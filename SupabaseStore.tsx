@@ -25,6 +25,7 @@ interface AppState {
   deleteEntry: (entryId: string) => void;
   addEmployee: (employee: Omit<Employee, 'id' | 'isActive'>) => void;
   updateEmployee: (id: string, updates: Partial<Employee>) => void;
+  deleteEmployee: (id: string) => void;
   toggleEmployeeStatus: (id: string) => void;
   updateSettings: (settings: AppSettings) => void;
 }
@@ -438,6 +439,23 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     ));
   };
 
+  const deleteEmployee = async (id: string) => {
+    console.log('Deleting employee:', id);
+
+    const { error } = await supabase
+      .from('employees')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase delete error:', error);
+      throw new Error(`Failed to delete employee: ${error.message}`);
+    }
+
+    console.log('Employee deleted, updating local state');
+    setEmployees(prev => prev.filter(e => e.id !== id));
+  };
+
   const toggleEmployeeStatus = async (id: string) => {
     const employee = employees.find(e => e.id === id);
     if (!employee) return;
@@ -491,6 +509,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       deleteEntry,
       addEmployee,
       updateEmployee,
+      deleteEmployee,
       toggleEmployeeStatus,
       updateSettings
     }}>

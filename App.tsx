@@ -265,7 +265,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 };
 
 const EditEmployeeModal = ({ isOpen, onClose, employee }: { isOpen: boolean; onClose: () => void; employee: Employee | null }) => {
-  const { updateEmployee } = useSupabaseStore();
+  const { updateEmployee, deleteEmployee } = useSupabaseStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
@@ -310,6 +310,22 @@ const EditEmployeeModal = ({ isOpen, onClose, employee }: { isOpen: boolean; onC
     }
   };
 
+  const handleDelete = async () => {
+    if (!employee) return;
+    
+    if (!confirm(`Are you sure you want to delete ${employee.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteEmployee(employee.id);
+      onClose();
+    } catch (error) {
+      console.error('Failed to delete employee:', error);
+      alert('Failed to delete employee. Please try again.');
+    }
+  };
+
   if (!isOpen || !employee) return null;
 
   return (
@@ -318,12 +334,12 @@ const EditEmployeeModal = ({ isOpen, onClose, employee }: { isOpen: boolean; onC
       onMouseDown={onClose}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-slide-in-right"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 animate-slide-in-right max-h-[85vh] overflow-y-auto"
         onMouseDown={e => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold text-[#263926] mb-6">Edit Team Member</h2>
         
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Name *</label>
             <input 
@@ -375,32 +391,41 @@ const EditEmployeeModal = ({ isOpen, onClose, employee }: { isOpen: boolean; onC
             />
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
-            <input 
-              type="checkbox"
-              id="edit-admin"
-              checked={isAdmin}
-              onChange={e => setIsAdmin(e.target.checked)}
-              className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
-            />
-            <label htmlFor="edit-admin" className="text-sm text-[#484848] cursor-pointer">Make Admin</label>
-          </div>
+          <div className="flex flex-col gap-3 justify-end pb-3">
+            <div className="flex items-center gap-3">
+              <input 
+                type="checkbox"
+                id="edit-admin"
+                checked={isAdmin}
+                onChange={e => setIsAdmin(e.target.checked)}
+                className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+              />
+              <label htmlFor="edit-admin" className="text-sm text-[#484848] cursor-pointer">Make Admin</label>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <input 
-              type="checkbox"
-              id="edit-active"
-              checked={isActive}
-              onChange={e => setIsActive(e.target.checked)}
-              className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
-            />
-            <label htmlFor="edit-active" className="text-sm text-[#484848] cursor-pointer">Active Employee</label>
+            <div className="flex items-center gap-3">
+              <input 
+                type="checkbox"
+                id="edit-active"
+                checked={isActive}
+                onChange={e => setIsActive(e.target.checked)}
+                className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+              />
+              <label htmlFor="edit-active" className="text-sm text-[#484848] cursor-pointer">Active Employee</label>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-3 mt-8">
-          <Button onClick={onClose} variant="outline" className="flex-1">Cancel</Button>
-          <Button onClick={handleSubmit} className="flex-1">Save Changes</Button>
+        <div className="flex gap-3 mt-6 pt-6 border-t border-[#F6F5F1]">
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
+          >
+            Delete Employee
+          </button>
+          <div className="flex-1"></div>
+          <Button onClick={onClose} variant="outline">Cancel</Button>
+          <Button onClick={handleSubmit}>Save Changes</Button>
         </div>
       </div>
     </div>
