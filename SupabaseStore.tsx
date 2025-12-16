@@ -40,7 +40,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     bookkeeperEmail: '',
     companyName: 'My Company',
     ownerName: '',
-    ownerEmail: ''
+    ownerEmail: '',
+    companyLogoUrl: undefined
   });
   const [currentUser, setCurrentUser] = useState<Employee | 'ADMIN'>('ADMIN');
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             bookkeeperEmail: settingsData.bookkeeper_email || '',
             companyName: settingsData.company_name,
             ownerName: settingsData.owner_name,
-            ownerEmail: settingsData.owner_email
+            ownerEmail: settingsData.owner_email,
+            companyLogoUrl: settingsData.company_logo_url || undefined
           });
         }
 
@@ -483,7 +485,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         bookkeeper_email: newSettings.bookkeeperEmail,
         company_name: newSettings.companyName,
         owner_name: newSettings.ownerName,
-        owner_email: newSettings.ownerEmail
+        owner_email: newSettings.ownerEmail,
+        company_logo_url: newSettings.companyLogoUrl || null
       })
       .eq('owner_id', user.id);
 

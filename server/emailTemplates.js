@@ -74,7 +74,10 @@ export const bookkeeperReportTemplate = (data) => {
 };
 
 export const teamInvitationTemplate = (data) => {
-  const { employeeName, companyName, role, appUrl } = data;
+  const { employeeName, companyName, role, appUrl, companyLogoUrl } = data;
+  
+  // Use custom logo if provided, otherwise fall back to default Ollie logo
+  const logoUrl = companyLogoUrl || 'https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg';
 
   return `
 <!DOCTYPE html>
@@ -89,7 +92,7 @@ export const teamInvitationTemplate = (data) => {
     
     <!-- Logo -->
     <div style="margin-bottom: 32px;">
-      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 22px; display: block;">
+      <img src="${logoUrl}" alt="${companyName}" style="height: 32px; max-width: 200px; display: block; object-fit: contain;">
     </div>
 
     <!-- Greeting -->

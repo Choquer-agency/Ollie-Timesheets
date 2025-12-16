@@ -50,5 +50,6 @@ export interface AppSettings {
   companyName: string;
   ownerName: string;
   ownerEmail: string;
+  companyLogoUrl?: string;
 }
 

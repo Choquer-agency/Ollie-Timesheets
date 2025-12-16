@@ -118,7 +118,8 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             employeeName: name,
             companyName: settings.companyName,
             role,
-            appUrl: window.location.origin
+            appUrl: window.location.origin,
+            companyLogoUrl: settings.companyLogoUrl
           });
           console.log('Invitation email sent');
           setShowSuccess(true);
@@ -282,6 +283,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   
   // Local state for form fields
   const [localSettings, setLocalSettings] = useState(settings);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Filter employees based on active/past toggle
   const filteredEmployees = employees.filter(emp => 
@@ -357,6 +359,63 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     alert("Settings saved!");
   };
 
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size must be less than 2MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      // Create a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `company-logo-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('Timesheets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('Timesheets')
+        .getPublicUrl(filePath);
+
+      // Update local settings
+      setLocalSettings({ ...localSettings, companyLogoUrl: publicUrl });
+
+      alert('Logo uploaded successfully! Click "Save Profile" to save changes.');
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      alert('Failed to upload logo. Please try again.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    if (confirm('Are you sure you want to remove your company logo?')) {
+      setLocalSettings({ ...localSettings, companyLogoUrl: undefined });
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#484848]/40 backdrop-blur-sm p-4"
@@ -427,6 +486,61 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                 className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
                             />
                         </div>
+                        
+                        <div>
+                            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Company Logo</label>
+                            <div className="space-y-3">
+                                {localSettings.companyLogoUrl ? (
+                                    <div className="flex items-center gap-4 p-4 bg-[#FAF9F5] border border-[#F6F5F1] rounded-2xl">
+                                        <img 
+                                            src={localSettings.companyLogoUrl} 
+                                            alt="Company Logo" 
+                                            className="h-16 w-auto object-contain"
+                                        />
+                                        <div className="flex-1">
+                                            <p className="text-sm text-[#263926] font-medium">Current Logo</p>
+                                            <p className="text-xs text-[#9CA3AF] mt-1">This logo will appear in team invitation emails</p>
+                                        </div>
+                                        <button 
+                                            onClick={handleRemoveLogo}
+                                            className="px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-[#FAF9F5] border border-[#F6F5F1] rounded-2xl text-center">
+                                        <p className="text-sm text-[#6B6B6B]">No logo uploaded</p>
+                                    </div>
+                                )}
+                                
+                                <label className="block">
+                                    <input 
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleLogoUpload}
+                                        disabled={uploadingLogo}
+                                        className="hidden"
+                                        id="logo-upload"
+                                    />
+                                    <label 
+                                        htmlFor="logo-upload"
+                                        className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-2xl transition-colors cursor-pointer ${
+                                            uploadingLogo 
+                                                ? 'bg-[#E5E3DA] text-[#9CA3AF] cursor-not-allowed' 
+                                                : 'bg-white border border-[#F6F5F1] text-[#263926] hover:bg-[#FAF9F5]'
+                                        }`}
+                                    >
+                                        {uploadingLogo ? 'Uploading...' : localSettings.companyLogoUrl ? 'Upload New Logo' : 'Upload Logo'}
+                                    </label>
+                                </label>
+                                
+                                <p className="text-xs text-[#9CA3AF]">
+                                    Upload your company logo to personalize team invitation emails. Max size: 2MB. Supported formats: JPG, PNG, SVG.
+                                </p>
+                            </div>
+                        </div>
+                        
                         <Button onClick={handleSaveSettings}>Save Profile</Button>
                     </div>
                 </div>

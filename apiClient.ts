@@ -25,6 +25,7 @@ interface TeamInvitationData {
   companyName: string;
   role: string;
   appUrl?: string;
+  companyLogoUrl?: string;
 }
 
 interface MissingClockoutData {

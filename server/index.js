@@ -95,7 +95,7 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
 // POST /api/email/invite-team-member - Send invitation to new team member
 app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
   try {
-    const { employeeEmail, employeeName, companyName, role, appUrl } = req.body;
+    const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl } = req.body;
 
     // Validate required fields
     if (!employeeEmail || !employeeName || !companyName || !role) {
@@ -110,7 +110,8 @@ app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
       employeeName,
       companyName,
       role,
-      appUrl
+      appUrl,
+      companyLogoUrl
     });
 
     res.json(result);
