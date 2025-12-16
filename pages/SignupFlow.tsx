@@ -162,13 +162,28 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
       
       if (!user) {
         console.error('Could not establish session after', maxAttempts, 'attempts');
-        // Still try to get user directly from auth
-        const { data: { user: directUser } } = await supabase.auth.getUser();
-        if (directUser) {
-          user = directUser;
-          console.log('Got user directly:', user.id);
+        console.log('Attempting automatic sign in...');
+        
+        // Try signing in with the credentials we just used to sign up
+        const { data: signInData, error: signInError } = await signIn(
+          companyInfo.email,
+          companyInfo.password
+        );
+        
+        if (signInError) {
+          console.error('Auto sign-in failed:', signInError);
+          setError('Account created! Email confirmation may be required. Please check your email or try logging in.');
+          setLoading(false);
+          return;
+        }
+        
+        // Try to get the user again after signing in
+        const { data: { user: signedInUser } } = await supabase.auth.getUser();
+        if (signedInUser) {
+          user = signedInUser;
+          console.log('Successfully signed in after signup:', user.id);
         } else {
-          setError('Account created but session not established. Please try logging in with your email and password.');
+          setError('Account created but requires email confirmation. Please check your email inbox.');
           setLoading(false);
           return;
         }
