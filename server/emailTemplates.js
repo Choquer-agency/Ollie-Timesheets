@@ -98,45 +98,20 @@ export const teamInvitationTemplate = (data) => {
 
     <!-- Greeting -->
     <h1 style="margin: 0 0 8px; font-size: 20px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
-    <p style="margin: 0 0 48px; font-size: 14px; color: #6B6B6B; line-height: 1.6; padding-bottom: 24px; border-bottom: 1px solid #F0EEE6;">
+    <p style="margin: 0 0 48px; font-size: 14px; color: #6B6B6B; line-height: 1.6;">
       You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
     </p>
 
-    <!-- Quick Start Guide -->
-    <h2 style="margin: 0 0 16px; font-size: 14px; color: #263926; font-weight: 700;">⚡ Quick Start Guide</h2>
-    
-    <p style="margin: 0 0 12px; font-size: 12px; color: #263926; line-height: 1.6;">
-      <strong>⏰ Clock In & Out</strong><br>
-      <span style="color: #6B6B6B;">Tap "Clock In" when you start work, and "Clock Out" when you finish.</span>
-    </p>
-
-    <p style="margin: 0 0 12px; font-size: 12px; color: #263926; line-height: 1.6;">
-      <strong>☕ Take Breaks</strong><br>
-      <span style="color: #6B6B6B;">Start and end breaks with one tap. We'll track it automatically.</span>
-    </p>
-
-    <p style="margin: 0 0 12px; font-size: 12px; color: #263926; line-height: 1.6;">
-      <strong>🏖️ Time Off</strong><br>
-      <span style="color: #6B6B6B;">Mark sick days or vacation directly in the app.</span>
-    </p>
-
-    <p style="margin: 0 0 32px; font-size: 12px; color: #263926; line-height: 1.6;">
-      <strong>📅 View History</strong><br>
-      <span style="color: #6B6B6B;">Check your hours, schedule, and remaining vacation days anytime.</span>
-    </p>
+    <!-- Quick Start Guide Card -->
+    <div style="background-color: #F0EEE6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+      <h2 style="margin: 0; font-size: 16px; color: #263926; font-weight: 700;">Quick Start Guide</h2>
+    </div>
 
     <!-- CTA Button -->
     <div style="margin: 0 0 32px;">
       <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         Join ${companyName}
       </a>
-    </div>
-
-    <!-- Pro Tip -->
-    <div style="background-color: #FFF7ED; border-left: 4px solid #FB923C; padding: 16px; margin-bottom: 32px;">
-      <p style="margin: 0; color: #C2410C; font-size: 14px; line-height: 1.6;">
-        <strong>💡 Pro Tip:</strong> Forgot to clock out? The system will remind you the next morning to fix your timecard.
-      </p>
     </div>
 
     <!-- Footer -->
