@@ -105,12 +105,16 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
 
     try {
       // Validate all employees have at least name and position
-      const invalidEmployees = employees.filter(emp => !emp.name || !emp.position);
+      const invalidEmployees = employees.filter(emp => !emp.name.trim() || !emp.position.trim());
       if (invalidEmployees.length > 0) {
         setError('Please fill in at least the name and position for all employees');
         setLoading(false);
         return;
       }
+
+      console.log('Starting signup process...');
+      console.log('Company info:', companyInfo);
+      console.log('Employees:', employees);
 
       // Step 1: Sign up the owner
       const { error: signUpError } = await signUp(
@@ -124,27 +128,54 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
       );
 
       if (signUpError) {
+        console.error('Sign up error:', signUpError);
         setError(signUpError.message);
         setLoading(false);
         return;
       }
 
-      // Wait a moment for auth to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('User signed up successfully');
 
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
+      // Wait for auth to complete and session to be established
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Get the current user session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!user) {
-        setError('Authentication failed. Please try logging in.');
+      if (sessionError || !session) {
+        console.error('Session error:', sessionError);
+        setError('Authentication completed but session not established. Please try logging in.');
         setLoading(false);
         return;
       }
 
-      // Step 2: Create settings record
+      const user = session.user;
+      console.log('Got user:', user.id);
+
+      // Step 2: Create profile record (if it doesn't exist)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: companyInfo.email,
+          full_name: 'Owner',
+          role: 'owner',
+          company_name: companyInfo.companyName
+        }, {
+          onConflict: 'id'
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+      } else {
+        console.log('Profile created/updated');
+      }
+
+      // Step 3: Create settings record
       const { error: settingsError } = await supabase
         .from('settings')
-        .insert({
+        .upsert({
+          id: crypto.randomUUID(),
           owner_id: user.id,
           company_name: companyInfo.companyName,
           owner_name: 'Owner',
@@ -154,19 +185,24 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
 
       if (settingsError) {
         console.error('Settings creation error:', settingsError);
+      } else {
+        console.log('Settings created');
       }
 
-      // Step 3: Create employee records
+      // Step 4: Create employee records
       const employeeInserts = employees.map(emp => ({
+        id: crypto.randomUUID(),
         user_id: null, // These are not yet users
-        name: emp.name,
-        email: emp.email || null,
-        role: emp.position,
+        name: emp.name.trim(),
+        email: emp.email.trim() || null,
+        role: emp.position.trim(),
         hourly_rate: emp.salary ? parseFloat(emp.salary) : null,
         vacation_days_total: parseInt(emp.vacationDays) || 10,
         is_admin: false,
         is_active: true
       }));
+
+      console.log('Inserting employees:', employeeInserts);
 
       const { error: employeesError } = await supabase
         .from('employees')
@@ -174,11 +210,15 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
 
       if (employeesError) {
         console.error('Employee creation error:', employeesError);
-        setError('Account created but there was an issue adding employees. You can add them later.');
-        // Don't return - still allow them to proceed
+        setError('Account created but there was an issue adding employees. You can add them later in Settings.');
+        // Wait a bit before completing so user can read the message
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } else {
+        console.log('Employees created successfully');
       }
 
       // Success!
+      console.log('Signup complete, calling onComplete');
       setLoading(false);
       onComplete();
     } catch (err: any) {
@@ -331,7 +371,7 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
   // Step 2: Employee Setup
   return (
     <div className="min-h-screen bg-[#FAF9F5] py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <img 
@@ -340,7 +380,7 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
             className="h-10 mx-auto mb-6"
           />
           <h1 className="text-3xl font-bold text-[#263926] mb-2">Add your team</h1>
-          <p className="text-[#6B6B6B]">Let's set up your employees so you can start tracking time right away</p>
+          <p className="text-[#6B6B6B]">Fill in the details for each team member</p>
           
           <button
             onClick={() => setStep(1)}
@@ -351,112 +391,119 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 text-rose-700 text-sm rounded-2xl border border-rose-100 max-w-2xl mx-auto">
+          <div className="mb-6 p-4 bg-rose-50 text-rose-700 text-sm rounded-2xl border border-rose-100">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleFinalSubmit} className="space-y-6">
-          {/* Employee Forms */}
-          <div className="space-y-4">
-            {employees.map((emp, index) => (
-              <div key={emp.id} className="bg-white rounded-2xl shadow-sm p-6 border border-[#F6F5F1]">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-[#263926]">Employee {index + 1}</h3>
-                  {employees.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveEmployee(emp.id)}
-                      className="text-rose-600 hover:text-rose-700 text-sm font-medium"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-[#6B6B6B] mb-2">Full name *</label>
-                    <input
-                      type="text"
-                      value={emp.name}
-                      onChange={(e) => updateEmployee(emp.id, 'name', e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none"
-                      placeholder="Jane Doe"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#6B6B6B] mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={emp.email}
-                      onChange={(e) => updateEmployee(emp.id, 'email', e.target.value)}
-                      className="w-full px-4 py-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none"
-                      placeholder="jane@company.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#6B6B6B] mb-2">Position *</label>
-                    <input
-                      type="text"
-                      value={emp.position}
-                      onChange={(e) => updateEmployee(emp.id, 'position', e.target.value)}
-                      required
-                      className="w-full px-4 py-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none"
-                      placeholder="Designer"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#6B6B6B] mb-2">Hourly rate ($/hr)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={emp.salary}
-                      onChange={(e) => updateEmployee(emp.id, 'salary', e.target.value)}
-                      className="w-full px-4 py-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none"
-                      placeholder="25.00"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#6B6B6B] mb-2">Vacation days (yearly)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={emp.vacationDays}
-                      onChange={(e) => updateEmployee(emp.id, 'vacationDays', e.target.value)}
-                      className="w-full px-4 py-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none"
-                      placeholder="10"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-[#6B6B6B] mb-2">Sick days (yearly)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={emp.sickDays}
-                      onChange={(e) => updateEmployee(emp.id, 'sickDays', e.target.value)}
-                      className="w-full px-4 py-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none"
-                      placeholder="5"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+        <form onSubmit={handleFinalSubmit}>
+          {/* Employee Table */}
+          <div className="bg-white rounded-2xl shadow-sm border border-[#F6F5F1] overflow-hidden mb-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-[#FAF9F5] border-b border-[#F6F5F1]">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Name *</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Email</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Position *</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Rate ($/hr)</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Vacation</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Sick days</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-20"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F6F5F1]">
+                  {employees.map((emp, index) => (
+                    <tr key={emp.id} className="hover:bg-[#FAF9F5] transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-[#6B6B6B]">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={emp.name}
+                          onChange={(e) => updateEmployee(emp.id, 'name', e.target.value)}
+                          required
+                          className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
+                          placeholder="Jane Doe"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="email"
+                          value={emp.email}
+                          onChange={(e) => updateEmployee(emp.id, 'email', e.target.value)}
+                          className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
+                          placeholder="jane@company.com"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={emp.position}
+                          onChange={(e) => updateEmployee(emp.id, 'position', e.target.value)}
+                          required
+                          className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
+                          placeholder="Designer"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={emp.salary}
+                          onChange={(e) => updateEmployee(emp.id, 'salary', e.target.value)}
+                          className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
+                          placeholder="25.00"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          value={emp.vacationDays}
+                          onChange={(e) => updateEmployee(emp.id, 'vacationDays', e.target.value)}
+                          className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
+                          placeholder="10"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          value={emp.sickDays}
+                          onChange={(e) => updateEmployee(emp.id, 'sickDays', e.target.value)}
+                          className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
+                          placeholder="5"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {employees.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEmployee(emp.id)}
+                            className="text-rose-600 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-colors"
+                            title="Remove employee"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Add Another Employee Button */}
-          <div className="text-center">
+          <div className="text-center mb-8">
             <button
               type="button"
               onClick={handleAddEmployee}
-              className="text-[#2CA01C] hover:text-[#238615] font-semibold text-sm flex items-center gap-2 mx-auto"
+              className="inline-flex items-center gap-2 px-4 py-2 text-[#2CA01C] hover:text-[#238615] hover:bg-emerald-50 rounded-lg font-semibold text-sm transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -465,8 +512,8 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
             </button>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex gap-4 pt-6 max-w-2xl mx-auto">
+          {/* Submit Buttons */}
+          <div className="flex gap-4 max-w-md mx-auto">
             <Button
               type="button"
               variant="outline"
