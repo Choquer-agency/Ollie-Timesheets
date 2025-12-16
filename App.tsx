@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import { useSupabaseStore } from './SupabaseStore';
+import { supabase } from './supabaseClient';
 import { Button } from './components/Button';
 import { TimeCardModal } from './components/TimeCardModal';
 import { DatePicker } from './components/DatePicker';
