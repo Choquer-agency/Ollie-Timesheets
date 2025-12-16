@@ -4,9 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cd server && npm install",
+    "build": "vite build",
     "preview": "vite preview",
-    "start": "node start-production.js",
+    "start": "node server-production.js",
     "server": "cd server && npm start",
     "server:dev": "cd server && npm run dev"
   },
