@@ -103,7 +103,7 @@ export const teamInvitationTemplate = (data) => {
     </p>
 
     <!-- Quick Start Guide Card -->
-    <div style="background-color: #F0EEE6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+    <div style="background-color: #FAF9F5; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
       <h2 style="margin: 0 0 16px; font-size: 16px; color: #263926; font-weight: 700;">Quick Start Guide</h2>
       
       <p style="margin: 0 0 12px; font-size: 14px; color: #263926; line-height: 1.6;">
