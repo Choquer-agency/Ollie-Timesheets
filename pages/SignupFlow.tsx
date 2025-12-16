@@ -403,20 +403,20 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
               <table className="w-full">
                 <thead className="bg-[#FAF9F5] border-b border-[#F6F5F1]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-12">#</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Name *</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Email</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Position *</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Rate ($/hr)</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Vacation</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Sick days</th>
-                    <th className="px-4 py-3 text-center text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-20"></th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-32">Rate ($/hr)</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-24">Vacation</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-28">Sick days</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-16"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F6F5F1]">
                   {employees.map((emp, index) => (
                     <tr key={emp.id} className="hover:bg-[#FAF9F5] transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-[#6B6B6B]">{index + 1}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-[#6B6B6B] w-12">{index + 1}</td>
                       <td className="px-4 py-3">
                         <input
                           type="text"
@@ -446,38 +446,41 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
                           placeholder="Designer"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 w-32">
                         <input
                           type="number"
                           step="0.01"
                           min="0"
+                          max="9999.99"
                           value={emp.salary}
                           onChange={(e) => updateEmployee(emp.id, 'salary', e.target.value)}
                           className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
                           placeholder="25.00"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 w-24">
                         <input
                           type="number"
                           min="0"
+                          max="99"
                           value={emp.vacationDays}
                           onChange={(e) => updateEmployee(emp.id, 'vacationDays', e.target.value)}
                           className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
                           placeholder="10"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 w-28">
                         <input
                           type="number"
                           min="0"
+                          max="99"
                           value={emp.sickDays}
                           onChange={(e) => updateEmployee(emp.id, 'sickDays', e.target.value)}
                           className="w-full px-3 py-2 border border-[#F6F5F1] rounded-lg focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] outline-none text-sm"
                           placeholder="5"
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center w-16">
                         {employees.length > 1 && (
                           <button
                             type="button"
