@@ -88,7 +88,7 @@ export const teamInvitationTemplate = (data) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to ${companyName}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #667eea; padding: 40px 20px;">
   <div style="max-width: 600px; margin: 0 auto;">
     
     <!-- Header -->
@@ -103,10 +103,10 @@ export const teamInvitationTemplate = (data) => {
     <div style="background: white; border-radius: 24px; padding: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden;">
       
       <!-- Welcome Section -->
-      <div style="background: linear-gradient(135deg, #2CA01C 0%, #228f15 100%); padding: 40px 32px; text-align: center;">
-        <h2 style="margin: 0 0 12px; color: white; font-size: 24px; font-weight: 700;">Hi ${employeeName}! 👋</h2>
-        <p style="margin: 0; color: rgba(255,255,255,0.95); font-size: 16px; line-height: 1.5;">
-          You're joining <strong>${companyName}</strong> as ${role}
+      <div style="background-color: #2CA01C; padding: 40px 32px; text-align: center;">
+        <h2 style="margin: 0 0 12px; color: #ffffff; font-size: 24px; font-weight: 700;">Hi ${employeeName}! 👋</h2>
+        <p style="margin: 0; color: #ffffff; font-size: 16px; line-height: 1.5;">
+          You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
         </p>
       </div>
 
@@ -115,10 +115,10 @@ export const teamInvitationTemplate = (data) => {
         
         <!-- CTA Button -->
         <div style="text-align: center; margin: 0 0 40px;">
-          <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #2CA01C 0%, #228f15 100%); color: white; text-decoration: none; padding: 18px 48px; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 8px 24px rgba(44,160,28,0.3); transition: transform 0.2s;">
+          <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 18px 48px; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             🚀 Get Started Now
           </a>
-          <p style="margin: 12px 0 0; color: #9CA3AF; font-size: 13px;">Click to access your timesheet dashboard</p>
+          <p style="margin: 12px 0 0; color: #6B6B6B; font-size: 13px;">Click to access your timesheet dashboard</p>
         </div>
 
         <!-- Quick Guide -->
