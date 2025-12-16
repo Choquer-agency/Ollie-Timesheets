@@ -104,7 +104,27 @@ export const teamInvitationTemplate = (data) => {
 
     <!-- Quick Start Guide Card -->
     <div style="background-color: #F0EEE6; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-      <h2 style="margin: 0; font-size: 16px; color: #263926; font-weight: 700;">Quick Start Guide</h2>
+      <h2 style="margin: 0 0 16px; font-size: 16px; color: #263926; font-weight: 700;">Quick Start Guide</h2>
+      
+      <p style="margin: 0 0 12px; font-size: 14px; color: #263926; line-height: 1.6;">
+        <strong>⏰ Clock In & Out</strong><br>
+        <span style="color: #6B6B6B;">Tap "Clock In" when you start work, and "Clock Out" when you finish.</span>
+      </p>
+
+      <p style="margin: 0 0 12px; font-size: 14px; color: #263926; line-height: 1.6;">
+        <strong>☕ Take Breaks</strong><br>
+        <span style="color: #6B6B6B;">Start and end breaks with one tap. We'll track it automatically.</span>
+      </p>
+
+      <p style="margin: 0 0 12px; font-size: 14px; color: #263926; line-height: 1.6;">
+        <strong>🏖️ Time Off</strong><br>
+        <span style="color: #6B6B6B;">Mark sick days or vacation directly in the app.</span>
+      </p>
+
+      <p style="margin: 0; font-size: 14px; color: #263926; line-height: 1.6;">
+        <strong>📅 View History</strong><br>
+        <span style="color: #6B6B6B;">Check your hours, schedule, and remaining vacation days anytime.</span>
+      </p>
     </div>
 
     <!-- CTA Button -->
