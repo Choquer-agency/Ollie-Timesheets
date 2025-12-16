@@ -264,182 +264,74 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   );
 };
 
-const EditEmployeeModal = ({ isOpen, onClose, employee }: { isOpen: boolean; onClose: () => void; employee: Employee | null }) => {
-  const { updateEmployee, deleteEmployee } = useSupabaseStore();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState('');
-  const [rate, setRate] = useState('');
-  const [vacationDays, setVacationDays] = useState('10');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isActive, setIsActive] = useState(true);
+const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { settings, updateSettings, employees, updateEmployee, deleteEmployee } = useSupabaseStore();
+  const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  
+  // Edit form state
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState('');
+  const [editRate, setEditRate] = useState('');
+  const [editVacationDays, setEditVacationDays] = useState('10');
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
+  const [editIsActive, setEditIsActive] = useState(true);
+  
+  // Local state for form fields
+  const [localSettings, setLocalSettings] = useState(settings);
 
-  useEffect(() => {
-    if (employee) {
-      setName(employee.name);
-      setEmail(employee.email || '');
-      setRole(employee.role);
-      setRate(employee.hourlyRate?.toString() || '');
-      setVacationDays(employee.vacationDaysTotal?.toString() || '10');
-      setIsAdmin(employee.isAdmin);
-      setIsActive(employee.isActive);
-    }
-  }, [employee]);
+  const handleEditEmployee = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setEditName(emp.name);
+    setEditEmail(emp.email || '');
+    setEditRole(emp.role);
+    setEditRate(emp.hourlyRate?.toString() || '');
+    setEditVacationDays(emp.vacationDaysTotal?.toString() || '10');
+    setEditIsAdmin(emp.isAdmin);
+    setEditIsActive(emp.isActive);
+  };
 
-  const handleSubmit = async () => {
-    if (!employee || !name.trim() || !role.trim()) {
+  const handleSaveEmployee = async () => {
+    if (!editingEmployee || !editName.trim() || !editRole.trim()) {
       alert('Please fill in all required fields');
       return;
     }
 
     try {
-      await updateEmployee(employee.id, {
-        name: name.trim(),
-        email: email.trim() || undefined,
-        role: role.trim(),
-        hourlyRate: rate ? parseFloat(rate) : undefined,
-        vacationDaysTotal: parseInt(vacationDays) || 10,
-        isAdmin,
-        isActive
+      await updateEmployee(editingEmployee.id, {
+        name: editName.trim(),
+        email: editEmail.trim() || undefined,
+        role: editRole.trim(),
+        hourlyRate: editRate ? parseFloat(editRate) : undefined,
+        vacationDaysTotal: parseInt(editVacationDays) || 10,
+        isAdmin: editIsAdmin,
+        isActive: editIsActive
       });
       
-      onClose();
+      setEditingEmployee(null);
     } catch (error) {
       console.error('Failed to update employee:', error);
       alert('Failed to update employee. Please try again.');
     }
   };
 
-  const handleDelete = async () => {
-    if (!employee) return;
+  const handleDeleteEmployee = async () => {
+    if (!editingEmployee) return;
     
-    if (!confirm(`Are you sure you want to delete ${employee.name}? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete ${editingEmployee.name}? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      await deleteEmployee(employee.id);
-      onClose();
+      await deleteEmployee(editingEmployee.id);
+      setEditingEmployee(null);
     } catch (error) {
       console.error('Failed to delete employee:', error);
       alert('Failed to delete employee. Please try again.');
     }
   };
-
-  if (!isOpen || !employee) return null;
-
-  return (
-    <div 
-      className="fixed inset-0 z-50 bg-[#484848]/90 backdrop-blur-sm flex items-center justify-center p-6"
-      onMouseDown={onClose}
-    >
-      <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 animate-slide-in-right max-h-[85vh] overflow-y-auto"
-        onMouseDown={e => e.stopPropagation()}
-      >
-        <h2 className="text-2xl font-bold text-[#263926] mb-6">Edit Team Member</h2>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Name *</label>
-            <input 
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Email</label>
-            <input 
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Position *</label>
-            <input 
-              type="text"
-              value={role}
-              onChange={e => setRole(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Hourly Rate ($)</label>
-            <input 
-              type="number"
-              step="0.01"
-              value={rate}
-              onChange={e => setRate(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Vacation Days</label>
-            <input 
-              type="number"
-              value={vacationDays}
-              onChange={e => setVacationDays(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-            />
-          </div>
-
-          <div className="flex flex-col gap-3 justify-end pb-3">
-            <div className="flex items-center gap-3">
-              <input 
-                type="checkbox"
-                id="edit-admin"
-                checked={isAdmin}
-                onChange={e => setIsAdmin(e.target.checked)}
-                className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
-              />
-              <label htmlFor="edit-admin" className="text-sm text-[#484848] cursor-pointer">Make Admin</label>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input 
-                type="checkbox"
-                id="edit-active"
-                checked={isActive}
-                onChange={e => setIsActive(e.target.checked)}
-                className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
-              />
-              <label htmlFor="edit-active" className="text-sm text-[#484848] cursor-pointer">Active Employee</label>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3 mt-6 pt-6 border-t border-[#F6F5F1]">
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
-          >
-            Delete Employee
-          </button>
-          <div className="flex-1"></div>
-          <Button onClick={onClose} variant="outline">Cancel</Button>
-          <Button onClick={handleSubmit}>Save Changes</Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees } = useSupabaseStore();
-  const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
-  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
-  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
-  
-  // Local state for form fields
-  const [localSettings, setLocalSettings] = useState(settings);
 
   useEffect(() => {
     if (isOpen) setLocalSettings(settings);
@@ -528,7 +420,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             )}
 
             {/* Team Management Section */}
-            {activeSection === 'team' && (
+            {activeSection === 'team' && !editingEmployee && (
                 <div>
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-2xl font-bold text-[#263926]">Team Management</h3>
@@ -549,7 +441,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                 {employees.map(emp => (
                                     <tr 
                                         key={emp.id} 
-                                        onClick={() => setEditEmployee(emp)}
+                                        onClick={() => handleEditEmployee(emp)}
                                         className="hover:bg-[#FAF9F5] transition-colors cursor-pointer"
                                     >
                                         <td className="px-6 py-4 font-medium text-[#263926]">
@@ -574,7 +466,114 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         </table>
                     </div>
                     <AddEmployeeModal isOpen={isAddEmployeeOpen} onClose={() => setIsAddEmployeeOpen(false)} />
-                    <EditEmployeeModal isOpen={!!editEmployee} onClose={() => setEditEmployee(null)} employee={editEmployee} />
+                </div>
+            )}
+
+            {/* Edit Employee Form (replaces table) */}
+            {activeSection === 'team' && editingEmployee && (
+                <div>
+                    <div className="flex items-center gap-4 mb-8">
+                        <button 
+                            onClick={() => setEditingEmployee(null)}
+                            className="p-2 hover:bg-[#FAF9F5] rounded-2xl transition-colors"
+                        >
+                            <svg className="w-5 h-5 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <h3 className="text-2xl font-bold text-[#263926]">Edit Team Member</h3>
+                    </div>
+
+                    <div className="max-w-3xl">
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Name *</label>
+                                <input 
+                                    type="text"
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Email</label>
+                                <input 
+                                    type="email"
+                                    value={editEmail}
+                                    onChange={e => setEditEmail(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Position *</label>
+                                <input 
+                                    type="text"
+                                    value={editRole}
+                                    onChange={e => setEditRole(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Hourly Rate ($)</label>
+                                <input 
+                                    type="number"
+                                    step="0.01"
+                                    value={editRate}
+                                    onChange={e => setEditRate(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Vacation Days</label>
+                                <input 
+                                    type="number"
+                                    value={editVacationDays}
+                                    onChange={e => setEditVacationDays(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-3 justify-end pb-3">
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="checkbox"
+                                        id="inline-edit-admin"
+                                        checked={editIsAdmin}
+                                        onChange={e => setEditIsAdmin(e.target.checked)}
+                                        className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+                                    />
+                                    <label htmlFor="inline-edit-admin" className="text-sm text-[#484848] cursor-pointer">Make Admin</label>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="checkbox"
+                                        id="inline-edit-active"
+                                        checked={editIsActive}
+                                        onChange={e => setEditIsActive(e.target.checked)}
+                                        className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+                                    />
+                                    <label htmlFor="inline-edit-active" className="text-sm text-[#484848] cursor-pointer">Active Employee</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-8 pt-6 border-t border-[#F6F5F1]">
+                            <button
+                                onClick={handleDeleteEmployee}
+                                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
+                            >
+                                Delete Employee
+                            </button>
+                            <div className="flex-1"></div>
+                            <Button onClick={() => setEditingEmployee(null)} variant="outline">Cancel</Button>
+                            <Button onClick={handleSaveEmployee}>Save Changes</Button>
+                        </div>
+                    </div>
                 </div>
             )}
 
