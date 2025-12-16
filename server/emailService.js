@@ -49,7 +49,7 @@ export const sendBookkeeperReport = async (data) => {
 
 // Send team member invitation email
 export const sendTeamInvitation = async (data) => {
-  const { employeeEmail, employeeName, companyName, role, appUrl } = data;
+  const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl } = data;
 
   if (!isValidEmail(employeeEmail)) {
     throw new Error('Invalid employee email address');
@@ -59,7 +59,8 @@ export const sendTeamInvitation = async (data) => {
     employeeName,
     companyName,
     role,
-    appUrl: appUrl || process.env.FRONTEND_URL || 'http://localhost:5173'
+    appUrl: appUrl || process.env.FRONTEND_URL || 'http://localhost:5173',
+    companyLogoUrl
   });
 
   try {

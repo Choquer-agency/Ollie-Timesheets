@@ -114,6 +114,11 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       // Send invitation email if email is provided
       if (email) {
         try {
+          console.log('Sending invitation with settings:', {
+            companyName: settings.companyName,
+            companyLogoUrl: settings.companyLogoUrl
+          });
+          
           await sendTeamInvitation({
             employeeEmail: email,
             employeeName: name,
@@ -122,7 +127,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             appUrl: window.location.origin,
             companyLogoUrl: settings.companyLogoUrl
           });
-          console.log('Invitation email sent');
+          console.log('Invitation email sent successfully');
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 3000);
         } catch (emailError) {
