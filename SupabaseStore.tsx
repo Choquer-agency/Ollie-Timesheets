@@ -385,22 +385,29 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       ...data
     };
 
+    console.log('Adding employee to Supabase:', newEmp);
+
     const { error } = await supabase
       .from('employees')
       .insert({
         id: newEmp.id,
+        user_id: null,
         name: newEmp.name,
-        email: newEmp.email,
+        email: newEmp.email || null,
         role: newEmp.role,
-        hourly_rate: newEmp.hourlyRate,
+        hourly_rate: newEmp.hourlyRate || null,
         vacation_days_total: newEmp.vacationDaysTotal || 10,
         is_admin: newEmp.isAdmin,
         is_active: true
       });
 
-    if (!error) {
-      setEmployees(prev => [...prev, newEmp]);
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw new Error(`Failed to add employee: ${error.message}`);
     }
+
+    console.log('Employee added to database, updating local state');
+    setEmployees(prev => [...prev, newEmp]);
   };
 
   const toggleEmployeeStatus = async (id: string) => {

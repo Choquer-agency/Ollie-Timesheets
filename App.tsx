@@ -84,6 +84,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   const [isAdmin, setIsAdmin] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
@@ -91,49 +92,67 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     e.preventDefault();
     if (!name || !role) return;
     
-    addEmployee({
-      name,
-      email,
-      role,
-      hourlyRate: rate ? parseFloat(rate) : undefined,
-      vacationDaysTotal: parseInt(vacationDays) || 0,
-      isAdmin
-    });
+    setError('');
+    setSendingInvite(true);
     
-    // Send invitation email if email is provided
-    if (email) {
-      setSendingInvite(true);
-      try {
-        await sendTeamInvitation({
-          employeeEmail: email,
-          employeeName: name,
-          companyName: settings.companyName,
-          role,
-          appUrl: window.location.origin
-        });
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-      } catch (error) {
-        console.error('Failed to send invitation:', error);
-        alert('Employee added but failed to send invitation email. Please send manually.');
-      } finally {
+    try {
+      // Add employee to database
+      console.log('Adding employee:', { name, email, role, rate, vacationDays, isAdmin });
+      
+      await addEmployee({
+        name,
+        email,
+        role,
+        hourlyRate: rate ? parseFloat(rate) : undefined,
+        vacationDaysTotal: parseInt(vacationDays) || 0,
+        isAdmin
+      });
+      
+      console.log('Employee added successfully');
+      
+      // Send invitation email if email is provided
+      if (email) {
+        try {
+          await sendTeamInvitation({
+            employeeEmail: email,
+            employeeName: name,
+            companyName: settings.companyName,
+            role,
+            appUrl: window.location.origin
+          });
+          console.log('Invitation email sent');
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+        } catch (emailError) {
+          console.error('Failed to send invitation email:', emailError);
+          // Don't fail the whole operation - employee is still added
+          setError('Employee added but invitation email failed. You can invite them manually.');
+          setTimeout(() => setError(''), 5000);
+        }
+      }
+      
+      // Reset form
+      setName('');
+      setEmail('');
+      setRole('');
+      setRate('');
+      setVacationDays('10');
+      setIsAdmin(false);
+      
+      // Close modal after brief delay
+      setTimeout(() => {
+        onClose();
+        setError('');
+      }, email ? 2000 : 0);
+      
+    } catch (error: any) {
+      console.error('Failed to add employee:', error);
+      setError(error.message || 'Failed to add employee. Please check your permissions.');
+      setSendingInvite(false);
+    } finally {
+      if (!error) {
         setSendingInvite(false);
       }
-    }
-    
-    // Reset
-    setName('');
-    setEmail('');
-    setRole('');
-    setRate('');
-    setVacationDays('10');
-    setIsAdmin(false);
-    
-    // Close after a brief delay if invitation was sent
-    if (email) {
-      setTimeout(() => onClose(), 2000);
-    } else {
-      onClose();
     }
   };
 
@@ -146,7 +165,14 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 animate-slide-in-right"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-[#263926] mb-6">Add Team Member</h2>
+        <h2 className="text-xl font-bold text-[#263926] mb-6">Add team member</h2>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-rose-50 text-rose-700 text-sm rounded-2xl border border-rose-100">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Full Name</label>
