@@ -88,120 +88,61 @@ export const teamInvitationTemplate = (data) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to ${companyName}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #667eea; padding: 40px 20px;">
-  <div style="max-width: 600px; margin: 0 auto;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     
-    <!-- Header -->
-    <div style="text-align: center; margin-bottom: 32px;">
-      <div style="background: white; display: inline-block; padding: 16px 24px; border-radius: 100px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); margin-bottom: 24px;">
-        <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 28px; display: block;">
-      </div>
-      <h1 style="margin: 0; font-size: 36px; color: white; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Welcome to the Team! 🎉</h1>
+    <!-- Logo -->
+    <div style="margin-bottom: 32px;">
+      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 32px; display: block;">
     </div>
 
-    <!-- Main Card -->
-    <div style="background: white; border-radius: 24px; padding: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden;">
-      
-      <!-- Welcome Section -->
-      <div style="background-color: #2CA01C; padding: 40px 32px; text-align: center;">
-        <h2 style="margin: 0 0 12px; color: #ffffff; font-size: 24px; font-weight: 700;">Hi ${employeeName}! 👋</h2>
-        <p style="margin: 0; color: #ffffff; font-size: 16px; line-height: 1.5;">
-          You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
-        </p>
-      </div>
+    <!-- Greeting -->
+    <h1 style="margin: 0 0 8px; font-size: 28px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
+    <p style="margin: 0 0 32px; font-size: 16px; color: #6B6B6B; line-height: 1.6;">
+      You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
+    </p>
 
-      <!-- Content -->
-      <div style="padding: 40px 32px;">
-        
-        <!-- CTA Button -->
-        <div style="text-align: center; margin: 0 0 40px;">
-          <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 18px 48px; border-radius: 50px; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-            🚀 Get Started Now
-          </a>
-          <p style="margin: 12px 0 0; color: #6B6B6B; font-size: 13px;">Click to access your timesheet dashboard</p>
-        </div>
+    <!-- Quick Start Guide -->
+    <h2 style="margin: 0 0 16px; font-size: 20px; color: #263926; font-weight: 700;">⚡ Quick Start Guide</h2>
+    
+    <p style="margin: 0 0 12px; font-size: 15px; color: #263926; line-height: 1.6;">
+      <strong>⏰ Clock In & Out</strong><br>
+      <span style="color: #6B6B6B;">Tap "Clock In" when you start work, and "Clock Out" when you finish.</span>
+    </p>
 
-        <!-- Quick Guide -->
-        <div style="background: #FAF9F5; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-          <h3 style="margin: 0 0 20px; font-size: 18px; color: #263926; font-weight: 700; text-align: center;">⚡ Quick Start Guide</h3>
-          
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E5E3DA;">
-                <div style="display: flex; align-items: start;">
-                  <span style="font-size: 24px; margin-right: 12px;">⏰</span>
-                  <div>
-                    <strong style="color: #263926; font-size: 15px;">Clock In & Out</strong>
-                    <p style="margin: 4px 0 0; color: #6B6B6B; font-size: 14px; line-height: 1.5;">
-                      Tap "Clock In" when you start, "Clock Out" when you finish. Easy!
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E5E3DA;">
-                <div style="display: flex; align-items: start;">
-                  <span style="font-size: 24px; margin-right: 12px;">☕</span>
-                  <div>
-                    <strong style="color: #263926; font-size: 15px;">Take Breaks</strong>
-                    <p style="margin: 4px 0 0; color: #6B6B6B; font-size: 14px; line-height: 1.5;">
-                      Start and end breaks with one tap. We'll track it automatically.
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E5E3DA;">
-                <div style="display: flex; align-items: start;">
-                  <span style="font-size: 24px; margin-right: 12px;">🏖️</span>
-                  <div>
-                    <strong style="color: #263926; font-size: 15px;">Time Off</strong>
-                    <p style="margin: 4px 0 0; color: #6B6B6B; font-size: 14px; line-height: 1.5;">
-                      Mark sick days or vacation right in the app.
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0;">
-                <div style="display: flex; align-items: start;">
-                  <span style="font-size: 24px; margin-right: 12px;">📅</span>
-                  <div>
-                    <strong style="color: #263926; font-size: 15px;">View History</strong>
-                    <p style="margin: 4px 0 0; color: #6B6B6B; font-size: 14px; line-height: 1.5;">
-                      Check your hours, schedule, and remaining vacation days.
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </table>
-        </div>
+    <p style="margin: 0 0 12px; font-size: 15px; color: #263926; line-height: 1.6;">
+      <strong>☕ Take Breaks</strong><br>
+      <span style="color: #6B6B6B;">Start and end breaks with one tap. We'll track it automatically.</span>
+    </p>
 
-        <!-- Important Tip -->
-        <div style="background: #FFF7ED; border-left: 4px solid #FB923C; border-radius: 12px; padding: 16px 20px;">
-          <p style="margin: 0; color: #C2410C; font-size: 14px; line-height: 1.6;">
-            <strong>💡 Pro Tip:</strong> Forgot to clock out? Don't worry! The system will remind you the next morning to fix your timecard.
-          </p>
-        </div>
+    <p style="margin: 0 0 12px; font-size: 15px; color: #263926; line-height: 1.6;">
+      <strong>🏖️ Time Off</strong><br>
+      <span style="color: #6B6B6B;">Mark sick days or vacation directly in the app.</span>
+    </p>
 
-      </div>
+    <p style="margin: 0 0 32px; font-size: 15px; color: #263926; line-height: 1.6;">
+      <strong>📅 View History</strong><br>
+      <span style="color: #6B6B6B;">Check your hours, schedule, and remaining vacation days anytime.</span>
+    </p>
 
-      <!-- Footer -->
-      <div style="background: #FAF9F5; padding: 24px 32px; text-align: center; border-top: 1px solid #E5E3DA;">
-        <p style="margin: 0 0 8px; color: #263926; font-size: 14px; font-weight: 600;">Questions?</p>
-        <p style="margin: 0; color: #6B6B6B; font-size: 13px;">Reach out to your manager for help</p>
-      </div>
-
+    <!-- CTA Button -->
+    <div style="margin: 0 0 32px;">
+      <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Join ${companyName}
+      </a>
     </div>
 
-    <!-- Email Footer -->
-    <div style="text-align: center; margin-top: 32px;">
-      <p style="margin: 0; color: rgba(255,255,255,0.8); font-size: 13px;">Sent from Ollie Timesheets</p>
+    <!-- Pro Tip -->
+    <div style="background-color: #FFF7ED; border-left: 4px solid #FB923C; padding: 16px; margin-bottom: 32px;">
+      <p style="margin: 0; color: #C2410C; font-size: 14px; line-height: 1.6;">
+        <strong>💡 Pro Tip:</strong> Forgot to clock out? The system will remind you the next morning to fix your timecard.
+      </p>
     </div>
+
+    <!-- Footer -->
+    <p style="margin: 0; color: #9CA3AF; font-size: 13px; line-height: 1.6;">
+      Sent from Ollie Timesheets
+    </p>
 
   </div>
 </body>
