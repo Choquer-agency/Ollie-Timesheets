@@ -136,21 +136,43 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
 
       console.log('User signed up successfully');
 
-      // Wait for auth to complete and session to be established
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait a bit for auth to propagate
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Get the current user session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Get the current user - try multiple times if needed
+      let user = null;
+      let attempts = 0;
+      const maxAttempts = 3;
       
-      if (sessionError || !session) {
-        console.error('Session error:', sessionError);
-        setError('Authentication completed but session not established. Please try logging in.');
-        setLoading(false);
-        return;
+      while (!user && attempts < maxAttempts) {
+        attempts++;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          user = session.user;
+          console.log('Got user on attempt', attempts, ':', user.id);
+          break;
+        }
+        
+        if (attempts < maxAttempts) {
+          console.log('No session yet, waiting... (attempt', attempts, ')');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
-
-      const user = session.user;
-      console.log('Got user:', user.id);
+      
+      if (!user) {
+        console.error('Could not establish session after', maxAttempts, 'attempts');
+        // Still try to get user directly from auth
+        const { data: { user: directUser } } = await supabase.auth.getUser();
+        if (directUser) {
+          user = directUser;
+          console.log('Got user directly:', user.id);
+        } else {
+          setError('Account created but session not established. Please try logging in with your email and password.');
+          setLoading(false);
+          return;
+        }
+      }
 
       // Step 2: Create profile record (if it doesn't exist)
       const { error: profileError } = await supabase
@@ -185,6 +207,14 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
 
       if (settingsError) {
         console.error('Settings creation error:', settingsError);
+        console.error('Settings error details:', JSON.stringify(settingsError, null, 2));
+        
+        // Check if it's an RLS policy error
+        if (settingsError.message?.includes('policy') || settingsError.code === '42501') {
+          setError('Database permissions error. Please contact support - RLS policies need to be updated.');
+          setLoading(false);
+          return;
+        }
       } else {
         console.log('Settings created');
       }
@@ -210,14 +240,22 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
 
       if (employeesError) {
         console.error('Employee creation error:', employeesError);
-        setError('Account created but there was an issue adding employees. You can add them later in Settings.');
-        // Wait a bit before completing so user can read the message
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.error('Employee error details:', JSON.stringify(employeesError, null, 2));
+        
+        // Check if it's an RLS policy error
+        if (employeesError.message?.includes('policy') || employeesError.code === '42501') {
+          setError('Database permissions error. RLS policies are blocking employee creation. You\'ll need to add employees manually after login.');
+          // Continue anyway - let them log in
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        } else {
+          setError('Account created but there was an issue adding employees. You can add them later in Settings.');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       } else {
         console.log('Employees created successfully');
       }
 
-      // Success!
+      // Success! Complete the signup even if employees failed
       console.log('Signup complete, calling onComplete');
       setLoading(false);
       onComplete();
