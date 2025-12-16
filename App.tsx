@@ -159,11 +159,15 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   return (
     <div 
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[#484848]/40 backdrop-blur-sm p-4"
-      onClick={onClose}
+      onMouseDown={(e) => {
+        // Only close if clicking directly on the overlay (not on children)
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <div 
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 animate-slide-in-right"
-        onClick={e => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold text-[#263926] mb-6">Add team member</h2>
         
