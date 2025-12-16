@@ -93,12 +93,12 @@ export const teamInvitationTemplate = (data) => {
     
     <!-- Logo -->
     <div style="margin-bottom: 32px;">
-      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 32px; display: block;">
+      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 16px; display: block;">
     </div>
 
     <!-- Greeting -->
     <h1 style="margin: 0 0 8px; font-size: 28px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
-    <p style="margin: 0 0 32px; font-size: 16px; color: #6B6B6B; line-height: 1.6;">
+    <p style="margin: 0 0 48px; font-size: 16px; color: #6B6B6B; line-height: 1.6; padding-bottom: 24px; border-bottom: 1px solid #F0EEE6;">
       You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
     </p>
 
@@ -127,7 +127,7 @@ export const teamInvitationTemplate = (data) => {
 
     <!-- CTA Button -->
     <div style="margin: 0 0 32px;">
-      <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+      <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         Join ${companyName}
       </a>
     </div>
