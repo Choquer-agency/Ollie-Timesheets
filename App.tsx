@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { AppProvider, useStore } from './store';
+import { useSupabaseStore } from './SupabaseStore';
 import { Button } from './components/Button';
 import { TimeCardModal } from './components/TimeCardModal';
 import { DatePicker } from './components/DatePicker';
@@ -75,7 +75,7 @@ const MobileBreakTimer = ({ breakStartTime }: { breakStartTime: string }) => {
 };
 
 const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { addEmployee, settings } = useStore();
+  const { addEmployee, settings } = useSupabaseStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
@@ -235,7 +235,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 };
 
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, toggleEmployeeStatus } = useStore();
+  const { settings, updateSettings, employees, toggleEmployeeStatus } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   
@@ -407,7 +407,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 // --- Sub-View: Employee Dashboard ---
 
 const EmployeeDashboard = () => {
-  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest } = useStore();
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest } = useSupabaseStore();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
   const [view, setView] = useState<'clock' | 'history'>('clock');
@@ -788,7 +788,7 @@ const EmployeeDashboard = () => {
 // --- Sub-View: Admin Dashboard ---
 
 const AdminDashboard = () => {
-  const { employees, entries, updateEntry, deleteEntry, settings } = useStore();
+  const { employees, entries, updateEntry, deleteEntry, settings } = useSupabaseStore();
   const [viewDate, setViewDate] = useState(getTodayISO());
   const [activeTab, setActiveTab] = useState<'daily' | 'period'>('daily');
   const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
@@ -1328,8 +1328,21 @@ const AdminDashboard = () => {
 // --- Main Layout ---
 
 const MainLayout = () => {
-  const { currentUser, setCurrentUser, employees, settings } = useStore();
+  const { currentUser, setCurrentUser, employees, settings, loading } = useSupabaseStore();
+  const { signOut } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
+          <p className="text-[#6B6B6B]">Loading your data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F5] font-sans text-[#484848]">
@@ -1364,13 +1377,22 @@ const MainLayout = () => {
             </select>
           </div>
           {currentUser === 'ADMIN' && (
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
-              title="Settings"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
+            <>
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
+                title="Settings"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+              <button
+                onClick={() => signOut()}
+                className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
+                title="Sign out"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              </button>
+            </>
           )}
         </div>
         
@@ -1403,11 +1425,36 @@ const MainLayout = () => {
   );
 };
 
+// Import auth components and Supabase store
+import { useAuth } from './AuthContext';
+import { Auth } from './pages/Auth';
+import { SupabaseStoreProvider } from './SupabaseStore';
+
 const App = () => {
+  const { user, loading } = useAuth();
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
+          <p className="text-[#6B6B6B]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show auth pages
+  if (!user) {
+    return <Auth />;
+  }
+
+  // User is authenticated, show the main app with Supabase store
   return (
-    <AppProvider>
+    <SupabaseStoreProvider>
       <MainLayout />
-    </AppProvider>
+    </SupabaseStoreProvider>
   );
 };
 

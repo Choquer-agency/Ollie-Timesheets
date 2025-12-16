@@ -8,110 +8,17 @@ import {
   sendChangeApprovalNotification 
 } from './apiClient';
 
-const MOCK_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'Alice Chen', email: 'alice@agency.com', role: 'Senior Designer', hourlyRate: 65, vacationDaysTotal: 15, isAdmin: false, isActive: true },
-  { id: '2', name: 'Bob Smith', email: 'bob@agency.com', role: 'Copywriter & Admin', hourlyRate: 50, vacationDaysTotal: 10, isAdmin: true, isActive: true },
-  { id: '3', name: 'Charlie Davis', email: 'charlie@agency.com', role: 'Junior Dev', hourlyRate: 45, vacationDaysTotal: 10, isAdmin: false, isActive: true },
-];
+// Demo employees removed - using Supabase data instead
+const MOCK_EMPLOYEES: Employee[] = [];
 
-// Helper to generate dynamic mock data relative to "today"
-const generateMockData = (): TimeEntry[] => {
-  const entries: TimeEntry[] = [];
-  const today = new Date();
-
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const dayOfWeek = d.getDay(); // 0 = Sun, 6 = Sat
-
-    // Skip weekends for history, but keep today if it happens to be a weekend for demo purposes
-    if (i > 0 && (dayOfWeek === 0 || dayOfWeek === 6)) continue;
-
-    // --- TODAY'S ACTIVE STATES ---
-    if (i === 0) {
-       // Alice: Currently Working
-       entries.push({
-         id: `alice-${i}`, employeeId: '1', date: dateStr,
-         clockIn: new Date(d.setHours(9, 0, 0)).toISOString(),
-         clockOut: null,
-         breaks: [], isSickDay: false, isVacationDay: false
-       });
-       
-       // Bob: Sick Day
-       entries.push({
-         id: `bob-${i}`, employeeId: '2', date: dateStr,
-         clockIn: null, clockOut: null, breaks: [], isSickDay: true, isVacationDay: false,
-         adminNotes: 'Called in with flu'
-       });
-
-       // Charlie: On Break (Start break 45 mins ago relative to NOW to ensure positive timer)
-       const fortyFiveMinsAgo = new Date(new Date().getTime() - 45 * 60000);
-       entries.push({
-         id: `charlie-${i}`, employeeId: '3', date: dateStr,
-         clockIn: new Date(d.setHours(9, 0, 0)).toISOString(),
-         clockOut: null,
-         breaks: [{ 
-            id: `br-charlie-${i}`, 
-            startTime: fortyFiveMinsAgo.toISOString(), 
-            endTime: null, 
-            type: 'unpaid' 
-         }], 
-         isSickDay: false, isVacationDay: false
-       });
-
-       continue;
-    }
-
-    // --- HISTORICAL DATA ---
-    // Alice: Consistent
-    entries.push({
-      id: `alice-${i}`, employeeId: '1', date: dateStr,
-      clockIn: new Date(d.setHours(9, 0, 0)).toISOString(),
-      clockOut: new Date(d.setHours(17, 30, 0)).toISOString(),
-      breaks: [{ id: `b-a-${i}`, startTime: new Date(d.setHours(12, 30, 0)).toISOString(), endTime: new Date(d.setHours(13, 0, 0)).toISOString(), type: 'unpaid' }],
-      isSickDay: false, isVacationDay: false
-    });
-
-    // Bob: A bit chaotic
-    if (i === 3) {
-      // Bob forgot to clock out 3 days ago
-      entries.push({
-        id: `bob-${i}`, employeeId: '2', date: dateStr,
-        clockIn: new Date(d.setHours(9, 15, 0)).toISOString(),
-        clockOut: null, // Issue!
-        breaks: [], isSickDay: false, isVacationDay: false
-      });
-    } else {
-      entries.push({
-        id: `bob-${i}`, employeeId: '2', date: dateStr,
-        clockIn: new Date(d.setHours(9, 30, 0)).toISOString(),
-        clockOut: new Date(d.setHours(17, 0, 0)).toISOString(),
-        breaks: [{ id: `b-b-${i}`, startTime: new Date(d.setHours(13, 0, 0)).toISOString(), endTime: new Date(d.setHours(14, 0, 0)).toISOString(), type: 'unpaid' }],
-        isSickDay: false, isVacationDay: false
-      });
-    }
-
-    // Charlie: Standard
-    entries.push({
-      id: `charlie-${i}`, employeeId: '3', date: dateStr,
-      clockIn: new Date(d.setHours(10, 0, 0)).toISOString(),
-      clockOut: new Date(d.setHours(18, 0, 0)).toISOString(),
-      breaks: [{ id: `b-c-${i}`, startTime: new Date(d.setHours(14, 0, 0)).toISOString(), endTime: new Date(d.setHours(14, 30, 0)).toISOString(), type: 'unpaid' }],
-      isSickDay: false, isVacationDay: false
-    });
-  }
-
-  return entries;
-};
-
-const INITIAL_ENTRIES: TimeEntry[] = generateMockData();
+// Demo data removed - using Supabase data instead
+const INITIAL_ENTRIES: TimeEntry[] = [];
 
 const DEFAULT_SETTINGS: AppSettings = {
     bookkeeperEmail: '',
-    companyName: 'My Agency',
-    ownerName: 'Admin User',
-    ownerEmail: 'admin@agency.com'
+    companyName: 'My Company',
+    ownerName: '',
+    ownerEmail: ''
 };
 
 interface AppState {
