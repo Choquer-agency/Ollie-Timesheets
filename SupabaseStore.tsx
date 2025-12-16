@@ -24,6 +24,7 @@ interface AppState {
   submitChangeRequest: (entry: TimeEntry) => void;
   deleteEntry: (entryId: string) => void;
   addEmployee: (employee: Omit<Employee, 'id' | 'isActive'>) => void;
+  updateEmployee: (id: string, updates: Partial<Employee>) => void;
   toggleEmployeeStatus: (id: string) => void;
   updateSettings: (settings: AppSettings) => void;
 }
@@ -410,6 +411,33 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setEmployees(prev => [...prev, newEmp]);
   };
 
+  const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+    console.log('Updating employee:', id, updates);
+
+    const { error } = await supabase
+      .from('employees')
+      .update({
+        name: updates.name,
+        email: updates.email || null,
+        role: updates.role,
+        hourly_rate: updates.hourlyRate || null,
+        vacation_days_total: updates.vacationDaysTotal,
+        is_active: updates.isActive,
+        is_admin: updates.isAdmin
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw new Error(`Failed to update employee: ${error.message}`);
+    }
+
+    console.log('Employee updated, refreshing local state');
+    setEmployees(prev => prev.map(e => 
+      e.id === id ? { ...e, ...updates } : e
+    ));
+  };
+
   const toggleEmployeeStatus = async (id: string) => {
     const employee = employees.find(e => e.id === id);
     if (!employee) return;
@@ -457,11 +485,12 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       clockIn, 
       clockOut, 
       startBreak, 
-      endBreak,
+      endBreak, 
       updateEntry,
       submitChangeRequest,
       deleteEntry,
       addEmployee,
+      updateEmployee,
       toggleEmployeeStatus,
       updateSettings
     }}>

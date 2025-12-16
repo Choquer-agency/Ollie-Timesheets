@@ -264,10 +264,154 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   );
 };
 
+const EditEmployeeModal = ({ isOpen, onClose, employee }: { isOpen: boolean; onClose: () => void; employee: Employee | null }) => {
+  const { updateEmployee } = useSupabaseStore();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
+  const [rate, setRate] = useState('');
+  const [vacationDays, setVacationDays] = useState('10');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+
+  useEffect(() => {
+    if (employee) {
+      setName(employee.name);
+      setEmail(employee.email || '');
+      setRole(employee.role);
+      setRate(employee.hourlyRate?.toString() || '');
+      setVacationDays(employee.vacationDaysTotal?.toString() || '10');
+      setIsAdmin(employee.isAdmin);
+      setIsActive(employee.isActive);
+    }
+  }, [employee]);
+
+  const handleSubmit = async () => {
+    if (!employee || !name.trim() || !role.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await updateEmployee(employee.id, {
+        name: name.trim(),
+        email: email.trim() || undefined,
+        role: role.trim(),
+        hourlyRate: rate ? parseFloat(rate) : undefined,
+        vacationDaysTotal: parseInt(vacationDays) || 10,
+        isAdmin,
+        isActive
+      });
+      
+      onClose();
+    } catch (error) {
+      console.error('Failed to update employee:', error);
+      alert('Failed to update employee. Please try again.');
+    }
+  };
+
+  if (!isOpen || !employee) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 bg-[#484848]/90 backdrop-blur-sm flex items-center justify-center p-6"
+      onMouseDown={onClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-slide-in-right"
+        onMouseDown={e => e.stopPropagation()}
+      >
+        <h2 className="text-2xl font-bold text-[#263926] mb-6">Edit Team Member</h2>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Name *</label>
+            <input 
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Email</label>
+            <input 
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Position *</label>
+            <input 
+              type="text"
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Hourly Rate ($)</label>
+            <input 
+              type="number"
+              step="0.01"
+              value={rate}
+              onChange={e => setRate(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Vacation Days</label>
+            <input 
+              type="number"
+              value={vacationDays}
+              onChange={e => setVacationDays(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+            />
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <input 
+              type="checkbox"
+              id="edit-admin"
+              checked={isAdmin}
+              onChange={e => setIsAdmin(e.target.checked)}
+              className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+            />
+            <label htmlFor="edit-admin" className="text-sm text-[#484848] cursor-pointer">Make Admin</label>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input 
+              type="checkbox"
+              id="edit-active"
+              checked={isActive}
+              onChange={e => setIsActive(e.target.checked)}
+              className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+            />
+            <label htmlFor="edit-active" className="text-sm text-[#484848] cursor-pointer">Active Employee</label>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-8">
+          <Button onClick={onClose} variant="outline" className="flex-1">Cancel</Button>
+          <Button onClick={handleSubmit} className="flex-1">Save Changes</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, toggleEmployeeStatus } = useSupabaseStore();
+  const { settings, updateSettings, employees } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   
   // Local state for form fields
   const [localSettings, setLocalSettings] = useState(settings);
@@ -373,30 +517,31 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                     <th className="px-6 py-4">Role</th>
                                     <th className="px-6 py-4 text-right">Rate</th>
                                     <th className="px-6 py-4 text-right">Vacation Days</th>
-                                    <th className="px-6 py-4 text-center">Admin</th>
                                     <th className="px-6 py-4 text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F6F5F1]">
                                 {employees.map(emp => (
-                                    <tr key={emp.id} className="hover:bg-[#FAF9F5] transition-colors">
+                                    <tr 
+                                        key={emp.id} 
+                                        onClick={() => setEditEmployee(emp)}
+                                        className="hover:bg-[#FAF9F5] transition-colors cursor-pointer"
+                                    >
                                         <td className="px-6 py-4 font-medium text-[#263926]">
                                             {emp.name}
                                             <div className="text-xs text-[#9CA3AF] font-normal">{emp.email}</div>
                                         </td>
                                         <td className="px-6 py-4 text-[#484848]">{emp.role}</td>
-                                        <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate}</td>
+                                        <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate || '—'}</td>
                                         <td className="px-6 py-4 text-right text-[#484848]">{emp.vacationDaysTotal}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            {emp.isAdmin && <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">ADMIN</span>}
-                                        </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button 
-                                                onClick={() => toggleEmployeeStatus(emp.id)}
-                                                className={`text-xs font-bold px-4 py-2 rounded-full transition-colors ${emp.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-[#E5E3DA] text-[#6B6B6B] hover:bg-[#DDD9CE]'}`}
-                                            >
-                                                {emp.isActive ? 'Active' : 'Archived'}
-                                            </button>
+                                            {emp.isAdmin ? (
+                                                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Admin</span>
+                                            ) : emp.isActive ? (
+                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Active</span>
+                                            ) : (
+                                                <span className="px-3 py-1 bg-[#E5E3DA] text-[#6B6B6B] rounded-full text-xs font-bold">Inactive</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -404,6 +549,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         </table>
                     </div>
                     <AddEmployeeModal isOpen={isAddEmployeeOpen} onClose={() => setIsAddEmployeeOpen(false)} />
+                    <EditEmployeeModal isOpen={!!editEmployee} onClose={() => setEditEmployee(null)} employee={editEmployee} />
                 </div>
             )}
 
