@@ -384,6 +384,8 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
       const fileName = `company-logo-${Date.now()}.${fileExt}`;
       const filePath = `logos/${fileName}`;
 
+      console.log('Uploading to bucket: Timesheets, path:', filePath);
+
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('Timesheets')
@@ -392,20 +394,28 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
           upsert: false
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Upload error details:', error);
+        throw error;
+      }
+
+      console.log('Upload successful, data:', data);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('Timesheets')
         .getPublicUrl(filePath);
 
+      console.log('Public URL:', publicUrl);
+
       // Update local settings
       setLocalSettings({ ...localSettings, companyLogoUrl: publicUrl });
 
       alert('Logo uploaded successfully! Click "Save Profile" to save changes.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading logo:', error);
-      alert('Failed to upload logo. Please try again.');
+      const errorMessage = error?.message || 'Unknown error';
+      alert(`Failed to upload logo: ${errorMessage}\n\nPlease check the console for details.`);
     } finally {
       setUploadingLogo(false);
     }
