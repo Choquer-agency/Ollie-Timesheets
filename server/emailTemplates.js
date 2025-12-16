@@ -93,7 +93,7 @@ export const teamInvitationTemplate = (data) => {
     
     <!-- Logo -->
     <div style="margin-bottom: 32px;">
-      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 18px; display: block;">
+      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 22px; display: block;">
     </div>
 
     <!-- Greeting -->
