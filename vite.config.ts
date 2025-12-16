@@ -9,7 +9,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: process.env.EMAIL_SERVER_URL || 'http://localhost:3001',
+        changeOrigin: true
+      }
+    }
+  },
+  preview: {
+    proxy: {
+      '/api': {
+        target: process.env.EMAIL_SERVER_URL || 'http://localhost:3001',
         changeOrigin: true
       }
     }
