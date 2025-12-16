@@ -93,34 +93,34 @@ export const teamInvitationTemplate = (data) => {
     
     <!-- Logo -->
     <div style="margin-bottom: 32px;">
-      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 16px; display: block;">
+      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 18px; display: block;">
     </div>
 
     <!-- Greeting -->
-    <h1 style="margin: 0 0 8px; font-size: 28px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
-    <p style="margin: 0 0 48px; font-size: 16px; color: #6B6B6B; line-height: 1.6; padding-bottom: 24px; border-bottom: 1px solid #F0EEE6;">
+    <h1 style="margin: 0 0 8px; font-size: 20px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
+    <p style="margin: 0 0 48px; font-size: 14px; color: #6B6B6B; line-height: 1.6; padding-bottom: 24px; border-bottom: 1px solid #F0EEE6;">
       You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
     </p>
 
     <!-- Quick Start Guide -->
-    <h2 style="margin: 0 0 16px; font-size: 20px; color: #263926; font-weight: 700;">⚡ Quick Start Guide</h2>
+    <h2 style="margin: 0 0 16px; font-size: 14px; color: #263926; font-weight: 700;">⚡ Quick Start Guide</h2>
     
-    <p style="margin: 0 0 12px; font-size: 15px; color: #263926; line-height: 1.6;">
+    <p style="margin: 0 0 12px; font-size: 12px; color: #263926; line-height: 1.6;">
       <strong>⏰ Clock In & Out</strong><br>
       <span style="color: #6B6B6B;">Tap "Clock In" when you start work, and "Clock Out" when you finish.</span>
     </p>
 
-    <p style="margin: 0 0 12px; font-size: 15px; color: #263926; line-height: 1.6;">
+    <p style="margin: 0 0 12px; font-size: 12px; color: #263926; line-height: 1.6;">
       <strong>☕ Take Breaks</strong><br>
       <span style="color: #6B6B6B;">Start and end breaks with one tap. We'll track it automatically.</span>
     </p>
 
-    <p style="margin: 0 0 12px; font-size: 15px; color: #263926; line-height: 1.6;">
+    <p style="margin: 0 0 12px; font-size: 12px; color: #263926; line-height: 1.6;">
       <strong>🏖️ Time Off</strong><br>
       <span style="color: #6B6B6B;">Mark sick days or vacation directly in the app.</span>
     </p>
 
-    <p style="margin: 0 0 32px; font-size: 15px; color: #263926; line-height: 1.6;">
+    <p style="margin: 0 0 32px; font-size: 12px; color: #263926; line-height: 1.6;">
       <strong>📅 View History</strong><br>
       <span style="color: #6B6B6B;">Check your hours, schedule, and remaining vacation days anytime.</span>
     </p>
