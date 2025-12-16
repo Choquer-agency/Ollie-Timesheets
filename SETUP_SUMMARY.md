@@ -122,7 +122,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 Already configured with:
 
 ```env
-RESEND_API_KEY=re_UzBrZv17_Maru923TprktG1a7c3eRYRZd
+RESEND_API_KEY=your_resend_api_key_here
 FROM_EMAIL=onboarding@resend.dev
 PORT=3001
 FRONTEND_URL=http://localhost:5173

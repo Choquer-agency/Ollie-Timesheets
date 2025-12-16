@@ -237,7 +237,7 @@ location.reload();
 
 2. **Verify Resend API key**:
    - Open `server/.env`
-   - Confirm API key is correct: `re_UzBrZv17_Maru923TprktG1a7c3eRYRZd`
+   - Confirm API key starts with `re_` and is properly set
 
 3. **Test backend directly**:
    ```bash
