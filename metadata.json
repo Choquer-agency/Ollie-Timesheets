@@ -1,0 +1,8 @@
+{
+  "name": "Ollie Timesheets",
+  "description": "A lightweight, aesthetic timesheet system for small agencies. Features clock-in/out, admin review, and payroll preparation with the Ollie brand identity.",
+  "version": "1.0.0",
+  "author": "Ollie Suite",
+  "requestFramePermissions": []
+}
+

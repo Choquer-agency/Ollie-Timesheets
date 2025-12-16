@@ -1,0 +1,1415 @@
+import React, { useState, useEffect } from 'react';
+
+import { AppProvider, useStore } from './store';
+import { Button } from './components/Button';
+import { TimeCardModal } from './components/TimeCardModal';
+import { DatePicker } from './components/DatePicker';
+import { PeriodDetailModal } from './components/PeriodDetailModal';
+import { Employee, TimeEntry, DailySummary } from './types';
+import { 
+  getTodayISO, 
+  formatTime, 
+  calculateStats, 
+  formatDuration, 
+  formatDateForDisplay 
+} from './utils';
+import { 
+  sendBookkeeperReport, 
+  sendTeamInvitation 
+} from './apiClient';
+
+// --- Components ---
+
+const LiveBreakTimer = ({ breakStartTime }: { breakStartTime: string }) => {
+  const [timer, setTimer] = useState("00:00:00");
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const start = new Date(breakStartTime).getTime();
+      const now = new Date().getTime();
+      const diff = Math.max(0, now - start);
+      
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimer(
+        `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+      );
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [breakStartTime]);
+
+  return (
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-amber-50 text-amber-700 border-amber-100 font-mono">
+      Break - {timer}
+    </span>
+  );
+};
+
+const MobileBreakTimer = ({ breakStartTime }: { breakStartTime: string }) => {
+  const [timer, setTimer] = useState("00:00:00");
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const start = new Date(breakStartTime).getTime();
+      const now = new Date().getTime();
+      const diff = Math.max(0, now - start);
+      
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimer(`${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [breakStartTime]);
+
+  return (
+    <span className="text-[10px] font-bold px-2 py-1 rounded-full tracking-wider bg-amber-50 text-amber-700 font-mono">
+      Break - {timer}
+    </span>
+  );
+};
+
+const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { addEmployee, settings } = useStore();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
+  const [rate, setRate] = useState('');
+  const [vacationDays, setVacationDays] = useState('10');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !role) return;
+    
+    addEmployee({
+      name,
+      email,
+      role,
+      hourlyRate: rate ? parseFloat(rate) : undefined,
+      vacationDaysTotal: parseInt(vacationDays) || 0,
+      isAdmin
+    });
+    
+    // Send invitation email if email is provided
+    if (email) {
+      setSendingInvite(true);
+      try {
+        await sendTeamInvitation({
+          employeeEmail: email,
+          employeeName: name,
+          companyName: settings.companyName,
+          role,
+          appUrl: window.location.origin
+        });
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      } catch (error) {
+        console.error('Failed to send invitation:', error);
+        alert('Employee added but failed to send invitation email. Please send manually.');
+      } finally {
+        setSendingInvite(false);
+      }
+    }
+    
+    // Reset
+    setName('');
+    setEmail('');
+    setRole('');
+    setRate('');
+    setVacationDays('10');
+    setIsAdmin(false);
+    
+    // Close after a brief delay if invitation was sent
+    if (email) {
+      setTimeout(() => onClose(), 2000);
+    } else {
+      onClose();
+    }
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#484848]/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 animate-slide-in-right"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="text-xl font-bold text-[#263926] mb-6">Add Team Member</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Full Name</label>
+            <input 
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+              placeholder="e.g. Jane Doe"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Email</label>
+            <input 
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+              placeholder="jane@agency.com"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Role</label>
+                <input 
+                required
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                placeholder="e.g. Designer"
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Rate ($/hr)</label>
+                <input 
+                type="number"
+                value={rate}
+                onChange={e => setRate(e.target.value)}
+                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                placeholder="0.00"
+                />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Vacation Days (Yearly)</label>
+            <input 
+              type="number"
+              value={vacationDays}
+              onChange={e => setVacationDays(e.target.value)}
+              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+              placeholder="10"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 p-4 bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] mt-2">
+             <input 
+               type="checkbox"
+               id="isAdmin"
+               checked={isAdmin}
+               onChange={e => setIsAdmin(e.target.checked)}
+               className="w-5 h-5 rounded border-[#E5E3DA] text-[#2CA01C] focus:ring-[#2CA01C]"
+             />
+             <div>
+                 <label htmlFor="isAdmin" className="block text-sm font-bold text-[#263926]">Admin Access</label>
+                 <p className="text-xs text-[#6B6B6B]">Can manage team, view all timesheets, and settings.</p>
+             </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+            <Button type="submit" className="flex-1" disabled={sendingInvite}>
+              {sendingInvite ? 'Sending invite...' : 'Add member'}
+            </Button>
+          </div>
+          
+          {showSuccess && (
+            <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-2xl border border-emerald-100 text-center">
+              ✓ Invitation email sent successfully!
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { settings, updateSettings, employees, toggleEmployeeStatus } = useStore();
+  const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  
+  // Local state for form fields
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  useEffect(() => {
+    if (isOpen) setLocalSettings(settings);
+  }, [isOpen, settings]);
+
+  if (!isOpen) return null;
+
+  const handleSaveSettings = () => {
+    updateSettings(localSettings);
+    alert("Settings saved!");
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#484848]/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex overflow-hidden animate-slide-in-right"
+        onClick={e => e.stopPropagation()}
+      >
+        
+        {/* Sidebar */}
+        <div className="w-1/4 bg-[#FAF9F5] border-r border-[#F6F5F1] p-6 flex flex-col gap-2">
+            <h2 className="text-xl font-bold text-[#263926] mb-4">Settings</h2>
+            <button 
+                onClick={() => setActiveSection('profile')}
+                className={`text-left px-4 py-3 rounded-2xl text-sm font-medium transition-colors ${activeSection === 'profile' ? 'bg-white text-[#263926] shadow-sm' : 'text-[#6B6B6B] hover:bg-white'}`}
+            >
+                My Profile
+            </button>
+            <button 
+                onClick={() => setActiveSection('team')}
+                className={`text-left px-4 py-3 rounded-2xl text-sm font-medium transition-colors ${activeSection === 'team' ? 'bg-white text-[#263926] shadow-sm' : 'text-[#6B6B6B] hover:bg-white'}`}
+            >
+                Team Management
+            </button>
+            <button 
+                onClick={() => setActiveSection('config')}
+                className={`text-left px-4 py-3 rounded-2xl text-sm font-medium transition-colors ${activeSection === 'config' ? 'bg-white text-[#263926] shadow-sm' : 'text-[#6B6B6B] hover:bg-white'}`}
+            >
+                App Configuration
+            </button>
+            
+            <div className="mt-auto">
+                <Button variant="outline" onClick={onClose} className="w-full">Close</Button>
+            </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 p-8 overflow-y-auto">
+            
+            {/* Profile Section */}
+            {activeSection === 'profile' && (
+                <div className="space-y-6 max-w-lg">
+                    <h3 className="text-2xl font-bold text-[#263926]">My Profile</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Your Name</label>
+                            <input 
+                                value={localSettings.ownerName}
+                                onChange={e => setLocalSettings({...localSettings, ownerName: e.target.value})}
+                                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Company Name</label>
+                            <input 
+                                value={localSettings.companyName}
+                                onChange={e => setLocalSettings({...localSettings, companyName: e.target.value})}
+                                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Your Email</label>
+                            <input 
+                                type="email"
+                                value={localSettings.ownerEmail}
+                                onChange={e => setLocalSettings({...localSettings, ownerEmail: e.target.value})}
+                                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                            />
+                        </div>
+                        <Button onClick={handleSaveSettings}>Save Profile</Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Team Management Section */}
+            {activeSection === 'team' && (
+                <div>
+                    <div className="flex justify-between items-center mb-8">
+                        <h3 className="text-2xl font-bold text-[#263926]">Team Management</h3>
+                        <Button onClick={() => setIsAddEmployeeOpen(true)}>+ Add Member</Button>
+                    </div>
+                    <div className="border border-[#F6F5F1] rounded-2xl overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-[#FAF9F5] text-[#6B6B6B] font-bold uppercase text-xs">
+                                <tr>
+                                    <th className="px-6 py-4">Name</th>
+                                    <th className="px-6 py-4">Role</th>
+                                    <th className="px-6 py-4 text-right">Rate</th>
+                                    <th className="px-6 py-4 text-right">Vacation Days</th>
+                                    <th className="px-6 py-4 text-center">Admin</th>
+                                    <th className="px-6 py-4 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#F6F5F1]">
+                                {employees.map(emp => (
+                                    <tr key={emp.id} className="hover:bg-[#FAF9F5] transition-colors">
+                                        <td className="px-6 py-4 font-medium text-[#263926]">
+                                            {emp.name}
+                                            <div className="text-xs text-[#9CA3AF] font-normal">{emp.email}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-[#484848]">{emp.role}</td>
+                                        <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate}</td>
+                                        <td className="px-6 py-4 text-right text-[#484848]">{emp.vacationDaysTotal}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            {emp.isAdmin && <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">ADMIN</span>}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button 
+                                                onClick={() => toggleEmployeeStatus(emp.id)}
+                                                className={`text-xs font-bold px-4 py-2 rounded-full transition-colors ${emp.isActive ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-[#E5E3DA] text-[#6B6B6B] hover:bg-[#DDD9CE]'}`}
+                                            >
+                                                {emp.isActive ? 'Active' : 'Archived'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <AddEmployeeModal isOpen={isAddEmployeeOpen} onClose={() => setIsAddEmployeeOpen(false)} />
+                </div>
+            )}
+
+            {/* Config Section */}
+            {activeSection === 'config' && (
+                <div className="space-y-6 max-w-lg">
+                    <h3 className="text-2xl font-bold text-[#263926]">App Configuration</h3>
+                    <div>
+                        <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Bookkeeper Email</label>
+                        <input 
+                            type="email"
+                            value={localSettings.bookkeeperEmail}
+                            onChange={e => setLocalSettings({...localSettings, bookkeeperEmail: e.target.value})}
+                            className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                            placeholder="accountant@example.com"
+                        />
+                        <p className="text-xs text-[#9CA3AF] mt-2">
+                            This email will be pre-filled when you choose "Send to Bookkeeper" in the payroll view.
+                        </p>
+                    </div>
+                    <Button onClick={handleSaveSettings}>Save Configuration</Button>
+                </div>
+            )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Sub-View: Employee Dashboard ---
+
+const EmployeeDashboard = () => {
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest } = useStore();
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+  const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
+  const [view, setView] = useState<'clock' | 'history'>('clock');
+  
+  // History View State - Moved to top level to avoid hook violation
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<TimeEntry | null>(null);
+  const [historyEntryDate, setHistoryEntryDate] = useState<string>('');
+  
+  // Check for unresolved past issues on mount
+  useEffect(() => {
+    if (currentUser === 'ADMIN') return;
+
+    const today = getTodayISO();
+    
+    // Find the most recent day in the past that has a missing clock out or an issue
+    const issue = entries.find(e => {
+        if (e.employeeId !== currentUser.id) return false;
+        if (e.date >= today) return false; // Ignore today or future
+        if (e.isSickDay || e.isVacationDay) return false;
+        // If they already submitted a change request, they are unblocked for now
+        if (e.changeRequest) return false; 
+        
+        // Critical Issue: Missing Clock Out
+        if (!e.clockOut) return true;
+        
+        return false;
+    });
+    
+    if (issue) {
+        setIssueEntry(issue);
+    } else {
+        setIssueEntry(null);
+    }
+  }, [entries, currentUser]);
+
+  if (currentUser === 'ADMIN') return null;
+
+  const today = getTodayISO();
+  const todayEntry = entries.find(e => e.employeeId === currentUser.id && e.date === today);
+  
+  // Vacation Logic
+  const vacationUsed = entries.filter(e => e.employeeId === currentUser.id && e.isVacationDay).length;
+  const vacationTotal = currentUser.vacationDaysTotal || 0;
+  const vacationRemaining = Math.max(0, vacationTotal - vacationUsed);
+
+  // Status Logic
+  let status: 'idle' | 'working' | 'break' | 'done' | 'vacation' | 'sick' = 'idle';
+  if (todayEntry) {
+    if (todayEntry.isVacationDay) status = 'vacation';
+    else if (todayEntry.isSickDay) status = 'sick';
+    else if (todayEntry.clockOut) status = 'done';
+    else if (todayEntry.breaks.some(b => !b.endTime)) status = 'break';
+    else status = 'working';
+  }
+
+  // Timer logic for break mode
+  const [breakTimer, setBreakTimer] = useState("00:00:00");
+  
+  useEffect(() => {
+    let interval: number;
+    if (status === 'break' && todayEntry) {
+        const currentBreak = todayEntry.breaks.find(b => !b.endTime);
+        if (currentBreak) {
+            interval = window.setInterval(() => {
+                const start = new Date(currentBreak.startTime).getTime();
+                const now = new Date().getTime();
+                // Ensure non-negative
+                const diff = Math.max(0, now - start);
+                
+                const hrs = Math.floor(diff / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                setBreakTimer(
+                    `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+                );
+            }, 1000);
+        }
+    }
+    return () => clearInterval(interval);
+  }, [status, todayEntry]);
+
+  // Full Screen Break Overlay
+  if (status === 'break') {
+      return (
+        <div className="fixed inset-0 z-50 bg-rose-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+             <div className="mb-12">
+                 <h1 className="text-4xl md:text-6xl font-bold text-rose-900 mb-4 tracking-tight">You are on break</h1>
+                 <p className="text-rose-700 font-mono text-xl md:text-3xl opacity-80">{breakTimer}</p>
+             </div>
+             
+             <button 
+                onClick={() => endBreak(currentUser.id)}
+                className="bg-rose-600 text-white text-2xl font-bold py-8 px-16 rounded-full shadow-2xl shadow-rose-600/30 hover:bg-rose-700 hover:scale-105 transition-all transform active:scale-95"
+             >
+                 End Break
+             </button>
+        </div>
+      );
+  }
+
+  // Action Required Modal (Blocking)
+  if (issueEntry) {
+     return (
+        <div className="fixed inset-0 z-50 bg-[#484848]/90 backdrop-blur-sm flex items-center justify-center p-6">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center animate-slide-in-right">
+                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h2 className="text-xl font-bold text-[#263926] mb-2">Action Required</h2>
+                <p className="text-[#6B6B6B] mb-6 text-sm">
+                    You didn't clock out on <span className="font-bold text-[#263926]">{formatDateForDisplay(issueEntry.date)}</span>. 
+                    Please update your time card.
+                </p>
+                <Button 
+                    className="w-full"
+                    onClick={() => setIsAdjustmentModalOpen(true)}
+                >
+                    Review & Fix Now
+                </Button>
+
+                {/* Modal that opens when they click fix */}
+                <TimeCardModal 
+                    isOpen={isAdjustmentModalOpen}
+                    onClose={() => setIsAdjustmentModalOpen(false)}
+                    employee={currentUser}
+                    entry={issueEntry}
+                    date={issueEntry.date}
+                    isEmployeeView={true}
+                    onSave={(proposedEntry) => {
+                        submitChangeRequest(proposedEntry);
+                        setIssueEntry(null); 
+                    }}
+                    onDelete={() => {}} 
+                />
+            </div>
+        </div>
+     );
+  }
+
+  // --- Schedule / History View ---
+  if (view === 'history') {
+      const myEntries = entries.filter(e => e.employeeId === currentUser.id).sort((a,b) => b.date.localeCompare(a.date));
+      const totalWorkedMins = myEntries.reduce((acc, e) => acc + calculateStats(e).totalWorkedMinutes, 0);
+      const totalBreakMins = myEntries.reduce((acc, e) => acc + calculateStats(e).totalBreakMinutes, 0);
+      
+      return (
+        <div className="max-w-4xl mx-auto mt-8 px-6 pb-20">
+            <div className="flex items-center gap-4 mb-8">
+                <Button variant="ghost" onClick={() => setView('clock')} className="pl-0 hover:bg-transparent hover:text-[#263926]">
+                    ← Back to Clock In
+                </Button>
+                <h1 className="text-2xl font-bold text-[#263926]">My Schedule & History</h1>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-sky-50 p-6 rounded-2xl border border-sky-100 text-sky-900">
+                    <h3 className="text-xs font-bold uppercase opacity-70 mb-1">Vacation Remaining</h3>
+                    <div className="text-3xl font-bold">{vacationRemaining} <span className="text-sm font-normal opacity-70">Days</span></div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Hours Worked</h3>
+                    <div className="text-3xl font-bold">{formatDuration(totalWorkedMins)}</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Break Time</h3>
+                    <div className="text-3xl font-bold">{formatDuration(totalBreakMins)}</div>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="border-b border-[#F6F5F1] bg-[#FAF9F5]">
+                            <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Date</th>
+                            <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Clock In</th>
+                            <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Clock Out</th>
+                            <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Break</th>
+                            <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Worked</th>
+                            <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F6F5F1]">
+                        {myEntries.map(entry => {
+                            const stats = calculateStats(entry);
+                            return (
+                                <tr 
+                                    key={entry.id} 
+                                    onClick={() => {
+                                        setHistoryEntryDate(entry.date);
+                                        setSelectedHistoryEntry(entry);
+                                    }}
+                                    className="hover:bg-[#FAF9F5] cursor-pointer transition-colors"
+                                >
+                                    <td className="py-4 px-6 font-medium text-[#263926]">{formatDateForDisplay(entry.date)}</td>
+                                    <td className="py-4 px-6 text-[#484848] font-mono text-sm">{formatTime(entry.clockIn)}</td>
+                                    <td className="py-4 px-6 text-[#484848] font-mono text-sm">{formatTime(entry.clockOut)}</td>
+                                    <td className="py-4 px-6 text-right text-[#6B6B6B] text-sm">{formatDuration(stats.totalBreakMinutes)}</td>
+                                    <td className="py-4 px-6 text-right font-medium text-[#263926]">{formatDuration(stats.totalWorkedMinutes)}</td>
+                                    <td className="py-4 px-6 text-right">
+                                        {entry.changeRequest ? (
+                                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Reviewing</span>
+                                        ) : entry.isSickDay ? (
+                                            <span className="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full">Sick</span>
+                                        ) : entry.isVacationDay ? (
+                                            <span className="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full">Vacation</span>
+                                        ) : (
+                                            <span className="text-xs text-[#9CA3AF]">OK</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {myEntries.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="py-8 text-center text-[#9CA3AF]">No history available.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Modal for Employee to Edit Past Entries */}
+            {selectedHistoryEntry && (
+                <TimeCardModal 
+                    isOpen={true}
+                    onClose={() => setSelectedHistoryEntry(null)}
+                    employee={currentUser}
+                    entry={selectedHistoryEntry}
+                    date={historyEntryDate}
+                    isEmployeeView={true}
+                    onSave={(proposed) => submitChangeRequest(proposed)}
+                    onDelete={() => {}}
+                />
+            )}
+        </div>
+      );
+  }
+
+  // --- Main Clock View ---
+  return (
+    <div className="max-w-md mx-auto mt-12 px-6 pb-20">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-bold text-[#263926] mb-2">Good morning, {currentUser.name.split(' ')[0]}</h2>
+        <p className="text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] p-8 border border-[#F6F5F1] text-center relative overflow-hidden">
+        
+        <div className="mb-8 mt-4">
+          <span className={`inline-block px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase ${
+            status === 'working' ? 'bg-emerald-100 text-emerald-700' :
+            status === 'done' ? 'bg-[#F0EEE6] text-[#6B6B6B]' :
+            status === 'sick' ? 'bg-rose-100 text-rose-700' :
+            status === 'vacation' ? 'bg-sky-100 text-sky-700' :
+            'bg-[#F0EEE6] text-[#6B6B6B]'
+          }`}>
+             {status === 'sick' ? 'Sick Day' : 
+              status === 'vacation' ? 'Vacation' :
+              status === 'idle' ? 'Ready to Start' : 
+              status === 'done' ? 'Shift Complete' : 
+              'Clocked In'}
+          </span>
+          <div className="mt-4 text-5xl font-mono text-[#263926] tracking-tight">
+             {(status === 'sick' || status === 'vacation') ? 'OFF' : new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase()}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {status === 'idle' && (
+            <Button onClick={() => clockIn(currentUser.id)} variant="primary" size="xl" className="w-full text-xl">
+              Clock In
+            </Button>
+          )}
+
+          {status === 'working' && (
+            <div className="grid grid-cols-2 gap-4">
+              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="h-20">
+                Start Break
+              </Button>
+              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="lg" className="h-20 bg-rose-900 hover:bg-rose-800 focus:ring-rose-900">
+                Clock Out
+              </Button>
+            </div>
+          )}
+
+          {status === 'done' && (
+             <div className="p-4 bg-emerald-50 rounded-2xl text-emerald-800 text-sm border border-emerald-100">
+               You clocked out at {formatTime(todayEntry!.clockOut)}. <br/> See you tomorrow! Have a great evening.
+             </div>
+          )}
+          
+          {status === 'sick' && (
+              <div className="p-4 bg-rose-50 rounded-2xl text-rose-700 text-sm border border-rose-100">
+                You are marked as sick today. Get well soon!
+              </div>
+          )}
+
+          {status === 'vacation' && (
+              <div className="p-4 bg-sky-50 rounded-2xl text-sky-700 text-sm border border-sky-100">
+                You are on vacation today. Enjoy!
+              </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer Navigation Area */}
+      <div className="mt-8 flex flex-col gap-4">
+          <Button 
+            variant="secondary" 
+            className="w-full py-4 text-[#484848] bg-[#F0EEE6] hover:bg-[#E5E3DA] border border-[#F6F5F1]"
+            onClick={() => setView('history')}
+          >
+            📅 View Schedule & Vacation
+          </Button>
+
+          {/* Quick Adjust Button */}
+          <button 
+            onClick={() => setIsAdjustmentModalOpen(true)}
+            className="text-xs text-[#9CA3AF] underline hover:text-[#484848] cursor-pointer text-center"
+          >
+            Adjust Today's Time / Mark Sick or Vacation
+          </button>
+      </div>
+
+      {/* Mini History */}
+      <div className="mt-8 border-t border-[#F6F5F1] pt-6">
+        <h3 className="text-base font-bold text-[#263926] mb-4">Today's Activity</h3>
+        <div className="space-y-3">
+          {todayEntry && !todayEntry.isSickDay && !todayEntry.isVacationDay && (
+             <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#6B6B6B]">Clock In</span>
+                  <span className="font-mono text-[#263926]">{formatTime(todayEntry.clockIn)}</span>
+                </div>
+                {todayEntry.breaks.map((b, i) => (
+                   <div key={b.id} className="flex justify-between text-sm pl-4 border-l-2 border-amber-100">
+                    <span className="text-[#6B6B6B]">Break {i+1}</span>
+                    <span className="font-mono text-[#263926]">
+                      {formatTime(b.startTime)} – {formatTime(b.endTime)}
+                    </span>
+                   </div>
+                ))}
+                {todayEntry.clockOut && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#6B6B6B]">Clock Out</span>
+                    <span className="font-mono text-[#263926]">{formatTime(todayEntry.clockOut)}</span>
+                  </div>
+                )}
+             </>
+          )}
+          {todayEntry?.changeRequest && (
+              <div className="text-center text-xs text-amber-600 bg-amber-50 p-2 rounded-2xl mt-2">
+                  Change request pending review.
+              </div>
+          )}
+          {(!todayEntry || todayEntry.isSickDay || todayEntry.isVacationDay) && <p className="text-sm text-[#9CA3AF] italic text-center">No hours recorded.</p>}
+        </div>
+      </div>
+
+      {/* Employee Modal for Proposals */}
+      <TimeCardModal 
+          isOpen={isAdjustmentModalOpen}
+          onClose={() => setIsAdjustmentModalOpen(false)}
+          employee={currentUser}
+          entry={todayEntry}
+          date={today}
+          isEmployeeView={true}
+          onSave={(proposedEntry) => {
+              submitChangeRequest(proposedEntry);
+          }}
+          onDelete={() => {}} // Employees cannot delete
+        />
+    </div>
+  );
+};
+
+// --- Sub-View: Admin Dashboard ---
+
+const AdminDashboard = () => {
+  const { employees, entries, updateEntry, deleteEntry, settings } = useStore();
+  const [viewDate, setViewDate] = useState(getTodayISO());
+  const [activeTab, setActiveTab] = useState<'daily' | 'period'>('daily');
+  const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
+  const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
+  const [showReviewOnly, setShowReviewOnly] = useState(false);
+  const [periodDetailEmployee, setPeriodDetailEmployee] = useState<Employee | null>(null);
+
+  // Count pending change requests
+  const pendingReviewCount = entries.filter(e => e.changeRequest).length;
+
+  // -- Daily Logic --
+
+  let dailySummaries: DailySummary[];
+
+  if (showReviewOnly) {
+    // Show ALL entries with change requests across ALL dates
+    const entriesWithReviews = entries.filter(e => e.changeRequest);
+    dailySummaries = entriesWithReviews.map(entry => {
+      const employee = employees.find(emp => emp.id === entry.employeeId)!;
+      const stats = calculateStats(entry);
+      return { employee, entry, stats };
+    });
+  } else {
+    // Normal daily view for specific date
+    const relevantEmployees = employees.filter(e => 
+      e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate)
+    );
+
+    dailySummaries = relevantEmployees.map(emp => {
+      const entry = entries.find(e => e.employeeId === emp.id && e.date === viewDate);
+      const stats = calculateStats(entry);
+      return { employee: emp, entry, stats };
+    });
+  }
+
+  const handleDateChange = (days: number) => {
+    const d = new Date(viewDate);
+    d.setDate(d.getDate() + days);
+    setViewDate(d.toISOString().split('T')[0]);
+  };
+
+
+  // -- Period Logic --
+
+  // Initialize with a standard 2 week period
+  const [periodEnd, setPeriodEnd] = useState(getTodayISO());
+  const [periodStart, setPeriodStart] = useState(() => {
+     const d = new Date();
+     d.setDate(d.getDate() - 13);
+     return d.toISOString().split('T')[0];
+  });
+
+  // Removed handlePeriodChange (14-day cycle buttons) in favor of direct date inputs
+
+  const periodSummaries = employees.map(emp => {
+      // Find entries in range
+      const empEntries = entries.filter(e => 
+          e.employeeId === emp.id && 
+          e.date >= periodStart && 
+          e.date <= periodEnd
+      );
+      
+      let totalMinutes = 0;
+      let daysWorked = 0;
+      let sickDays = 0;
+      let vacationDays = 0;
+      let hasIssues = false;
+
+      empEntries.forEach(entry => {
+          const stats = calculateStats(entry);
+          if (entry.isSickDay) {
+             sickDays++;
+          } else if (entry.isVacationDay) {
+             vacationDays++;
+          } else {
+              totalMinutes += stats.totalWorkedMinutes;
+              if (stats.totalWorkedMinutes > 0) daysWorked++;
+          }
+          if (stats.issues.length > 0) hasIssues = true;
+      });
+      
+      const hours = totalMinutes / 60;
+      const pay = hours * (emp.hourlyRate || 0);
+
+      return {
+          employee: emp,
+          totalMinutes,
+          totalPay: pay,
+          hasIssues,
+          daysWorked,
+          sickDays,
+          vacationDays
+      };
+  }).filter(s => s.employee.isActive || s.totalMinutes > 0 || s.sickDays > 0 || s.vacationDays > 0); 
+
+  const totalPayroll = periodSummaries.reduce((acc, s) => acc + s.totalPay, 0);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
+
+  const [sendingReport, setSendingReport] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
+
+  const handleSendToBookkeeper = async () => {
+    setSendingReport(true);
+    
+    try {
+      const employees = periodSummaries.map(s => ({
+        name: s.employee.name,
+        role: s.employee.role,
+        hours: formatDuration(s.totalMinutes),
+        daysWorked: s.daysWorked,
+        sickDays: s.sickDays,
+        vacationDays: s.vacationDays,
+        totalPay: s.totalPay
+      }));
+
+      await sendBookkeeperReport({
+        bookkeeperEmail: settings.bookkeeperEmail || '',
+        companyName: settings.companyName,
+        periodStart: formatDateForDisplay(periodStart),
+        periodEnd: formatDateForDisplay(periodEnd),
+        employees,
+        totalPayroll
+      });
+
+      setReportSent(true);
+      setTimeout(() => {
+        setReportSent(false);
+        setIsSendConfirmOpen(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to send bookkeeper report:', error);
+      alert('Failed to send report. Please try again or check your email settings.');
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto mt-8 px-4 md:px-6 pb-20">
+      
+      {/* Header Controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-[#263926]">{settings.companyName || 'Timesheets'}</h1>
+          <p className="text-[#6B6B6B] text-sm mt-1">Review and approve hours for payroll.</p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Review Filter Button */}
+          {activeTab === 'daily' && pendingReviewCount > 0 && (
+            <button
+              onClick={() => setShowReviewOnly(!showReviewOnly)}
+              className={`relative p-3 rounded-full transition-all ${showReviewOnly ? 'bg-red-600 text-white shadow-md' : 'bg-white text-[#6B6B6B] hover:text-[#263926] border border-[#F6F5F1] shadow-sm'}`}
+              title="Filter to show only pending reviews"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              {!showReviewOnly && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                  {pendingReviewCount}
+                </span>
+              )}
+            </button>
+          )}
+          
+          {/* Tab Buttons */}
+          <div className="flex items-center gap-2 md:gap-4 bg-white p-1 rounded-full border border-[#F6F5F1] shadow-sm overflow-x-auto">
+            <button 
+                onClick={() => {
+                  setActiveTab('daily');
+                  setShowReviewOnly(false);
+                }}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-all whitespace-nowrap ${activeTab === 'daily' ? 'bg-[#2CA01C] text-white shadow-md' : 'text-[#6B6B6B] hover:text-[#263926]'}`}
+            >
+                Daily Review
+            </button>
+            <button 
+                onClick={() => {
+                  setActiveTab('period');
+                  setShowReviewOnly(false);
+                }}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-all whitespace-nowrap ${activeTab === 'period' ? 'bg-[#2CA01C] text-white shadow-md' : 'text-[#6B6B6B] hover:text-[#263926]'}`}
+            >
+                Pay Period
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {activeTab === 'daily' && (
+        <>
+          {/* Date Navigator - Hide when in review mode */}
+          {!showReviewOnly && (
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <button onClick={() => handleDateChange(-1)} className="p-2 text-[#9CA3AF] hover:text-[#263926] hover:bg-[#F0EEE6] rounded-full transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="text-center w-48">
+                <span className="block text-lg font-semibold text-[#263926]">{formatDateForDisplay(viewDate)}</span>
+                {viewDate === getTodayISO() && <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Today</span>}
+              </div>
+              <button onClick={() => handleDateChange(1)} className="p-2 text-[#9CA3AF] hover:text-[#263926] hover:bg-[#F0EEE6] rounded-full transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+
+          {/* Review Mode Header */}
+          {showReviewOnly && (
+            <div className="mb-8 text-center">
+              <h2 className="text-2xl font-bold text-[#263926] mb-2">Pending Reviews</h2>
+              <p className="text-[#6B6B6B] text-sm">Showing all time card change requests across all dates</p>
+            </div>
+          )}
+
+          {/* Desktop Table View (Hidden on Mobile) */}
+          <div className="hidden md:block bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#F6F5F1] bg-[#F0EEE6]">
+                  <th className="py-4 px-5 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Employee</th>
+                  {showReviewOnly && <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Date</th>}
+                  <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Time Range</th>
+                  <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Worked</th>
+                  <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Break</th>
+                  <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Status</th>
+                  <th className="py-4 px-3 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F6F5F1]">
+                {dailySummaries.map(({ employee, entry, stats }) => (
+                  <tr 
+                    key={employee.id} 
+                    onClick={() => setSelectedEmployeeEntry({ employee, entry })}
+                    className="hover:bg-[#F0EEE6] cursor-pointer transition-colors group"
+                  >
+                    <td className="py-4 px-5">
+                      <div className="font-medium text-[#263926]">{employee.name}</div>
+                      <div className="text-xs text-[#6B6B6B]">{employee.role} {!employee.isActive && '(Archived)'}</div>
+                    </td>
+                    {showReviewOnly && entry && (
+                      <td className="py-4 px-4 text-sm text-[#263926] font-medium">
+                        {formatDateForDisplay(entry.date)}
+                      </td>
+                    )}
+                    <td className="py-4 px-4 font-mono text-sm text-[#484848]">
+                      {entry?.clockIn && !entry.isSickDay && !entry.isVacationDay ? (
+                        <>
+                          {formatTime(entry.clockIn)} <span className="text-[#E5E3DA] mx-1">–</span> {formatTime(entry.clockOut)}
+                        </>
+                      ) : entry?.isSickDay ? <span className="text-rose-400">Sick Day</span> : entry?.isVacationDay ? <span className="text-sky-400">Vacation</span> : <span className="text-[#E5E3DA]">--:--</span>}
+                    </td>
+                    <td className="py-4 px-4 text-right font-medium text-[#263926]">
+                      {!entry?.isSickDay && !entry?.isVacationDay && entry?.clockIn ? formatDuration(stats.totalWorkedMinutes) : '—'}
+                    </td>
+                    <td className="py-4 px-4 text-right text-[#6B6B6B] text-sm">
+                      {stats.totalBreakMinutes > 0 ? formatDuration(stats.totalBreakMinutes) : '—'}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex gap-2">
+                        {stats.issues.map(issue => {
+                          // Show live break timer if on break and viewing today
+                          if (issue === 'OPEN_BREAK' && viewDate === getTodayISO() && entry) {
+                            const currentBreak = entry.breaks.find(b => !b.endTime);
+                            if (currentBreak) {
+                              return <LiveBreakTimer key={issue} breakStartTime={currentBreak.startTime} />;
+                            }
+                          }
+                          
+                          return (
+                            <span key={issue} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                                issue === 'SICK_DAY' ? 'bg-rose-50 text-rose-700 border-rose-100' : 
+                                issue === 'VACATION_DAY' ? 'bg-sky-50 text-sky-700 border-sky-100' :
+                                issue === 'CHANGE_REQUESTED' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                'bg-amber-50 text-amber-700 border-amber-100'
+                            }`}>
+                                {issue === 'MISSING_CLOCK_OUT' && 'Missing Out'}
+                                {issue === 'LONG_SHIFT_NO_BREAK' && 'No Break'}
+                                {issue === 'OPEN_BREAK' && 'On Break'}
+                                {issue === 'SICK_DAY' && 'Sick'}
+                                {issue === 'VACATION_DAY' && 'Vacation'}
+                                {issue === 'CHANGE_REQUESTED' && 'Review'}
+                            </span>
+                          );
+                        })}
+                        {stats.issues.length === 0 && entry?.clockIn && !entry.clockOut && (
+                           <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Active</span>
+                        )}
+                        {stats.issues.length === 0 && entry?.clockOut && (
+                           <span className="text-xs text-[#9CA3AF]">OK</span>
+                        )}
+                         {stats.issues.length === 0 && !entry && (
+                           <span className="text-xs text-[#E5E3DA]">No Entry</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-3 text-center">
+                       <span className="text-[#9CA3AF] opacity-0 group-hover:opacity-100 transition-opacity inline-block">
+                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                       </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+             {dailySummaries.map(({ employee, entry, stats }) => (
+                 <div 
+                    key={employee.id}
+                    onClick={() => setSelectedEmployeeEntry({ employee, entry })}
+                    className="bg-white p-4 rounded-2xl shadow-sm border border-[#F6F5F1] active:scale-[0.98] transition-transform"
+                 >
+                    <div className="flex justify-between items-start mb-3">
+                        <div>
+                            <div className="font-bold text-[#263926]">{employee.name}</div>
+                            <div className="text-xs text-[#6B6B6B]">{employee.role} {!employee.isActive && '(Archived)'}</div>
+                        </div>
+                        {entry?.clockIn && !entry.isSickDay && !entry.isVacationDay ? (
+                            <div className="text-right">
+                                <div className="text-lg font-bold text-[#263926]">{formatDuration(stats.totalWorkedMinutes)}</div>
+                                <div className="text-xs text-[#9CA3AF] font-mono">
+                                    {formatTime(entry.clockIn)} - {formatTime(entry.clockOut)}
+                                </div>
+                            </div>
+                        ) : entry?.isSickDay ? (
+                            <div className="px-3 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-full">SICK DAY</div>
+                        ) : entry?.isVacationDay ? (
+                            <div className="px-3 py-1 bg-sky-100 text-sky-700 text-xs font-bold rounded-full">VACATION</div>
+                        ) : (
+                            <div className="text-xs text-[#E5E3DA] italic">No Time</div>
+                        )}
+                    </div>
+                    
+                    <div className="flex justify-between items-center border-t border-[#F6F5F1] pt-3">
+                        <div className="flex gap-2 flex-wrap">
+                            {stats.issues.length > 0 ? stats.issues.map(issue => {
+                                // Show live break timer if on break and viewing today
+                                if (issue === 'OPEN_BREAK' && viewDate === getTodayISO() && entry) {
+                                  const currentBreak = entry.breaks.find(b => !b.endTime);
+                                  if (currentBreak) {
+                                    return <MobileBreakTimer key={issue} breakStartTime={currentBreak.startTime} />;
+                                  }
+                                }
+                                
+                                return (
+                                  <span key={issue} className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
+                                      issue === 'CHANGE_REQUESTED' ? 'bg-indigo-100 text-indigo-700' :
+                                      issue === 'SICK_DAY' ? 'bg-rose-50 text-rose-700' : 
+                                      issue === 'VACATION_DAY' ? 'bg-sky-50 text-sky-700' :
+                                      'bg-amber-50 text-amber-700'
+                                  }`}>
+                                      {issue.replace(/_/g, ' ')}
+                                  </span>
+                                );
+                            }) : (
+                                entry?.clockIn && !entry.clockOut ? 
+                                <span className="text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider bg-emerald-100 text-emerald-700">Active</span> :
+                                <span className="text-[10px] text-[#9CA3AF]">No Issues</span>
+                            )}
+                        </div>
+                        <span className="text-xs text-[#9CA3AF]">Tap to edit</span>
+                    </div>
+                 </div>
+             ))}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'period' && (
+        <>
+          {/* Period Controls */}
+          <div className="mb-8 bg-white rounded-2xl p-6 border border-[#F6F5F1] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <DatePicker 
+                  label="Start date"
+                  value={periodStart}
+                  onChange={setPeriodStart}
+                />
+                <DatePicker 
+                  label="End date"
+                  value={periodEnd}
+                  onChange={setPeriodEnd}
+                />
+              </div>
+              <div>
+                <Button onClick={() => setIsSendConfirmOpen(true)}>
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Send to Bookkeeper
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Period Summary Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-2xl p-6 border border-[#F6F5F1] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+              <h4 className="text-sm font-bold text-[#6B6B6B] mb-2">Total hours</h4>
+              <div className="text-3xl font-bold text-[#263926]">
+                {formatDuration(periodSummaries.reduce((acc, s) => acc + s.totalMinutes, 0))}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-[#F6F5F1] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+              <h4 className="text-sm font-bold text-[#6B6B6B] mb-2">Total payroll</h4>
+              <div className="text-3xl font-bold text-[#2CA01C]">{formatCurrency(totalPayroll)}</div>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-[#F6F5F1] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+              <h4 className="text-sm font-bold text-[#6B6B6B] mb-2">Team members</h4>
+              <div className="text-3xl font-bold text-[#263926]">{periodSummaries.length}</div>
+            </div>
+          </div>
+
+          {/* Period Table */}
+          <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[#F6F5F1] bg-[#F0EEE6]">
+                  <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Employee</th>
+                  <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Total Hours</th>
+                  <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Days Worked</th>
+                  <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Sick</th>
+                  <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Vacation</th>
+                  <th className="py-4 px-6 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Total Pay</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F6F5F1]">
+                {periodSummaries.map(s => (
+                  <tr 
+                    key={s.employee.id} 
+                    onClick={() => setPeriodDetailEmployee(s.employee)}
+                    className="hover:bg-[#FAF9F5] cursor-pointer transition-colors"
+                  >
+                    <td className="py-4 px-6">
+                      <div className="font-medium text-[#263926]">{s.employee.name}</div>
+                      <div className="text-xs text-[#6B6B6B]">{s.employee.role}</div>
+                    </td>
+                    <td className="py-4 px-6 text-right font-medium text-[#263926]">{formatDuration(s.totalMinutes)}</td>
+                    <td className="py-4 px-6 text-right text-[#484848]">{s.daysWorked}</td>
+                    <td className="py-4 px-6 text-right text-[#484848]">{s.sickDays}</td>
+                    <td className="py-4 px-6 text-right text-[#484848]">{s.vacationDays}</td>
+                    <td className="py-4 px-6 text-right font-bold text-[#2CA01C]">{formatCurrency(s.totalPay)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Slide-over Modal */}
+      {selectedEmployeeEntry && (
+        <TimeCardModal 
+          isOpen={true}
+          onClose={() => setSelectedEmployeeEntry(null)}
+          employee={selectedEmployeeEntry.employee}
+          entry={selectedEmployeeEntry.entry}
+          date={viewDate}
+          isEmployeeView={false}
+          onSave={(updatedEntry) => {
+              if (selectedEmployeeEntry.entry) {
+                  updateEntry(updatedEntry);
+              } else {
+                  updateEntry(updatedEntry); 
+              }
+          }}
+          onDelete={deleteEntry}
+        />
+      )}
+
+      {/* Period Detail Modal */}
+      {periodDetailEmployee && (
+        <PeriodDetailModal
+          isOpen={true}
+          onClose={() => setPeriodDetailEmployee(null)}
+          employee={periodDetailEmployee}
+          entries={entries
+            .filter(e => 
+              e.employeeId === periodDetailEmployee.id &&
+              e.date >= periodStart &&
+              e.date <= periodEnd
+            )
+            .sort((a, b) => b.date.localeCompare(a.date))
+          }
+          periodStart={periodStart}
+          periodEnd={periodEnd}
+          onEntryClick={(entry, date) => {
+            setPeriodDetailEmployee(null);
+            setSelectedEmployeeEntry({ employee: periodDetailEmployee, entry });
+            setViewDate(date);
+          }}
+        />
+      )}
+
+      {/* Confirm Send Modal */}
+      {isSendConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#484848]/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-slide-in-right">
+                <h3 className="text-lg font-bold text-[#263926] mb-2">Send report?</h3>
+                <p className="text-sm text-[#6B6B6B] mb-6">
+                    This will send a professionally formatted email report to <span className="font-semibold text-[#263926]">{settings.bookkeeperEmail || 'your bookkeeper'}</span>.
+                </p>
+                
+                {!settings.bookkeeperEmail && (
+                    <div className="mb-6 p-3 bg-amber-50 text-amber-700 text-xs rounded-2xl border border-amber-100">
+                        Warning: No bookkeeper email set in settings.
+                    </div>
+                )}
+
+                {reportSent && (
+                    <div className="mb-6 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-2xl border border-emerald-100 text-center">
+                        ✓ Report sent successfully!
+                    </div>
+                )}
+
+                <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setIsSendConfirmOpen(false)} className="flex-1" disabled={sendingReport}>Cancel</Button>
+                    <Button onClick={handleSendToBookkeeper} className="flex-1" disabled={sendingReport || reportSent}>
+                        {sendingReport ? 'Sending...' : reportSent ? 'Sent!' : 'Send report'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Main Layout ---
+
+const MainLayout = () => {
+  const { currentUser, setCurrentUser, employees, settings } = useStore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F5] font-sans text-[#484848]">
+      {/* Clean Top Bar */}
+      <div className="bg-white border-b border-[#F6F5F1] py-3 px-4 md:px-6 flex justify-between items-center sticky top-0 z-40">
+        <img 
+          src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" 
+          alt="Ollie Timesheets"
+          className="h-6"
+        />
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#6B6B6B]">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="uppercase tracking-wider">Viewing as:</span>
+            </div>
+            <select 
+              value={currentUser === 'ADMIN' ? 'ADMIN' : currentUser.id}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'ADMIN') setCurrentUser('ADMIN');
+                else setCurrentUser(employees.find(em => em.id === val)!);
+              }}
+              className="bg-white border border-[#F6F5F1] text-[#263926] rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] cursor-pointer"
+            >
+              <option value="ADMIN">Admin (Owner)</option>
+              {employees.filter(e => e.isActive).map(e => (
+                <option key={e.id} value={e.id}>{e.name} {e.isAdmin && '(Admin)'}</option>
+              ))}
+            </select>
+          </div>
+          {currentUser === 'ADMIN' && (
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
+              title="Settings"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+          )}
+        </div>
+        
+        {/* Mobile Role Switcher */}
+        <div className="sm:hidden flex items-center gap-2">
+          <select 
+            value={currentUser === 'ADMIN' ? 'ADMIN' : currentUser.id}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === 'ADMIN') setCurrentUser('ADMIN');
+              else setCurrentUser(employees.find(em => em.id === val)!);
+            }}
+            className="bg-white border border-[#F6F5F1] text-[#263926] rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] cursor-pointer max-w-[150px]"
+          >
+            <option value="ADMIN">Admin</option>
+            {employees.filter(e => e.isActive).map(e => (
+              <option key={e.id} value={e.id}>{e.name.split(' ')[0]}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {currentUser === 'ADMIN' ? <AdminDashboard /> : <EmployeeDashboard />}
+      
+      {/* Settings Modal */}
+      {currentUser === 'ADMIN' && (
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      )}
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <AppProvider>
+      <MainLayout />
+    </AppProvider>
+  );
+};
+
+export default App;
+
