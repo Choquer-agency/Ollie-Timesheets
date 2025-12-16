@@ -34,7 +34,7 @@ export const bookkeeperReportTemplate = (data) => {
     </div>
 
     <!-- Period Info -->
-    <div style="background: white; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #F6F5F1;">
+    <div style="background: white; border-radius: 16px; padding: 24px; margin-bottom: 10px; border: 1px solid #F6F5F1;">
       <p style="margin: 0; color: #6B6B6B; font-size: 14px; font-weight: 600; text-transform: uppercase;">Pay period</p>
       <p style="margin: 8px 0 0; color: #263926; font-size: 20px; font-weight: 600;">${periodStart} to ${periodEnd}</p>
     </div>
@@ -98,7 +98,7 @@ export const teamInvitationTemplate = (data) => {
 
     <!-- Greeting -->
     <h1 style="margin: 0 0 8px; font-size: 20px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
-    <p style="margin: 0 0 48px; font-size: 14px; color: #6B6B6B; line-height: 1.6;">
+    <p style="margin: 0 0 24px; font-size: 14px; color: #6B6B6B; line-height: 1.6;">
       You're joining <strong>${companyName}</strong> as <strong>${role}</strong>
     </p>
 
