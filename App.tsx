@@ -265,10 +265,11 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 };
 
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, updateEmployee, deleteEmployee } = useSupabaseStore();
+  const { settings, updateSettings, employees, updateEmployee } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [showPastEmployees, setShowPastEmployees] = useState(false);
   
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -281,6 +282,11 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   
   // Local state for form fields
   const [localSettings, setLocalSettings] = useState(settings);
+
+  // Filter employees based on active/past toggle
+  const filteredEmployees = employees.filter(emp => 
+    showPastEmployees ? !emp.isActive : emp.isActive
+  );
 
   const handleEditEmployee = (emp: Employee) => {
     setEditingEmployee(emp);
@@ -317,19 +323,26 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     }
   };
 
-  const handleDeleteEmployee = async () => {
+  const handleArchiveEmployee = async () => {
     if (!editingEmployee) return;
     
-    if (!confirm(`Are you sure you want to delete ${editingEmployee.name}? This action cannot be undone.`)) {
+    const action = editingEmployee.isActive ? 'archive' : 'restore';
+    const confirmMsg = editingEmployee.isActive 
+      ? `Archive ${editingEmployee.name}? They will be moved to Past Employees and their time entries will be preserved.`
+      : `Restore ${editingEmployee.name}? They will be moved back to Active Employees.`;
+    
+    if (!confirm(confirmMsg)) {
       return;
     }
 
     try {
-      await deleteEmployee(editingEmployee.id);
+      await updateEmployee(editingEmployee.id, {
+        isActive: !editingEmployee.isActive
+      });
       setEditingEmployee(null);
     } catch (error) {
-      console.error('Failed to delete employee:', error);
-      alert('Failed to delete employee. Please try again.');
+      console.error('Failed to archive/restore employee:', error);
+      alert('Failed to update employee. Please try again.');
     }
   };
 
@@ -422,10 +435,35 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             {/* Team Management Section */}
             {activeSection === 'team' && !editingEmployee && (
                 <div>
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-6">
                         <h3 className="text-2xl font-bold text-[#263926]">Team Management</h3>
                         <Button onClick={() => setIsAddEmployeeOpen(true)}>+ Add Member</Button>
                     </div>
+
+                    {/* Filter Toggle */}
+                    <div className="flex gap-2 mb-6">
+                        <button
+                            onClick={() => setShowPastEmployees(false)}
+                            className={`px-4 py-2 rounded-2xl text-sm font-medium transition-colors ${
+                                !showPastEmployees 
+                                    ? 'bg-[#2CA01C] text-white' 
+                                    : 'bg-[#F0EEE6] text-[#6B6B6B] hover:bg-[#E5E3DA]'
+                            }`}
+                        >
+                            Active Employees ({employees.filter(e => e.isActive).length})
+                        </button>
+                        <button
+                            onClick={() => setShowPastEmployees(true)}
+                            className={`px-4 py-2 rounded-2xl text-sm font-medium transition-colors ${
+                                showPastEmployees 
+                                    ? 'bg-[#2CA01C] text-white' 
+                                    : 'bg-[#F0EEE6] text-[#6B6B6B] hover:bg-[#E5E3DA]'
+                            }`}
+                        >
+                            Past Employees ({employees.filter(e => !e.isActive).length})
+                        </button>
+                    </div>
+
                     <div className="border border-[#F6F5F1] rounded-2xl overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                         <table className="w-full text-left text-sm">
                             <thead className="bg-[#FAF9F5] text-[#6B6B6B] font-bold uppercase text-xs">
@@ -438,30 +476,38 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F6F5F1]">
-                                {employees.map(emp => (
-                                    <tr 
-                                        key={emp.id} 
-                                        onClick={() => handleEditEmployee(emp)}
-                                        className="hover:bg-[#FAF9F5] transition-colors cursor-pointer"
-                                    >
-                                        <td className="px-6 py-4 font-medium text-[#263926]">
-                                            {emp.name}
-                                            <div className="text-xs text-[#9CA3AF] font-normal">{emp.email}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-[#484848]">{emp.role}</td>
-                                        <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate || '—'}</td>
-                                        <td className="px-6 py-4 text-right text-[#484848]">{emp.vacationDaysTotal}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            {emp.isAdmin ? (
-                                                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Admin</span>
-                                            ) : emp.isActive ? (
-                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Active</span>
-                                            ) : (
-                                                <span className="px-3 py-1 bg-[#E5E3DA] text-[#6B6B6B] rounded-full text-xs font-bold">Inactive</span>
-                                            )}
+                                {filteredEmployees.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-[#9CA3AF]">
+                                            {showPastEmployees ? 'No past employees' : 'No active employees'}
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    filteredEmployees.map(emp => (
+                                        <tr 
+                                            key={emp.id} 
+                                            onClick={() => handleEditEmployee(emp)}
+                                            className="hover:bg-[#FAF9F5] transition-colors cursor-pointer"
+                                        >
+                                            <td className="px-6 py-4 font-medium text-[#263926]">
+                                                {emp.name}
+                                                <div className="text-xs text-[#9CA3AF] font-normal">{emp.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-[#484848]">{emp.role}</td>
+                                            <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate || '—'}</td>
+                                            <td className="px-6 py-4 text-right text-[#484848]">{emp.vacationDaysTotal}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                {emp.isAdmin ? (
+                                                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Admin</span>
+                                                ) : emp.isActive ? (
+                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Active</span>
+                                                ) : (
+                                                    <span className="px-3 py-1 bg-[#E5E3DA] text-[#6B6B6B] rounded-full text-xs font-bold">Past</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -564,10 +610,14 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
                         <div className="flex gap-3 mt-8 pt-6 border-t border-[#F6F5F1]">
                             <button
-                                onClick={handleDeleteEmployee}
-                                className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
+                                onClick={handleArchiveEmployee}
+                                className={`px-4 py-2 text-sm font-medium rounded-2xl transition-colors ${
+                                    editingEmployee?.isActive
+                                        ? 'text-amber-600 hover:bg-amber-50'
+                                        : 'text-emerald-600 hover:bg-emerald-50'
+                                }`}
                             >
-                                Delete Employee
+                                {editingEmployee?.isActive ? '📦 Archive Employee' : '↩️ Restore Employee'}
                             </button>
                             <div className="flex-1"></div>
                             <Button onClick={() => setEditingEmployee(null)} variant="outline">Cancel</Button>
