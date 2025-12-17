@@ -360,9 +360,16 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
   if (!isOpen) return null;
 
-  const handleSaveSettings = () => {
-    updateSettings(localSettings);
-    alert("Settings saved!");
+  const handleSaveSettings = async () => {
+    try {
+      console.log('Saving settings:', localSettings);
+      await updateSettings(localSettings);
+      console.log('Settings saved successfully');
+      alert("Settings saved!");
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert(`Failed to save settings: ${error}`);
+    }
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

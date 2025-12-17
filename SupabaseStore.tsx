@@ -477,7 +477,18 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updateSettings = async (newSettings: AppSettings) => {
-    if (!user) return;
+    if (!user) {
+      console.error('Cannot update settings: No user logged in');
+      throw new Error('No user logged in');
+    }
+
+    console.log('Updating settings in database:', {
+      bookkeeper_email: newSettings.bookkeeperEmail,
+      company_name: newSettings.companyName,
+      owner_name: newSettings.ownerName,
+      owner_email: newSettings.ownerEmail,
+      company_logo_url: newSettings.companyLogoUrl || null
+    });
 
     const { error } = await supabase
       .from('settings')
@@ -490,9 +501,13 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       })
       .eq('owner_id', user.id);
 
-    if (!error) {
-      setSettings(newSettings);
+    if (error) {
+      console.error('Supabase update settings error:', error);
+      throw new Error(`Failed to update settings: ${error.message}`);
     }
+
+    console.log('Settings updated successfully in database');
+    setSettings(newSettings);
   };
 
   return (
