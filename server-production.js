@@ -95,7 +95,7 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
 
 app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
   try {
-    const { employeeEmail, employeeName, companyName, role, appUrl } = req.body;
+    const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl } = req.body;
 
     if (!employeeEmail || !employeeName || !companyName || !role) {
       return res.status(400).json({
@@ -104,12 +104,15 @@ app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
       });
     }
 
+    console.log('Sending team invitation with logo:', companyLogoUrl);
+
     const result = await sendTeamInvitation({
       employeeEmail,
       employeeName,
       companyName,
       role,
-      appUrl
+      appUrl,
+      companyLogoUrl
     });
 
     res.json(result);
