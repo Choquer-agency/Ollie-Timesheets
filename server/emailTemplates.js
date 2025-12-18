@@ -26,7 +26,13 @@ export const bookkeeperReportTemplate = (data) => {
     
     <!-- Header -->
     <div style="text-align: center; margin-bottom: 40px;">
-      <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" style="height: 32px; margin-bottom: 16px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 16px;">
+        <tr>
+          <td>
+            <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; margin: 0 auto;">
+          </td>
+        </tr>
+      </table>
       <h1 style="margin: 0; font-size: 28px; color: #263926; font-weight: 700;">Timesheet Report</h1>
       <p style="margin: 8px 0 0; color: #6B6B6B; font-size: 16px;">${companyName}</p>
     </div>
@@ -91,9 +97,13 @@ export const teamInvitationTemplate = (data) => {
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     
     <!-- Logo -->
-    <div style="margin-bottom: 32px;">
-      <img src="${logoUrl}" alt="${companyName}" style="height: 32px; max-width: 200px; display: block; object-fit: contain;">
-    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 32px;">
+      <tr>
+        <td>
+          <img src="${logoUrl}" alt="${companyName}" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic;">
+        </td>
+      </tr>
+    </table>
 
     <!-- Greeting -->
     <h1 style="margin: 0 0 8px; font-size: 20px; color: #263926; font-weight: 700;">Hey ${employeeName}! Welcome to the team. 👋</h1>
