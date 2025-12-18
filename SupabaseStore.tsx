@@ -43,8 +43,20 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     ownerEmail: '',
     companyLogoUrl: undefined
   });
-  const [currentUser, setCurrentUser] = useState<Employee | 'ADMIN'>('ADMIN');
+  const [currentUser, setCurrentUserState] = useState<Employee | 'ADMIN'>('ADMIN');
+  const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Protected setCurrentUser - employees cannot change their view
+  const setCurrentUser = (user: Employee | 'ADMIN') => {
+    // Only allow changes if user is owner/admin
+    if (isOwner) {
+      setCurrentUserState(user);
+    } else {
+      // Employees cannot change their view - silently ignore
+      console.warn('Employees cannot switch views');
+    }
+  };
 
   // Load data from Supabase when user logs in
   useEffect(() => {
@@ -78,8 +90,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           .select('*')
           .order('created_at', { ascending: true });
 
+        let mappedEmployees: Employee[] = [];
         if (employeesData && !employeesError) {
-          const mappedEmployees: Employee[] = employeesData.map(emp => ({
+          mappedEmployees = employeesData.map(emp => ({
             id: emp.id,
             name: emp.name,
             email: emp.email || undefined,
@@ -92,15 +105,44 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           setEmployees(mappedEmployees);
         }
 
+        // Determine if user is owner/admin or employee
+        // Check if user is the owner (has settings record)
+        const userIsOwner = settingsData && !settingsError;
+        setIsOwner(userIsOwner);
+        
+        // Check if user is an employee (has user_id matching in employees table)
+        const userEmployee = employeesData?.find(emp => emp.user_id === user.id);
+        const mappedUserEmployee = userEmployee ? mappedEmployees.find(emp => emp.id === userEmployee.id) : undefined;
+
+        // Automatically set currentUser based on role
+        if (userIsOwner) {
+          // Owner can access admin view
+          setCurrentUserState('ADMIN');
+        } else if (mappedUserEmployee) {
+          // Employee can only access their own account
+          setCurrentUserState(mappedUserEmployee);
+        } else {
+          // Default to admin if no match (shouldn't happen normally)
+          setCurrentUserState('ADMIN');
+        }
+
         // Load time entries (last 30 days)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-        const { data: entriesData, error: entriesError } = await supabase
+        // For employees, only load their own entries
+        let entriesQuery = supabase
           .from('time_entries')
           .select('*, breaks(*)')
-          .gte('date', thirtyDaysAgoStr)
+          .gte('date', thirtyDaysAgoStr);
+        
+        // If user is an employee, filter to only their entries
+        if (mappedUserEmployee && !isOwner) {
+          entriesQuery = entriesQuery.eq('employee_id', mappedUserEmployee.id);
+        }
+        
+        const { data: entriesData, error: entriesError } = await entriesQuery
           .order('date', { ascending: false });
 
         if (entriesData && !entriesError) {
@@ -135,6 +177,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user]);
 
   const clockIn = async (employeeId: string) => {
+    // Security check: Employees can only clock in for themselves
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
+      throw new Error('You can only clock in for yourself');
+    }
+    
     const today = getTodayISO();
     const existing = entries.find(e => e.employeeId === employeeId && e.date === today);
     if (existing) return;
@@ -169,6 +216,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const clockOut = async (employeeId: string) => {
+    // Security check: Employees can only clock out for themselves
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
+      throw new Error('You can only clock out for yourself');
+    }
+    
     const today = getTodayISO();
     const now = new Date().toISOString();
     const entry = entries.find(e => e.employeeId === employeeId && e.date === today);
@@ -206,6 +258,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const startBreak = async (employeeId: string) => {
+    // Security check: Employees can only start breaks for themselves
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
+      throw new Error('You can only start breaks for yourself');
+    }
+    
     const today = getTodayISO();
     const entry = entries.find(e => e.employeeId === employeeId && e.date === today);
     
@@ -240,6 +297,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const endBreak = async (employeeId: string) => {
+    // Security check: Employees can only end breaks for themselves
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
+      throw new Error('You can only end breaks for yourself');
+    }
+    
     const today = getTodayISO();
     const entry = entries.find(e => e.employeeId === employeeId && e.date === today);
     
@@ -270,6 +332,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateEntry = async (updatedEntry: TimeEntry) => {
     const exists = entries.find(e => e.id === updatedEntry.id);
+    
+    // Security check: Employees can only update their own entries
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== updatedEntry.employeeId) {
+      throw new Error('You can only edit your own time entries');
+    }
     
     // Clear change request when admin updates
     const { changeRequest, ...entryData } = updatedEntry;
@@ -334,6 +401,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const submitChangeRequest = async (proposedEntry: TimeEntry) => {
+    // Security check: Employees can only submit change requests for their own entries
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== proposedEntry.employeeId) {
+      throw new Error('You can only submit change requests for your own time entries');
+    }
+    
     const { error } = await supabase
       .from('time_entries')
       .update({
@@ -368,6 +440,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deleteEntry = async (entryId: string) => {
+    // Security check: Only admins can delete entries
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can delete time entries');
+    }
+    
     // Delete breaks first
     await supabase.from('breaks').delete().eq('time_entry_id', entryId);
     
@@ -383,6 +460,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const addEmployee = async (data: Omit<Employee, 'id' | 'isActive'>) => {
+    // Security check: Only admins can add employees
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can add employees');
+    }
+    
     const newEmp: Employee = {
       id: crypto.randomUUID(),
       isActive: true,
@@ -415,6 +497,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+    // Security check: Only admins can update employees
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can update employees');
+    }
+    
     console.log('Updating employee:', id, updates);
 
     const { error } = await supabase
@@ -442,6 +529,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deleteEmployee = async (id: string) => {
+    // Security check: Only admins can delete employees
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can delete employees');
+    }
+    
     console.log('Deleting employee:', id);
 
     const { error } = await supabase
@@ -459,6 +551,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const toggleEmployeeStatus = async (id: string) => {
+    // Security check: Only admins can toggle employee status
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can change employee status');
+    }
+    
     const employee = employees.find(e => e.id === id);
     if (!employee) return;
 
@@ -477,6 +574,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updateSettings = async (newSettings: AppSettings) => {
+    // Security check: Only admins can update settings
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can update settings');
+    }
+    
     if (!user) {
       console.error('Cannot update settings: No user logged in');
       throw new Error('No user logged in');
@@ -515,7 +617,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       employees, 
       entries, 
       settings,
-      currentUser, 
+      currentUser: currentUserState, 
       loading,
       setCurrentUser,
       clockIn, 
