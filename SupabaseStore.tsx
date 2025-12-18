@@ -138,7 +138,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           .gte('date', thirtyDaysAgoStr);
         
         // If user is an employee, filter to only their entries
-        if (mappedUserEmployee && !isOwner) {
+        if (mappedUserEmployee && !userIsOwner) {
           entriesQuery = entriesQuery.eq('employee_id', mappedUserEmployee.id);
         }
         
