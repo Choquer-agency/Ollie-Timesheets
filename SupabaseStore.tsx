@@ -91,17 +91,22 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           .order('created_at', { ascending: true });
 
         let mappedEmployees: Employee[] = [];
+        const employeeMapById = new Map<string, Employee>();
         if (employeesData && !employeesError) {
-          mappedEmployees = employeesData.map(emp => ({
-            id: emp.id,
-            name: emp.name,
-            email: emp.email || undefined,
-            role: emp.role,
-            hourlyRate: emp.hourly_rate || undefined,
-            vacationDaysTotal: emp.vacation_days_total,
-            isAdmin: emp.is_admin,
-            isActive: emp.is_active
-          }));
+          mappedEmployees = employeesData.map(emp => {
+            const mapped: Employee = {
+              id: emp.id,
+              name: emp.name,
+              email: emp.email || undefined,
+              role: emp.role,
+              hourlyRate: emp.hourly_rate || undefined,
+              vacationDaysTotal: emp.vacation_days_total,
+              isAdmin: emp.is_admin,
+              isActive: emp.is_active
+            };
+            employeeMapById.set(emp.id, mapped);
+            return mapped;
+          });
           setEmployees(mappedEmployees);
         }
 
@@ -110,9 +115,15 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         const userIsOwner = settingsData && !settingsError;
         setIsOwner(userIsOwner);
         
-        // Check if user is an employee (has user_id matching in employees table)
-        const userEmployee = employeesData?.find(emp => emp.user_id === user.id);
-        const mappedUserEmployee = userEmployee ? mappedEmployees.find(emp => emp.id === userEmployee.id) : undefined;
+        const normalizedUserEmail = user.email?.trim().toLowerCase();
+        const employeeMatchById = employeesData?.find(emp => emp.user_id === user.id && emp.is_active);
+        const employeeMatchByEmail = normalizedUserEmail
+          ? employeesData?.find(emp => emp.email && emp.email.toLowerCase() === normalizedUserEmail && emp.is_active)
+          : undefined;
+        const resolvedEmployeeRecord = employeeMatchById ?? employeeMatchByEmail;
+        const mappedUserEmployee = resolvedEmployeeRecord
+          ? employeeMapById.get(resolvedEmployeeRecord.id)
+          : undefined;
 
         // Automatically set currentUser based on role
         if (userIsOwner) {
@@ -122,8 +133,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           // Employee can only access their own account
           setCurrentUserState(mappedUserEmployee);
         } else {
-          // Default to admin if no match (shouldn't happen normally)
-          setCurrentUserState('ADMIN');
+          console.error('Logged-in user does not have an associated employee record');
+          setLoading(false);
+          await supabase.auth.signOut();
+          return;
         }
 
         // Load time entries (last 30 days)
