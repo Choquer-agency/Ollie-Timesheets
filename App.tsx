@@ -954,15 +954,15 @@ const EmployeeDashboard = () => {
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-sky-50 p-6 rounded-2xl border border-sky-100 text-sky-900">
-                    <h3 className="text-xs font-bold uppercase opacity-70 mb-1">Vacation Remaining</h3>
+                    <h3 className="text-xs font-bold opacity-70 mb-1">Vacation remaining</h3>
                     <div className="text-3xl font-bold">{vacationRemaining} <span className="text-sm font-normal opacity-70">Days</span></div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Hours Worked</h3>
+                    <h3 className="text-xs font-bold text-[#6B6B6B] mb-1">Total hours worked</h3>
                     <div className="text-3xl font-bold">{formatDuration(totalWorkedMins)}</div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Break Time</h3>
+                    <h3 className="text-xs font-bold text-[#6B6B6B] mb-1">Total break time</h3>
                     <div className="text-3xl font-bold">{formatDuration(totalBreakMins)}</div>
                 </div>
             </div>
