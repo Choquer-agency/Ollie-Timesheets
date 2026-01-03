@@ -1859,6 +1859,7 @@ import { Auth } from './pages/Auth';
 import { SupabaseStoreProvider, useSupabaseStore } from './SupabaseStore';
 import { OAuthSetup } from './pages/OAuthSetup';
 import { AcceptInvitation } from './pages/AcceptInvitation';
+import { EmployeeApp } from './pages/EmployeeApp';
 
 const AppContent = () => {
   const { needsSetup, loading } = useSupabaseStore();
@@ -1866,6 +1867,12 @@ const AppContent = () => {
   // Check if we're on the accept-invitation route
   if (window.location.pathname === '/accept-invitation') {
     return <AcceptInvitation />;
+  }
+
+  // Check if we're on the employee dashboard route
+  // This route bypasses SupabaseStore role detection to avoid RLS issues
+  if (window.location.pathname === '/employee/dashboard') {
+    return <EmployeeApp />;
   }
 
   // Show loading state while checking setup status
@@ -1891,6 +1898,23 @@ const AppContent = () => {
 
 const App = () => {
   const { user, loading } = useAuth();
+
+  // Check if we're on the accept-invitation route (allow access without auth)
+  if (window.location.pathname === '/accept-invitation') {
+    return <AcceptInvitation />;
+  }
+
+  // Check if we're on the employee dashboard route
+  // This needs to be checked before auth check to allow proper routing
+  if (window.location.pathname === '/employee/dashboard') {
+    if (!user && !loading) {
+      // Not authenticated, redirect to login
+      window.location.href = '/';
+      return null;
+    }
+    // User is authenticated, show employee app
+    return <EmployeeApp />;
+  }
 
   // Check if we're on the accept-invitation route (allow access without auth)
   if (window.location.pathname === '/accept-invitation') {

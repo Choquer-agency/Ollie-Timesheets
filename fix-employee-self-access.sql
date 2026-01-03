@@ -7,6 +7,10 @@
 -- This is needed for employees to log in after accepting an invitation
 -- ================================================
 
+-- Drop existing policies if they exist (to allow re-running this script)
+DROP POLICY IF EXISTS "employee_read_own_record" ON employees;
+DROP POLICY IF EXISTS "employee_read_owner_settings" ON settings;
+
 -- Add policy for employees to read their own record
 CREATE POLICY "employee_read_own_record"
 ON employees

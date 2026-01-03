@@ -178,10 +178,13 @@ export const AcceptInvitation: React.FC = () => {
       
       console.log('Employee linked and verified:', verifyData);
 
-      // CRITICAL: Store a flag so the app knows this is a fresh employee signup
-      // This helps the app distinguish between:
-      // 1. New company owner who needs setup (needsSetup = true)
-      // 2. New employee who just accepted invitation (needsSetup = false, but just signed up)
+      // CRITICAL: Store employee metadata to bypass role detection
+      // This tells the app "this is definitely an employee" and provides
+      // the necessary data to load their dashboard directly
+      localStorage.setItem('is_employee', 'true');
+      localStorage.setItem('employee_id', employee.id);
+      localStorage.setItem('employee_owner_id', employee.owner_id);
+      localStorage.setItem('employee_name', employee.name);
       localStorage.setItem('just_accepted_invitation', 'true');
       
       // Wait a bit longer for all database updates to propagate
@@ -193,10 +196,11 @@ export const AcceptInvitation: React.FC = () => {
         throw new Error('Session not established. Please try logging in.');
       }
       
-      console.log('Session confirmed, redirecting to app...');
+      console.log('Session confirmed, redirecting to employee dashboard...');
 
-      // Force a hard refresh to reload all state
-      window.location.replace('/');
+      // Redirect to dedicated employee dashboard route
+      // This bypasses the SupabaseStore role detection that was causing 406 errors
+      window.location.replace('/employee/dashboard');
     } catch (err: any) {
       console.error('Error accepting invitation:', err);
       setError(err.message || 'Failed to create account');

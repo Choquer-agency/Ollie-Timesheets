@@ -67,6 +67,19 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const loadData = async () => {
       try {
+        // Check if this is an employee coming from invitation acceptance
+        const isEmployeeFlag = localStorage.getItem('is_employee');
+        const employeeId = localStorage.getItem('employee_id');
+        const employeeOwnerId = localStorage.getItem('employee_owner_id');
+        
+        if (isEmployeeFlag === 'true' && employeeId && employeeOwnerId) {
+          console.log('Employee flag detected - redirecting to employee dashboard');
+          // This user just accepted an invitation, redirect to employee dashboard
+          // to bypass the role detection that causes RLS issues
+          window.location.href = '/employee/dashboard';
+          return;
+        }
+
         // First, check if user is owner or employee to determine which owner_id to use for settings
         const { data: settingsData, error: settingsError } = await supabase
           .from('settings')
@@ -110,37 +123,66 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             localStorage.removeItem('just_accepted_invitation');
           }
           
-          const { data: myEmployeeRecord, error: empLookupError } = await supabase
-            .from('employees')
-            .select('owner_id, id, email, user_id')
-            .eq('user_id', user.id)
-            .single();
+          let myEmployeeRecord = null;
+          let empLookupError = null;
+
+          try {
+            const { data, error } = await supabase
+              .from('employees')
+              .select('owner_id, id, email, user_id')
+              .eq('user_id', user.id)
+              .single();
+            
+            myEmployeeRecord = data;
+            empLookupError = error;
+          } catch (err) {
+            console.warn('Initial employee lookup failed:', err);
+            empLookupError = err;
+          }
           
           console.log('Employee lookup result:', { myEmployeeRecord, empLookupError });
+          
+          // If RLS is blocking access (406 error), try the SECURITY DEFINER function
+          if (!myEmployeeRecord && empLookupError) {
+            console.log('RLS may be blocking access, trying SECURITY DEFINER function...');
+            try {
+              const { data: teamData, error: teamError } = await supabase.rpc('get_team_employees', {
+                p_user_id: user.id
+              });
+              
+              if (teamData && teamData.length > 0) {
+                myEmployeeRecord = teamData.find((emp: any) => emp.user_id === user.id);
+                console.log('Found employee via SECURITY DEFINER function:', myEmployeeRecord);
+              } else if (teamError) {
+                console.warn('SECURITY DEFINER function failed:', teamError);
+              }
+            } catch (err) {
+              console.warn('Failed to call get_team_employees function:', err);
+            }
+          }
           
           // If not found and just accepted invitation, try one more time
           if (!myEmployeeRecord && justAcceptedInvitation) {
             console.log('Employee not found on first try after invitation, retrying...');
             await new Promise(resolve => setTimeout(resolve, 1000));
-            const { data: retryRecord } = await supabase
-              .from('employees')
-              .select('*')
-              .eq('user_id', user.id)
-              .single();
             
-            if (retryRecord) {
-              console.log('Employee found on retry:', retryRecord);
-              // Employee only needs their own record, not all company employees
-              resolvedOwnerId = retryRecord.owner_id;
-              employeesData = [retryRecord]; // Just this employee's record
-              employeesError = null;
-              console.log('Loaded employee record for:', retryRecord.name);
-            } else {
-              console.log('Employee still not found on retry - user may need setup');
-              employeesData = [];
-              employeesError = null;
+            try {
+              const { data: retryRecord } = await supabase
+                .from('employees')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+              
+              if (retryRecord) {
+                console.log('Employee found on retry:', retryRecord);
+                myEmployeeRecord = retryRecord;
+              }
+            } catch (err) {
+              console.warn('Retry failed:', err);
             }
-          } else if (myEmployeeRecord?.owner_id) {
+          }
+          
+          if (myEmployeeRecord?.owner_id) {
             // Found their employee record - employee only needs their own record
             resolvedOwnerId = myEmployeeRecord.owner_id;
             console.log('Found employee record for:', myEmployeeRecord.id);
