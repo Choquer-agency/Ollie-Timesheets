@@ -124,39 +124,35 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             await new Promise(resolve => setTimeout(resolve, 1000));
             const { data: retryRecord } = await supabase
               .from('employees')
-              .select('owner_id, id, email, user_id')
+              .select('*')
               .eq('user_id', user.id)
               .single();
             
             if (retryRecord) {
               console.log('Employee found on retry:', retryRecord);
-              // Use the retry result
+              // Employee only needs their own record, not all company employees
               resolvedOwnerId = retryRecord.owner_id;
-              const result = await supabase
-                .from('employees')
-                .select('*')
-                .eq('owner_id', retryRecord.owner_id)
-                .order('created_at', { ascending: true });
-              employeesData = result.data;
-              employeesError = result.error;
-              console.log('Loaded company employees:', employeesData?.length, 'employees');
+              employeesData = [retryRecord]; // Just this employee's record
+              employeesError = null;
+              console.log('Loaded employee record for:', retryRecord.name);
             } else {
               console.log('Employee still not found on retry - user may need setup');
               employeesData = [];
               employeesError = null;
             }
           } else if (myEmployeeRecord?.owner_id) {
-            // Found their employee record, load all employees from that owner
-            resolvedOwnerId = myEmployeeRecord.owner_id; // Use the owner's ID
-            console.log('Found employee record, loading company employees with owner_id:', resolvedOwnerId);
-            const result = await supabase
+            // Found their employee record - employee only needs their own record
+            resolvedOwnerId = myEmployeeRecord.owner_id;
+            console.log('Found employee record for:', myEmployeeRecord.id);
+            // Employee only loads their OWN record, not all company employees
+            const { data: fullRecord } = await supabase
               .from('employees')
               .select('*')
-              .eq('owner_id', myEmployeeRecord.owner_id)
-              .order('created_at', { ascending: true });
-            employeesData = result.data;
-            employeesError = result.error;
-            console.log('Loaded company employees:', employeesData?.length, 'employees');
+              .eq('user_id', user.id)
+              .single();
+            employeesData = fullRecord ? [fullRecord] : [];
+            employeesError = null;
+            console.log('Loaded employee own record:', fullRecord?.name);
           } else {
             // Not found as employee either - they might need to complete setup
             console.log('No employee record found - user may need setup');
