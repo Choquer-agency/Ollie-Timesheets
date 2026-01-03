@@ -86,6 +86,12 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }
 
+        // Determine if user is the owner (has settings record)
+        const userIsOwner = settingsData && !settingsError;
+        setIsOwner(userIsOwner);
+        
+        console.log('User role check:', { userId: user.id, userIsOwner });
+
         // Load employees
         // For owners: load all employees they own
         // For employees: we need to find their employee record first, then load all employees from that owner
@@ -145,11 +151,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           setEmployees(mappedEmployees);
         }
 
-        // Determine if user is owner/admin or employee
-        // Check if user is the owner (has settings record)
-        const userIsOwner = settingsData && !settingsError;
-        setIsOwner(userIsOwner);
-        
+        // Match the logged-in user to an employee record
         const normalizedUserEmail = user.email?.trim().toLowerCase();
         const employeeMatchById = employeesData?.find(emp => emp.user_id === user.id && emp.is_active);
         const employeeMatchByEmail = normalizedUserEmail
@@ -164,9 +166,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           userId: user.id,
           userEmail: user.email,
           userIsOwner,
+          employeesDataCount: employeesData?.length,
           hasEmployeeMatch: !!mappedUserEmployee,
           employeeMatchById: !!employeeMatchById,
-          employeeMatchByEmail: !!employeeMatchByEmail
+          employeeMatchByEmail: !!employeeMatchByEmail,
+          resolvedEmployeeRecord: resolvedEmployeeRecord ? { id: resolvedEmployeeRecord.id, user_id: resolvedEmployeeRecord.user_id, email: resolvedEmployeeRecord.email } : null
         });
 
         // Automatically set currentUser based on role
