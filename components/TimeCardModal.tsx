@@ -30,8 +30,11 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (entry) {
-        // For admin viewing a change request, automatically load the proposed changes
-        const dataToShow = (!isEmployeeView && entry.changeRequest) ? entry.changeRequest : entry;
+        // For admin viewing a change request, merge the original entry with the proposed changes
+        // This ensures we have all required fields (id, employeeId, date) while showing the requested changes
+        const dataToShow = (!isEmployeeView && entry.changeRequest) 
+          ? { ...entry, ...entry.changeRequest } // Merge original with changeRequest
+          : entry;
         setFormData(JSON.parse(JSON.stringify(dataToShow))); 
         setClockInInput(getTimeInputFromISO(dataToShow.clockIn));
         setClockOutInput(getTimeInputFromISO(dataToShow.clockOut));
@@ -448,8 +451,23 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                 </Button>
                 <Button 
                   onClick={() => {
-                    if (onApprove) {
-                      onApprove(formData as TimeEntry);
+                    if (onApprove && entry) {
+                      // Construct the complete approved entry with all required fields
+                      const finalIsOffDay = formData.isSickDay || formData.isVacationDay;
+                      const { changeRequest, ...cleanFormData } = formData as TimeEntry;
+                      
+                      const approvedEntry: TimeEntry = {
+                        id: entry.id, // Ensure we use the original entry ID
+                        employeeId: entry.employeeId, // Ensure we use the original employee ID
+                        date: entry.date, // Ensure we use the original date
+                        ...cleanFormData,
+                        clockIn: finalIsOffDay ? null : (clockInInput ? getISOFromTimeInput(date, clockInInput) : null),
+                        clockOut: finalIsOffDay ? null : (clockOutInput ? getISOFromTimeInput(date, clockOutInput) : null),
+                        breaks: finalIsOffDay ? [] : (formData.breaks || [])
+                      };
+                      
+                      console.log('Approving entry:', approvedEntry);
+                      onApprove(approvedEntry);
                       onClose();
                     }
                   }}

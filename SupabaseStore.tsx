@@ -595,14 +595,17 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const exists = entries.find(e => e.id === approvedEntry.id);
     if (!exists?.changeRequest) {
-      console.warn('No change request found to approve');
+      console.warn('No change request found to approve for entry:', approvedEntry.id);
       return;
     }
 
     // Apply the approved changes (from the change request)
     const { changeRequest, ...cleanData } = approvedEntry;
     
-    console.log('Approving change request for entry:', approvedEntry.id);
+    console.log('Approving change request for entry:', approvedEntry.id, {
+      hadChangeRequest: !!exists.changeRequest,
+      cleanData: cleanData
+    });
 
     // Update in Supabase
     const { error } = await supabase
@@ -619,40 +622,47 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         change_request: null // Clear change request
       });
 
-    if (!error) {
-      // Update breaks
-      await supabase.from('breaks').delete().eq('time_entry_id', cleanData.id);
-      
-      if (cleanData.breaks && cleanData.breaks.length > 0) {
-        await supabase.from('breaks').insert(
-          cleanData.breaks.map(b => ({
-            id: b.id,
-            owner_id: ownerId!,
-            time_entry_id: cleanData.id,
-            start_time: b.startTime,
-            end_time: b.endTime,
-            break_type: b.type
-          }))
-        );
-      }
-
-      // Update local state
-      setEntries(prev => prev.map(e => e.id === cleanData.id ? cleanData : e));
-
-      // Send approval notification
-      const employee = employees.find(emp => emp.id === exists.employeeId);
-      if (employee?.email) {
-        sendChangeApprovalNotification({
-          employeeEmail: employee.email,
-          employeeName: employee.name,
-          date: formatDateForDisplay(exists.date),
-          status: 'approved',
-          adminNotes: cleanData.adminNotes
-        }).catch(err => console.error('Failed to send approval notification:', err));
-      }
-
-      console.log('Change request approved and cleared');
+    if (error) {
+      console.error('Error updating entry in database:', error);
+      return;
     }
+
+    // Update breaks
+    await supabase.from('breaks').delete().eq('time_entry_id', cleanData.id);
+    
+    if (cleanData.breaks && cleanData.breaks.length > 0) {
+      await supabase.from('breaks').insert(
+        cleanData.breaks.map(b => ({
+          id: b.id,
+          owner_id: ownerId!,
+          time_entry_id: cleanData.id,
+          start_time: b.startTime,
+          end_time: b.endTime,
+          break_type: b.type
+        }))
+      );
+    }
+
+    // Update local state - ensure changeRequest is removed
+    setEntries(prev => {
+      const updated = prev.map(e => e.id === cleanData.id ? cleanData : e);
+      console.log('Updated entry in state - has changeRequest?:', !!updated.find(u => u.id === cleanData.id)?.changeRequest);
+      return updated;
+    });
+
+    // Send approval notification
+    const employee = employees.find(emp => emp.id === exists.employeeId);
+    if (employee?.email) {
+      sendChangeApprovalNotification({
+        employeeEmail: employee.email,
+        employeeName: employee.name,
+        date: formatDateForDisplay(exists.date),
+        status: 'approved',
+        adminNotes: cleanData.adminNotes
+      }).catch(err => console.error('Failed to send approval notification:', err));
+    }
+
+    console.log('Change request approved and cleared successfully');
   };
 
   const denyChangeRequest = async (entryId: string) => {
