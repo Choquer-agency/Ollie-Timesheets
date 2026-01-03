@@ -248,6 +248,10 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                             <span className="font-bold">Total Time Adjustment:</span>
                             <span className="font-mono font-bold">{adjustmentText}</span>
                         </div>
+                        <div className="flex justify-between items-center text-[#263926]">
+                            <span className="font-bold">Total Hours Worked:</span>
+                            <span className="font-mono font-bold">{formatDuration(requestedStats.totalWorkedMinutes)}</span>
+                        </div>
                         {entry.breaks && entry.breaks.length > 0 && (
                             <div className="flex justify-between items-center">
                                 <span className="font-medium">Original Breaks:</span>
