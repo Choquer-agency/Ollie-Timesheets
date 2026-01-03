@@ -1749,30 +1749,8 @@ const MainLayout = () => {
         />
         <div className="flex items-center gap-3">
           {currentUser === 'ADMIN' ? (
-            // Admin view - show dropdown to switch between team members
+            // Admin view - show settings and sign out only
             <>
-              <div className="hidden sm:flex items-center gap-3">
-                <div className="flex items-center gap-2 text-xs text-[#6B6B6B]">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span className="uppercase tracking-wider">Viewing as:</span>
-                </div>
-                <select 
-                  value={currentUser === 'ADMIN' ? 'ADMIN' : currentUser.id}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'ADMIN') setCurrentUser('ADMIN');
-                    else setCurrentUser(employees.find(em => em.id === val)!);
-                  }}
-                  className="bg-white border border-[#F6F5F1] text-[#263926] rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] cursor-pointer"
-                >
-                  <option value="ADMIN">Admin (Owner)</option>
-                  {employees.filter(e => e.isActive).map(e => (
-                    <option key={e.id} value={e.id}>{e.name} {e.isAdmin && '(Admin)'}</option>
-                  ))}
-                </select>
-              </div>
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
@@ -1787,26 +1765,9 @@ const MainLayout = () => {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               </button>
-              {/* Mobile Role Switcher for Admin */}
-              <div className="sm:hidden flex items-center gap-2">
-                <select 
-                  value={currentUser === 'ADMIN' ? 'ADMIN' : currentUser.id}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'ADMIN') setCurrentUser('ADMIN');
-                    else setCurrentUser(employees.find(em => em.id === val)!);
-                  }}
-                  className="bg-white border border-[#F6F5F1] text-[#263926] rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] cursor-pointer max-w-[150px]"
-                >
-                  <option value="ADMIN">Admin</option>
-                  {employees.filter(e => e.isActive).map(e => (
-                    <option key={e.id} value={e.id}>{e.name.split(' ')[0]}</option>
-                  ))}
-                </select>
-              </div>
             </>
           ) : (
-            // Employee view - show non-clickable name and icon
+            // Employee view - show name and sign out only
             <>
               <div className="flex items-center gap-2 text-sm text-[#263926]">
                 <svg className="w-4 h-4 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

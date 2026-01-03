@@ -49,15 +49,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
 
-  // Protected setCurrentUser - employees cannot change their view
+  // Protected setCurrentUser - DISABLED for security
+  // Users cannot switch views - admins stay in admin view, employees stay in employee view
   const setCurrentUser = (user: Employee | 'ADMIN') => {
-    // Only allow changes if user is owner/admin
-    if (isOwner) {
-      setCurrentUserState(user);
-    } else {
-      // Employees cannot change their view - silently ignore
-      console.warn('Employees cannot switch views');
-    }
+    console.warn('setCurrentUser is disabled - users cannot switch views');
+    // Do nothing - view switching is not allowed
   };
 
   // Load data from Supabase when user logs in
