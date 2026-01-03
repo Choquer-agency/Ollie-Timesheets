@@ -28,9 +28,11 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (entry) {
-        setFormData(JSON.parse(JSON.stringify(entry))); 
-        setClockInInput(getTimeInputFromISO(entry.clockIn));
-        setClockOutInput(getTimeInputFromISO(entry.clockOut));
+        // For admin viewing a change request, automatically load the proposed changes
+        const dataToShow = (!isEmployeeView && entry.changeRequest) ? entry.changeRequest : entry;
+        setFormData(JSON.parse(JSON.stringify(dataToShow))); 
+        setClockInInput(getTimeInputFromISO(dataToShow.clockIn));
+        setClockOutInput(getTimeInputFromISO(dataToShow.clockOut));
       } else {
         // New empty entry
         setFormData({
@@ -49,15 +51,12 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
       }
       setError(null);
     }
-  }, [isOpen, entry, employee, date]);
+  }, [isOpen, entry, employee, date, isEmployeeView]);
 
-  // If Admin views an entry with a proposal, allow them to load the proposal data
-  const loadProposal = () => {
-    if (entry?.changeRequest) {
-        setFormData(entry.changeRequest);
-        setClockInInput(getTimeInputFromISO(entry.changeRequest.clockIn || null));
-        setClockOutInput(getTimeInputFromISO(entry.changeRequest.clockOut || null));
-    }
+  // Helper to format time for display
+  const formatTimeForDisplay = (isoString: string | null) => {
+    if (!isoString) return 'Not set';
+    return new Date(isoString).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
 
   if (!isOpen) return null;
@@ -207,14 +206,35 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
 
         {/* Change Request Banner (Admin Only) */}
         {!isEmployeeView && entry?.changeRequest && (
-            <div className="mb-6 p-4 bg-[#FFF7ED] border border-[#FDBA74] rounded-2xl flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-                <div>
+            <div className="mb-6 p-4 bg-[#FFF7ED] border border-[#FDBA74] rounded-2xl">
+                <div className="mb-3">
                     <h4 className="font-bold text-[#263926] text-base">Change Requested</h4>
-                    <p className="text-sm text-[#263926]">Employee has submitted adjustments for this day.</p>
+                    <p className="text-sm text-[#263926]">Showing employee's requested changes. Original values below for reference.</p>
                 </div>
-                <Button size="sm" onClick={loadProposal} className="bg-[#FDBA74] !text-[#263926] hover:bg-[#FB923C] border-[#FDBA74] w-full md:w-auto">
-                    Review & Apply
-                </Button>
+                <div className="mt-3 pt-3 border-t border-[#FDBA74]/30 space-y-2 text-xs text-[#6B6B6B]">
+                    <div className="flex justify-between items-center">
+                        <span className="font-medium">Original Clock In:</span>
+                        <span className="font-mono">{formatTimeForDisplay(entry.clockIn)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="font-medium">Original Clock Out:</span>
+                        <span className="font-mono">{formatTimeForDisplay(entry.clockOut)}</span>
+                    </div>
+                    {entry.breaks && entry.breaks.length > 0 && (
+                        <div className="flex justify-between items-center">
+                            <span className="font-medium">Original Breaks:</span>
+                            <span className="font-mono">{entry.breaks.length} break(s)</span>
+                        </div>
+                    )}
+                    {(entry.isSickDay || entry.isVacationDay) && (
+                        <div className="flex justify-between items-center">
+                            <span className="font-medium">Original Status:</span>
+                            <span className="font-semibold">
+                                {entry.isSickDay ? 'Sick Day' : entry.isVacationDay ? 'Vacation' : 'Regular Day'}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
         )}
 
@@ -270,16 +290,30 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 md:gap-6">
-                   <TimePicker 
-                      label="Clock In" 
-                      value={clockInInput} 
-                      onChange={setClockInInput} 
-                   />
-                   <TimePicker 
-                      label="Clock Out" 
-                      value={clockOutInput} 
-                      onChange={setClockOutInput} 
-                   />
+                   <div>
+                     <TimePicker 
+                        label="Clock In" 
+                        value={clockInInput} 
+                        onChange={setClockInInput} 
+                     />
+                     {!isEmployeeView && entry?.changeRequest && (
+                       <div className="mt-1 text-xs text-[#9CA3AF] pl-1">
+                         Original: <span className="font-mono">{formatTimeForDisplay(entry.clockIn)}</span>
+                       </div>
+                     )}
+                   </div>
+                   <div>
+                     <TimePicker 
+                        label="Clock Out" 
+                        value={clockOutInput} 
+                        onChange={setClockOutInput} 
+                     />
+                     {!isEmployeeView && entry?.changeRequest && (
+                       <div className="mt-1 text-xs text-[#9CA3AF] pl-1">
+                         Original: <span className="font-mono">{formatTimeForDisplay(entry.clockOut)}</span>
+                       </div>
+                     )}
+                   </div>
                 </div>
             </section>
 
@@ -292,6 +326,12 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                 </div>
                 <Button variant="ghost" size="sm" onClick={addBreak} className="text-[#484848] border border-[#F6F5F1] hover:bg-[#F0EEE6]">+ Add</Button>
                 </div>
+                
+                {!isEmployeeView && entry?.changeRequest && entry.breaks && entry.breaks.length > 0 && (
+                  <div className="mb-3 text-xs text-[#9CA3AF] pl-1">
+                    Original: {entry.breaks.length} break(s) totaling {formatDuration(calculateStats(entry).totalBreakMinutes)}
+                  </div>
+                )}
                 
                 <div className="space-y-3">
                 {formData.breaks?.length === 0 && (
