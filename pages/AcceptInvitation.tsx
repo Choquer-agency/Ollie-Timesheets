@@ -161,11 +161,25 @@ export const AcceptInvitation: React.FC = () => {
         throw updateError;
       }
 
-      // Wait a moment for the database to update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for database to update and verify the user_id link
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Verify the link was successful before redirecting
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('employees')
+        .select('user_id, name, email')
+        .eq('id', employee.id)
+        .single();
+      
+      if (verifyError || verifyData?.user_id !== authData.user.id) {
+        console.error('Verification failed:', verifyError, verifyData);
+        throw new Error('Failed to verify account link. Please contact your employer.');
+      }
+      
+      console.log('Employee linked and verified:', verifyData);
 
-      // Success! Redirect to home - the app will detect they're an employee
-      window.location.href = '/';
+      // Force a hard refresh to reload all state
+      window.location.replace('/');
     } catch (err: any) {
       console.error('Error accepting invitation:', err);
       setError(err.message || 'Failed to create account');
