@@ -29,6 +29,7 @@ interface AppState {
   deleteEmployee: (id: string) => void;
   toggleEmployeeStatus: (id: string) => void;
   updateSettings: (settings: AppSettings) => void;
+  resendInvitation: (employeeId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -167,7 +168,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               hourlyRate: userIsOwner ? (emp.hourly_rate || undefined) : undefined,
               vacationDaysTotal: emp.vacation_days_total,
               isAdmin: emp.is_admin,
-              isActive: emp.is_active
+              isActive: emp.is_active,
+              userId: emp.user_id,
+              invitationToken: emp.invitation_token
             };
             employeeMapById.set(emp.id, mapped);
             return mapped;
@@ -724,6 +727,61 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setSettings(newSettings);
   };
 
+  const resendInvitation = async (employeeId: string) => {
+    // Security check: Only admins can resend invitations
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can resend invitations');
+    }
+
+    const employee = employees.find(e => e.id === employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    if (!employee.email) {
+      throw new Error('Employee has no email address');
+    }
+
+    if (employee.userId) {
+      throw new Error('Employee has already accepted the invitation');
+    }
+
+    // Refresh invitation token and expiry
+    const invitationExpiry = new Date();
+    invitationExpiry.setDate(invitationExpiry.getDate() + 7);
+
+    const { data: updatedEmployee, error } = await supabase
+      .from('employees')
+      .update({
+        invitation_expires_at: invitationExpiry.toISOString()
+      })
+      .eq('id', employeeId)
+      .select('invitation_token')
+      .single();
+
+    if (error) {
+      console.error('Failed to update invitation expiry:', error);
+      throw new Error(`Failed to resend invitation: ${error.message}`);
+    }
+
+    const invitationToken = updatedEmployee?.invitation_token;
+    if (!invitationToken) {
+      throw new Error('No invitation token found');
+    }
+
+    // Send the invitation email
+    const { sendTeamInvitation } = await import('./apiClient');
+    await sendTeamInvitation({
+      employeeEmail: employee.email,
+      employeeName: employee.name,
+      companyName: settings.companyName,
+      role: employee.role,
+      appUrl: window.location.origin,
+      companyLogoUrl: settings.companyLogoUrl,
+      invitationToken
+    });
+  };
+
   return (
     <AppContext.Provider value={{ 
       employees, 
@@ -744,7 +802,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       updateEmployee,
       deleteEmployee,
       toggleEmployeeStatus,
-      updateSettings
+      updateSettings,
+      resendInvitation
     }}>
       {children}
     </AppContext.Provider>

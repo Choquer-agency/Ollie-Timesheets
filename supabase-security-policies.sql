@@ -379,3 +379,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 4. Verify hourly_rate is not visible for other employees
 -- ================================================
 
+

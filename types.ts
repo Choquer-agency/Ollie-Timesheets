@@ -7,6 +7,8 @@ export interface Employee {
   vacationDaysTotal?: number;
   isAdmin: boolean;
   isActive: boolean;
+  userId?: string | null; // null if invitation not accepted yet
+  invitationToken?: string | null;
 }
 
 export type BreakType = 'unpaid';

@@ -274,11 +274,13 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 };
 
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, updateEmployee } = useSupabaseStore();
+  const { settings, updateSettings, employees, updateEmployee, resendInvitation } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [showPastEmployees, setShowPastEmployees] = useState(false);
+  const [resendingInviteId, setResendingInviteId] = useState<string | null>(null);
+  const [inviteResendSuccess, setInviteResendSuccess] = useState<string | null>(null);
   
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -353,6 +355,32 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     } catch (error) {
       console.error('Failed to archive/restore employee:', error);
       alert('Failed to update employee. Please try again.');
+    }
+  };
+
+  const handleResendInvitation = async (employee: Employee, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click from opening edit modal
+    
+    if (!employee.email) {
+      alert('This employee has no email address on file.');
+      return;
+    }
+
+    if (employee.userId) {
+      alert('This employee has already created their account.');
+      return;
+    }
+
+    try {
+      setResendingInviteId(employee.id);
+      await resendInvitation(employee.id);
+      setInviteResendSuccess(employee.id);
+      setTimeout(() => setInviteResendSuccess(null), 3000);
+    } catch (error: any) {
+      console.error('Failed to resend invitation:', error);
+      alert(`Failed to resend invitation: ${error.message || 'Please try again.'}`);
+    } finally {
+      setResendingInviteId(null);
     }
   };
 
@@ -611,13 +639,14 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                     <th className="px-6 py-4">Role</th>
                                     <th className="px-6 py-4 text-right">Rate</th>
                                     <th className="px-6 py-4 text-right">Vacation Days</th>
-                                    <th className="px-6 py-4 text-right">Status</th>
+                                    <th className="px-6 py-4 text-center">Status</th>
+                                    <th className="px-6 py-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F6F5F1]">
                                 {filteredEmployees.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-[#9CA3AF]">
+                                        <td colSpan={6} className="px-6 py-12 text-center text-[#9CA3AF]">
                                             {showPastEmployees ? 'No past employees' : 'No active employees'}
                                         </td>
                                     </tr>
@@ -635,13 +664,34 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                             <td className="px-6 py-4 text-[#484848]">{emp.role}</td>
                                             <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate || '—'}</td>
                                             <td className="px-6 py-4 text-right text-[#484848]">{emp.vacationDaysTotal}</td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-center">
                                                 {emp.isAdmin ? (
                                                     <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Admin</span>
-                                                ) : emp.isActive ? (
+                                                ) : emp.userId ? (
                                                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Active</span>
                                                 ) : (
-                                                    <span className="px-3 py-1 bg-[#E5E3DA] text-[#6B6B6B] rounded-full text-xs font-bold">Past</span>
+                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">Pending</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {!emp.userId && emp.email && emp.isActive && (
+                                                    <button
+                                                        onClick={(e) => handleResendInvitation(emp, e)}
+                                                        disabled={resendingInviteId === emp.id}
+                                                        className={`px-3 py-1.5 text-xs font-medium rounded-2xl transition-colors ${
+                                                            inviteResendSuccess === emp.id
+                                                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                                                : resendingInviteId === emp.id
+                                                                ? 'bg-[#E5E3DA] text-[#9CA3AF] cursor-not-allowed'
+                                                                : 'bg-[#2CA01C] text-white hover:bg-[#258518]'
+                                                        }`}
+                                                    >
+                                                        {inviteResendSuccess === emp.id 
+                                                            ? '✓ Sent!' 
+                                                            : resendingInviteId === emp.id 
+                                                            ? 'Sending...' 
+                                                            : 'Resend Invitation'}
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
