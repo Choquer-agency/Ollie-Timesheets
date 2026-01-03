@@ -48,6 +48,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
 
   // Protected setCurrentUser - DISABLED for security
   // Users cannot switch views - admins stay in admin view, employees stay in employee view
@@ -93,6 +94,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         // For employees: we need to find their employee record first, then load all employees from that owner
         let employeesData;
         let employeesError;
+        let resolvedOwnerId = user.id; // Default to user.id for owners
         
         if (userIsOwner) {
           // Owner: load their employees
@@ -113,6 +115,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           
           if (myEmployeeRecord?.owner_id) {
             // Found their employee record, load all employees from that owner
+            resolvedOwnerId = myEmployeeRecord.owner_id; // Use the owner's ID
             const result = await supabase
               .from('employees')
               .select('*')
@@ -126,6 +129,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             employeesError = null;
           }
         }
+
+        // Store the owner ID for use in all operations
+        setOwnerId(resolvedOwnerId);
 
         let mappedEmployees: Employee[] = [];
         const employeeMapById = new Map<string, Employee>();
@@ -190,11 +196,16 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
+        // Determine the correct owner_id to use for queries
+        // For owners: use their own user.id
+        // For employees: use the owner_id from their employee record
+        let queryOwnerId = resolvedOwnerId;
+
         // For employees, only load their own entries
         let entriesQuery = supabase
           .from('time_entries')
           .select('*, breaks(*)')
-          .eq('owner_id', user.id)
+          .eq('owner_id', queryOwnerId)
           .gte('date', thirtyDaysAgoStr);
         
         // If user is an employee, filter to only their entries
@@ -262,7 +273,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       .from('time_entries')
       .insert({
         id: newEntry.id,
-        owner_id: user!.id,
+        owner_id: ownerId!,
         employee_id: newEntry.employeeId,
         date: newEntry.date,
         clock_in: newEntry.clockIn,
@@ -344,7 +355,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       .from('breaks')
       .insert({
         id: newBreak.id,
-        owner_id: user!.id,
+        owner_id: ownerId!,
         time_entry_id: entry.id,
         start_time: newBreak.startTime,
         end_time: null,
@@ -430,7 +441,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         await supabase.from('breaks').insert(
           entryData.breaks.map(b => ({
             id: b.id,
-            owner_id: user!.id,
+            owner_id: ownerId!,
             time_entry_id: entryData.id,
             start_time: b.startTime,
             end_time: b.endTime,
@@ -544,7 +555,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       .from('employees')
       .insert({
         id: newEmp.id,
-        owner_id: user!.id,
+        owner_id: ownerId!,
         user_id: null,
         name: newEmp.name,
         email: newEmp.email || null,
