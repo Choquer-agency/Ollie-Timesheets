@@ -47,6 +47,7 @@ export interface Database {
       employees: {
         Row: {
           id: string;
+          owner_id: string;
           user_id: string | null;
           name: string;
           email: string | null;
@@ -60,6 +61,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          owner_id: string;
           user_id?: string | null;
           name: string;
           email?: string | null;
@@ -82,6 +84,7 @@ export interface Database {
       time_entries: {
         Row: {
           id: string;
+          owner_id: string;
           employee_id: string;
           date: string;
           clock_in: string | null;
@@ -95,6 +98,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          owner_id: string;
           employee_id: string;
           date: string;
           clock_in?: string | null;
@@ -116,6 +120,7 @@ export interface Database {
       breaks: {
         Row: {
           id: string;
+          owner_id: string;
           time_entry_id: string;
           start_time: string;
           end_time: string | null;
@@ -124,6 +129,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          owner_id: string;
           time_entry_id: string;
           start_time: string;
           end_time?: string | null;

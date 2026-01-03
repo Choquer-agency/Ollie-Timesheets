@@ -86,10 +86,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }
 
-        // Load employees
+        // Load employees - ONLY load employees belonging to this owner
         const { data: employeesData, error: employeesError } = await supabase
           .from('employees')
           .select('*')
+          .eq('owner_id', user.id)
           .order('created_at', { ascending: true });
 
         let mappedEmployees: Employee[] = [];
@@ -143,7 +144,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        // Load time entries (last 30 days)
+        // Load time entries (last 30 days) - ONLY for this owner
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -152,6 +153,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         let entriesQuery = supabase
           .from('time_entries')
           .select('*, breaks(*)')
+          .eq('owner_id', user.id)
           .gte('date', thirtyDaysAgoStr);
         
         // If user is an employee, filter to only their entries
@@ -214,11 +216,12 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       isVacationDay: false
     };
 
-    // Save to Supabase
+    // Save to Supabase with owner_id
     const { error } = await supabase
       .from('time_entries')
       .insert({
         id: newEntry.id,
+        owner_id: user!.id,
         employee_id: newEntry.employeeId,
         date: newEntry.date,
         clock_in: newEntry.clockIn,
@@ -295,11 +298,12 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       type: 'unpaid'
     };
 
-    // Save to Supabase
+    // Save to Supabase with owner_id
     const { error } = await supabase
       .from('breaks')
       .insert({
         id: newBreak.id,
+        owner_id: user!.id,
         time_entry_id: entry.id,
         start_time: newBreak.startTime,
         end_time: null,
@@ -380,11 +384,12 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         await supabase.from('breaks').delete().eq('time_entry_id', entryData.id);
       }
       
-      // Insert new breaks
+      // Insert new breaks with owner_id
       if (entryData.breaks.length > 0) {
         await supabase.from('breaks').insert(
           entryData.breaks.map(b => ({
             id: b.id,
+            owner_id: user!.id,
             time_entry_id: entryData.id,
             start_time: b.startTime,
             end_time: b.endTime,
@@ -494,6 +499,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       .from('employees')
       .insert({
         id: newEmp.id,
+        owner_id: user!.id,
         user_id: null,
         name: newEmp.name,
         email: newEmp.email || null,
