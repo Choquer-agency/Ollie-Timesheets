@@ -11,7 +11,10 @@ export function cn(...inputs: ClassValue[]) {
 // --- Date Formatting ---
 
 export const formatDateForDisplay = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  // Parse as local date to avoid timezone issues
+  // dateStr format: YYYY-MM-DD
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
 };
 
@@ -97,7 +100,12 @@ export const calculateStats = (entry?: TimeEntry): DerivedStats => {
   if (hasOpenBreak) issues.push('OPEN_BREAK');
 
   // Issue: Missing Clock Out (only if date is in past)
-  const isPastDate = new Date(entry.date) < new Date(getTodayISO());
+  // Parse both dates in local timezone for accurate comparison
+  const entryDateParts = entry.date.split('-').map(Number);
+  const entryDate = new Date(entryDateParts[0], entryDateParts[1] - 1, entryDateParts[2]);
+  const todayParts = getTodayISO().split('-').map(Number);
+  const today = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+  const isPastDate = entryDate < today;
   if (isPastDate && !entry.clockOut) {
     issues.push('MISSING_CLOCK_OUT');
   }
