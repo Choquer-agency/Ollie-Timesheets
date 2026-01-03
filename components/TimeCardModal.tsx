@@ -80,8 +80,10 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
 
     // Reconstruct ISO strings from time inputs
     // If Sick/Vacation Day is checked, we explicitly clear times on SAVE.
+    // Explicitly remove changeRequest to ensure it doesn't persist
+    const { changeRequest, ...cleanFormData } = formData as TimeEntry;
     const finalEntry: TimeEntry = {
-      ...(formData as TimeEntry),
+      ...cleanFormData,
       clockIn: finalIsOffDay ? null : (clockInInput ? getISOFromTimeInput(date, clockInInput) : null),
       clockOut: finalIsOffDay ? null : (clockOutInput ? getISOFromTimeInput(date, clockOutInput) : null),
       breaks: finalIsOffDay ? [] : (formData.breaks || [])
@@ -208,7 +210,7 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
         {!isEmployeeView && entry?.changeRequest && (() => {
             // Calculate the time difference between original and requested
             const originalStats = calculateStats(entry);
-            const requestedStats = calculateStats(entry.changeRequest);
+            const requestedStats = calculateStats(entry.changeRequest as TimeEntry);
             const timeDiffMinutes = requestedStats.totalWorkedMinutes - originalStats.totalWorkedMinutes;
             const isIncrease = timeDiffMinutes > 0;
             const absMinutes = Math.abs(timeDiffMinutes);

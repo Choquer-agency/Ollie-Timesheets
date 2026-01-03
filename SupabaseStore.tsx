@@ -521,6 +521,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     
     // Clear change request when admin updates
     const { changeRequest, ...entryData } = updatedEntry;
+    console.log('Updating entry - had changeRequest:', !!exists?.changeRequest, 'clearing it now');
 
     // Update in Supabase
     const { error } = await supabase
@@ -560,7 +561,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setEntries(prev => {
         if (exists) {
-          return prev.map(e => e.id === entryData.id ? entryData : e);
+          const updated = prev.map(e => e.id === entryData.id ? entryData : e);
+          console.log('Entry updated in local state - changeRequest cleared:', !updated.find(e => e.id === entryData.id)?.changeRequest);
+          return updated;
         } else {
           return [...prev, entryData];
         }
