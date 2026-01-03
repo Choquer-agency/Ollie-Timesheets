@@ -1862,8 +1862,9 @@ import { AcceptInvitation } from './pages/AcceptInvitation';
 import { EmployeeApp } from './pages/EmployeeApp';
 
 const AppContent = () => {
-  const { needsSetup, loading } = useSupabaseStore();
-
+  // Check routes that bypass SupabaseStore BEFORE calling useSupabaseStore hook
+  // This prevents SupabaseStore from loading when we don't need it
+  
   // Check if we're on the accept-invitation route
   if (window.location.pathname === '/accept-invitation') {
     return <AcceptInvitation />;
@@ -1874,6 +1875,9 @@ const AppContent = () => {
   if (window.location.pathname === '/employee/dashboard') {
     return <EmployeeApp />;
   }
+
+  // Now safe to use SupabaseStore for business owner flow
+  const { needsSetup, loading } = useSupabaseStore();
 
   // Show loading state while checking setup status
   if (loading) {
