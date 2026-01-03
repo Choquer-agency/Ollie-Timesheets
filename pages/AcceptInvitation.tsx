@@ -135,7 +135,8 @@ export const AcceptInvitation: React.FC = () => {
           data: {
             full_name: employee.name,
             role: 'employee'
-          }
+          },
+          emailRedirectTo: window.location.origin
         }
       });
 
@@ -160,8 +161,10 @@ export const AcceptInvitation: React.FC = () => {
         throw updateError;
       }
 
-      // Success! User will be automatically logged in by Supabase
-      // The app will detect they're an employee and show the employee dashboard
+      // Wait a moment for the database to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Success! Redirect to home - the app will detect they're an employee
       window.location.href = '/';
     } catch (err: any) {
       console.error('Error accepting invitation:', err);

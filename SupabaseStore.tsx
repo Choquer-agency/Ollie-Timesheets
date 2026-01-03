@@ -86,12 +86,44 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }
 
-        // Load employees - ONLY load employees belonging to this owner
-        const { data: employeesData, error: employeesError } = await supabase
-          .from('employees')
-          .select('*')
-          .eq('owner_id', user.id)
-          .order('created_at', { ascending: true });
+        // Load employees
+        // For owners: load all employees they own
+        // For employees: we need to find their employee record first, then load all employees from that owner
+        let employeesData;
+        let employeesError;
+        
+        if (userIsOwner) {
+          // Owner: load their employees
+          const result = await supabase
+            .from('employees')
+            .select('*')
+            .eq('owner_id', user.id)
+            .order('created_at', { ascending: true });
+          employeesData = result.data;
+          employeesError = result.error;
+        } else {
+          // Potential employee: first try to find their employee record
+          const { data: myEmployeeRecord } = await supabase
+            .from('employees')
+            .select('owner_id')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (myEmployeeRecord?.owner_id) {
+            // Found their employee record, load all employees from that owner
+            const result = await supabase
+              .from('employees')
+              .select('*')
+              .eq('owner_id', myEmployeeRecord.owner_id)
+              .order('created_at', { ascending: true });
+            employeesData = result.data;
+            employeesError = result.error;
+          } else {
+            // Not found as employee either - they might need to complete setup
+            employeesData = [];
+            employeesError = null;
+          }
+        }
 
         let mappedEmployees: Employee[] = [];
         const employeeMapById = new Map<string, Employee>();
@@ -127,6 +159,15 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         const mappedUserEmployee = resolvedEmployeeRecord
           ? employeeMapById.get(resolvedEmployeeRecord.id)
           : undefined;
+
+        console.log('User authentication check:', {
+          userId: user.id,
+          userEmail: user.email,
+          userIsOwner,
+          hasEmployeeMatch: !!mappedUserEmployee,
+          employeeMatchById: !!employeeMatchById,
+          employeeMatchByEmail: !!employeeMatchByEmail
+        });
 
         // Automatically set currentUser based on role
         if (userIsOwner) {
