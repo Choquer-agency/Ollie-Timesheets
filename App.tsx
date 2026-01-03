@@ -639,14 +639,13 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                     <th className="px-6 py-4">Role</th>
                                     <th className="px-6 py-4 text-right">Rate</th>
                                     <th className="px-6 py-4 text-right">Vacation Days</th>
-                                    <th className="px-6 py-4 text-center">Status</th>
-                                    <th className="px-6 py-4 text-center">Actions</th>
+                                    <th className="px-6 py-4 text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F6F5F1]">
                                 {filteredEmployees.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-[#9CA3AF]">
+                                        <td colSpan={5} className="px-6 py-12 text-center text-[#9CA3AF]">
                                             {showPastEmployees ? 'No past employees' : 'No active employees'}
                                         </td>
                                     </tr>
@@ -664,34 +663,13 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                             <td className="px-6 py-4 text-[#484848]">{emp.role}</td>
                                             <td className="px-6 py-4 text-right text-[#484848] font-mono">${emp.hourlyRate || '—'}</td>
                                             <td className="px-6 py-4 text-right text-[#484848]">{emp.vacationDaysTotal}</td>
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="px-6 py-4 text-right">
                                                 {emp.isAdmin ? (
                                                     <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Admin</span>
                                                 ) : emp.userId ? (
                                                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Active</span>
                                                 ) : (
                                                     <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">Pending</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {!emp.userId && emp.email && emp.isActive && (
-                                                    <button
-                                                        onClick={(e) => handleResendInvitation(emp, e)}
-                                                        disabled={resendingInviteId === emp.id}
-                                                        className={`px-3 py-1.5 text-xs font-medium rounded-2xl transition-colors ${
-                                                            inviteResendSuccess === emp.id
-                                                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                                                : resendingInviteId === emp.id
-                                                                ? 'bg-[#E5E3DA] text-[#9CA3AF] cursor-not-allowed'
-                                                                : 'bg-[#2CA01C] text-white hover:bg-[#258518]'
-                                                        }`}
-                                                    >
-                                                        {inviteResendSuccess === emp.id 
-                                                            ? '✓ Sent!' 
-                                                            : resendingInviteId === emp.id 
-                                                            ? 'Sending...' 
-                                                            : 'Resend Invitation'}
-                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
@@ -798,6 +776,25 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         </div>
 
                         <div className="flex gap-3 mt-8 pt-6 border-t border-[#F6F5F1]">
+                            {!editingEmployee?.userId && editingEmployee?.email && editingEmployee?.isActive && (
+                                <button
+                                    onClick={(e) => editingEmployee && handleResendInvitation(editingEmployee, e)}
+                                    disabled={resendingInviteId === editingEmployee?.id}
+                                    className={`px-4 py-2 text-sm font-medium rounded-2xl transition-colors ${
+                                        inviteResendSuccess === editingEmployee?.id
+                                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                            : resendingInviteId === editingEmployee?.id
+                                            ? 'bg-[#E5E3DA] text-[#9CA3AF] cursor-not-allowed'
+                                            : 'text-[#2CA01C] hover:bg-emerald-50'
+                                    }`}
+                                >
+                                    {inviteResendSuccess === editingEmployee?.id 
+                                        ? '✓ Invitation Sent!' 
+                                        : resendingInviteId === editingEmployee?.id 
+                                        ? 'Sending...' 
+                                        : '📧 Resend Invitation'}
+                                </button>
+                            )}
                             <button
                                 onClick={handleArchiveEmployee}
                                 className={`px-4 py-2 text-sm font-medium rounded-2xl transition-colors ${
