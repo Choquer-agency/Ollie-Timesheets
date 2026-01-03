@@ -1225,7 +1225,7 @@ const EmployeeDashboard = () => {
 // --- Sub-View: Admin Dashboard ---
 
 const AdminDashboard = () => {
-  const { employees, entries, updateEntry, deleteEntry, settings } = useSupabaseStore();
+  const { employees, entries, updateEntry, approveChangeRequest, denyChangeRequest, deleteEntry, settings } = useSupabaseStore();
   const [viewDate, setViewDate] = useState(getTodayISO());
   const [activeTab, setActiveTab] = useState<'daily' | 'period'>('daily');
   const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
@@ -1701,6 +1701,14 @@ const AdminDashboard = () => {
               }
           }}
           onDelete={deleteEntry}
+          onApprove={(approvedEntry) => {
+              approveChangeRequest(approvedEntry);
+              setSelectedEmployeeEntry(null);
+          }}
+          onDeny={(entryId) => {
+              denyChangeRequest(entryId);
+              setSelectedEmployeeEntry(null);
+          }}
         />
       )}
 

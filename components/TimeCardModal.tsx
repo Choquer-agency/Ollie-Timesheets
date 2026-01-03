@@ -14,10 +14,12 @@ interface TimeCardModalProps {
   isEmployeeView: boolean; // New prop to determine mode
   onSave: (entry: TimeEntry) => void;
   onDelete: (id: string) => void;
+  onApprove?: (entry: TimeEntry) => void; // For approving change requests
+  onDeny?: (entryId: string) => void; // For denying change requests
 }
 
 export const TimeCardModal: React.FC<TimeCardModalProps> = ({
-  isOpen, onClose, entry, employee, date, isEmployeeView, onSave, onDelete
+  isOpen, onClose, entry, employee, date, isEmployeeView, onSave, onDelete, onApprove, onDeny
 }) => {
   const [formData, setFormData] = useState<Partial<TimeEntry>>({});
   const [clockInInput, setClockInInput] = useState('');
@@ -420,27 +422,80 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
               {error}
             </div>
           )}
-          <div className="flex flex-col-reverse md:flex-row justify-between items-center w-full gap-4">
-            {!isEmployeeView && entry && (
-               <button 
-                onClick={() => {
-                  if(confirm('Are you sure you want to completely delete this time card?')) {
-                    onDelete(entry.id);
-                    onClose();
-                  }
-                }} 
-                className="text-sm text-rose-600 hover:text-rose-700 w-full md:w-auto text-center py-2"
-              >
-                Delete Entry
-              </button>
-            )}
-            <div className="flex gap-3 ml-auto w-full md:w-auto">
-              <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none justify-center">Cancel</Button>
-              <Button onClick={handleSave} className="flex-1 md:flex-none justify-center">
-                  {isEmployeeView ? "Submit Request" : "Save Changes"}
-              </Button>
+          
+          {/* Different button layouts based on context */}
+          {!isEmployeeView && entry?.changeRequest ? (
+            // Admin viewing a change request - show Approve/Deny buttons
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3 w-full">
+                <Button 
+                  variant="outline" 
+                  onClick={onClose} 
+                  className="flex-1 justify-center"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (onDeny && entry) {
+                      onDeny(entry.id);
+                      onClose();
+                    }
+                  }}
+                  className="flex-1 justify-center bg-rose-600 hover:bg-rose-700 focus:ring-rose-600"
+                >
+                  Deny Changes
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (onApprove) {
+                      onApprove(formData as TimeEntry);
+                      onClose();
+                    }
+                  }}
+                  className="flex-1 justify-center bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-600"
+                >
+                  Approve Changes
+                </Button>
+              </div>
+              {entry && (
+                <button 
+                  onClick={() => {
+                    if(confirm('Are you sure you want to completely delete this time card?')) {
+                      onDelete(entry.id);
+                      onClose();
+                    }
+                  }} 
+                  className="text-sm text-rose-600 hover:text-rose-700 text-center py-2"
+                >
+                  Delete Entry
+                </button>
+              )}
             </div>
-          </div>
+          ) : (
+            // Normal edit mode or employee view
+            <div className="flex flex-col-reverse md:flex-row justify-between items-center w-full gap-4">
+              {!isEmployeeView && entry && (
+                <button 
+                  onClick={() => {
+                    if(confirm('Are you sure you want to completely delete this time card?')) {
+                      onDelete(entry.id);
+                      onClose();
+                    }
+                  }} 
+                  className="text-sm text-rose-600 hover:text-rose-700 w-full md:w-auto text-center py-2"
+                >
+                  Delete Entry
+                </button>
+              )}
+              <div className="flex gap-3 ml-auto w-full md:w-auto">
+                <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none justify-center">Cancel</Button>
+                <Button onClick={handleSave} className="flex-1 md:flex-none justify-center">
+                    {isEmployeeView ? "Submit Request" : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,8 @@ interface AppState {
   startBreak: (employeeId: string) => void;
   endBreak: (employeeId: string) => void;
   updateEntry: (entry: TimeEntry) => void;
+  approveChangeRequest: (entry: TimeEntry) => void;
+  denyChangeRequest: (entryId: string) => void;
   submitChangeRequest: (entry: TimeEntry) => void;
   deleteEntry: (entryId: string) => void;
   addEmployee: (employee: Omit<Employee, 'id' | 'isActive'>) => Promise<{ invitationToken?: string }>;
@@ -585,6 +587,120 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const approveChangeRequest = async (approvedEntry: TimeEntry) => {
+    // Security check: Only admins can approve change requests
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can approve change requests');
+    }
+
+    const exists = entries.find(e => e.id === approvedEntry.id);
+    if (!exists?.changeRequest) {
+      console.warn('No change request found to approve');
+      return;
+    }
+
+    // Apply the approved changes (from the change request)
+    const { changeRequest, ...cleanData } = approvedEntry;
+    
+    console.log('Approving change request for entry:', approvedEntry.id);
+
+    // Update in Supabase
+    const { error } = await supabase
+      .from('time_entries')
+      .upsert({
+        id: cleanData.id,
+        employee_id: cleanData.employeeId,
+        date: cleanData.date,
+        clock_in: cleanData.clockIn,
+        clock_out: cleanData.clockOut,
+        admin_notes: cleanData.adminNotes,
+        is_sick_day: cleanData.isSickDay || false,
+        is_vacation_day: cleanData.isVacationDay || false,
+        change_request: null // Clear change request
+      });
+
+    if (!error) {
+      // Update breaks
+      await supabase.from('breaks').delete().eq('time_entry_id', cleanData.id);
+      
+      if (cleanData.breaks && cleanData.breaks.length > 0) {
+        await supabase.from('breaks').insert(
+          cleanData.breaks.map(b => ({
+            id: b.id,
+            owner_id: ownerId!,
+            time_entry_id: cleanData.id,
+            start_time: b.startTime,
+            end_time: b.endTime,
+            break_type: b.type
+          }))
+        );
+      }
+
+      // Update local state
+      setEntries(prev => prev.map(e => e.id === cleanData.id ? cleanData : e));
+
+      // Send approval notification
+      const employee = employees.find(emp => emp.id === exists.employeeId);
+      if (employee?.email) {
+        sendChangeApprovalNotification({
+          employeeEmail: employee.email,
+          employeeName: employee.name,
+          date: formatDateForDisplay(exists.date),
+          status: 'approved',
+          adminNotes: cleanData.adminNotes
+        }).catch(err => console.error('Failed to send approval notification:', err));
+      }
+
+      console.log('Change request approved and cleared');
+    }
+  };
+
+  const denyChangeRequest = async (entryId: string) => {
+    // Security check: Only admins can deny change requests
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can deny change requests');
+    }
+
+    const exists = entries.find(e => e.id === entryId);
+    if (!exists?.changeRequest) {
+      console.warn('No change request found to deny');
+      return;
+    }
+
+    console.log('Denying change request for entry:', entryId);
+
+    // Simply clear the change request, keep original entry data
+    const { error } = await supabase
+      .from('time_entries')
+      .update({ change_request: null })
+      .eq('id', entryId);
+
+    if (!error) {
+      // Remove change request from local state
+      setEntries(prev => prev.map(e => {
+        if (e.id === entryId) {
+          const { changeRequest, ...rest } = e;
+          return rest;
+        }
+        return e;
+      }));
+
+      // Send denial notification
+      const employee = employees.find(emp => emp.id === exists.employeeId);
+      if (employee?.email) {
+        sendChangeApprovalNotification({
+          employeeEmail: employee.email,
+          employeeName: employee.name,
+          date: formatDateForDisplay(exists.date),
+          status: 'denied',
+          adminNotes: 'Your change request has been denied.'
+        }).catch(err => console.error('Failed to send denial notification:', err));
+      }
+
+      console.log('Change request denied and cleared');
+    }
+  };
+
   const submitChangeRequest = async (proposedEntry: TimeEntry) => {
     // Security check: Employees can only submit change requests for their own entries
     if (currentUserState !== 'ADMIN' && currentUserState.id !== proposedEntry.employeeId) {
@@ -881,6 +997,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       startBreak, 
       endBreak, 
       updateEntry,
+      approveChangeRequest,
+      denyChangeRequest,
       submitChangeRequest,
       deleteEntry,
       addEmployee,
