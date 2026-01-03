@@ -15,6 +15,7 @@ interface AppState {
   settings: AppSettings;
   currentUser: Employee | 'ADMIN';
   loading: boolean;
+  needsSetup: boolean;
   setCurrentUser: (user: Employee | 'ADMIN') => void;
   clockIn: (employeeId: string) => void;
   clockOut: (employeeId: string) => void;
@@ -46,6 +47,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentUserState, setCurrentUserState] = useState<Employee | 'ADMIN'>('ADMIN');
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [needsSetup, setNeedsSetup] = useState(false);
 
   // Protected setCurrentUser - employees cannot change their view
   const setCurrentUser = (user: Employee | 'ADMIN') => {
@@ -133,9 +135,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           // Employee can only access their own account
           setCurrentUserState(mappedUserEmployee);
         } else {
-          console.error('Logged-in user does not have an associated employee record');
+          // User has no settings record and no employee record
+          // This happens with OAuth users who haven't completed setup
+          console.log('User needs to complete account setup');
+          setNeedsSetup(true);
           setLoading(false);
-          await supabase.auth.signOut();
           return;
         }
 
@@ -632,6 +636,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       settings,
       currentUser: currentUserState, 
       loading,
+      needsSetup,
       setCurrentUser,
       clockIn, 
       clockOut, 

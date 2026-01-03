@@ -1715,7 +1715,7 @@ const AdminDashboard = () => {
 // --- Main Layout ---
 
 const MainLayout = () => {
-  const { currentUser, setCurrentUser, employees, settings, loading } = useSupabaseStore();
+  const { currentUser, setCurrentUser, employees, settings, loading, needsSetup } = useSupabaseStore();
   const { signOut } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -1729,6 +1729,11 @@ const MainLayout = () => {
         </div>
       </div>
     );
+  }
+
+  // If user needs to complete setup (OAuth flow without settings)
+  if (needsSetup) {
+    return null; // The App component will handle showing OAuthSetup
   }
 
   return (
@@ -1832,7 +1837,32 @@ const MainLayout = () => {
 // Import auth components and Supabase store
 import { useAuth } from './AuthContext';
 import { Auth } from './pages/Auth';
-import { SupabaseStoreProvider } from './SupabaseStore';
+import { SupabaseStoreProvider, useSupabaseStore } from './SupabaseStore';
+import { OAuthSetup } from './pages/OAuthSetup';
+
+const AppContent = () => {
+  const { needsSetup, loading } = useSupabaseStore();
+
+  // Show loading state while checking setup status
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
+          <p className="text-[#6B6B6B]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user needs to complete setup, show setup screen
+  if (needsSetup) {
+    return <OAuthSetup />;
+  }
+
+  // Otherwise show main app
+  return <MainLayout />;
+};
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -1857,7 +1887,7 @@ const App = () => {
   // User is authenticated, show the main app with Supabase store
   return (
     <SupabaseStoreProvider>
-      <MainLayout />
+      <AppContent />
     </SupabaseStoreProvider>
   );
 };

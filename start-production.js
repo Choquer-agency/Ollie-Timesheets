@@ -43,3 +43,6 @@ process.on('SIGTERM', () => {
 console.log(`📧 Email server starting on port ${EMAIL_PORT}`);
 console.log(`🌐 Frontend server starting on port ${PORT}`);
 
+
+
+
