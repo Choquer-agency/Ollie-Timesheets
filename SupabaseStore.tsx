@@ -530,6 +530,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       .from('time_entries')
       .upsert({
         id: entryData.id,
+        owner_id: ownerId!, // Required for RLS policy
         employee_id: entryData.employeeId,
         date: entryData.date,
         clock_in: entryData.clockIn,
@@ -612,6 +613,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       .from('time_entries')
       .upsert({
         id: cleanData.id,
+        owner_id: ownerId!, // Required for RLS policy
         employee_id: cleanData.employeeId,
         date: cleanData.date,
         clock_in: cleanData.clockIn,
