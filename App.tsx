@@ -796,7 +796,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 // --- Sub-View: Employee Dashboard ---
 
 const EmployeeDashboard = () => {
-  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest } = useSupabaseStore();
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, settings } = useSupabaseStore();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
   const [view, setView] = useState<'clock' | 'history'>('clock');
@@ -1040,6 +1040,7 @@ const EmployeeDashboard = () => {
   return (
     <div className="max-w-md mx-auto mt-12 px-6 pb-20">
       <div className="text-center mb-10">
+        <p className="text-xs font-bold tracking-wide uppercase text-[#6B6B6B] mb-3">{settings.companyName || 'My Company'}</p>
         <h2 className="text-3xl font-bold text-[#263926] mb-2">Good morning, {currentUser.name.split(' ')[0]}</h2>
         <p className="text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       </div>
@@ -1749,8 +1750,16 @@ const MainLayout = () => {
         />
         <div className="flex items-center gap-3">
           {currentUser === 'ADMIN' ? (
-            // Admin view - show settings and sign out only
+            // Admin view - show admin name, settings and sign out
             <>
+              <div className="flex items-center gap-2 text-sm text-[#263926]">
+                <svg className="w-4 h-4 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="font-medium">
+                  {settings.ownerName ? `${settings.ownerName} - Admin` : 'Admin'}
+                </span>
+              </div>
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
