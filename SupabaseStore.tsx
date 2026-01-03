@@ -66,22 +66,12 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const loadData = async () => {
       try {
-        // Load settings
+        // First, check if user is owner or employee to determine which owner_id to use for settings
         const { data: settingsData, error: settingsError } = await supabase
           .from('settings')
           .select('*')
           .eq('owner_id', user.id)
           .single();
-
-        if (settingsData && !settingsError) {
-          setSettings({
-            bookkeeperEmail: settingsData.bookkeeper_email || '',
-            companyName: settingsData.company_name,
-            ownerName: settingsData.owner_name,
-            ownerEmail: settingsData.owner_email,
-            companyLogoUrl: settingsData.company_logo_url || undefined
-          });
-        }
 
         // Determine if user is the owner (has settings record)
         const userIsOwner = settingsData && !settingsError;
@@ -132,6 +122,36 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Store the owner ID for use in all operations
         setOwnerId(resolvedOwnerId);
+
+        // Now load settings using the correct owner ID
+        // For owners: already loaded above
+        // For employees: need to load owner's settings
+        if (!userIsOwner && resolvedOwnerId !== user.id) {
+          const { data: ownerSettingsData, error: ownerSettingsError } = await supabase
+            .from('settings')
+            .select('*')
+            .eq('owner_id', resolvedOwnerId)
+            .single();
+
+          if (ownerSettingsData && !ownerSettingsError) {
+            setSettings({
+              bookkeeperEmail: ownerSettingsData.bookkeeper_email || '',
+              companyName: ownerSettingsData.company_name,
+              ownerName: ownerSettingsData.owner_name,
+              ownerEmail: ownerSettingsData.owner_email,
+              companyLogoUrl: ownerSettingsData.company_logo_url || undefined
+            });
+          }
+        } else if (settingsData && !settingsError) {
+          // Owner's settings (already loaded)
+          setSettings({
+            bookkeeperEmail: settingsData.bookkeeper_email || '',
+            companyName: settingsData.company_name,
+            ownerName: settingsData.owner_name,
+            ownerEmail: settingsData.owner_email,
+            companyLogoUrl: settingsData.company_logo_url || undefined
+          });
+        }
 
         let mappedEmployees: Employee[] = [];
         const employeeMapById = new Map<string, Employee>();
