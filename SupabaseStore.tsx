@@ -514,8 +514,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         is_active: true,
         invitation_expires_at: invitationExpiry.toISOString()
       })
-      .select()
+      .select('*, invitation_token')
       .single();
+    
+    console.log('Created employee data:', createdEmployee);
 
     if (error) {
       console.error('Supabase insert error:', error);
@@ -526,7 +528,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setEmployees(prev => [...prev, newEmp]);
     
     // Return the invitation token so it can be sent via email
-    return { invitationToken: createdEmployee?.invitation_token };
+    const token = createdEmployee?.invitation_token;
+    console.log('Returning invitation token:', token);
+    return { invitationToken: token };
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
