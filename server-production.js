@@ -95,16 +95,16 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
 
 app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
   try {
-    const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl } = req.body;
+    const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl, invitationToken } = req.body;
 
-    if (!employeeEmail || !employeeName || !companyName || !role) {
+    if (!employeeEmail || !employeeName || !companyName || !role || !invitationToken) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
       });
     }
 
-    console.log('Sending team invitation with logo:', companyLogoUrl);
+    console.log('Sending team invitation with token:', invitationToken);
 
     const result = await sendTeamInvitation({
       employeeEmail,
@@ -112,7 +112,8 @@ app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
       companyName,
       role,
       appUrl,
-      companyLogoUrl
+      companyLogoUrl,
+      invitationToken
     });
 
     res.json(result);

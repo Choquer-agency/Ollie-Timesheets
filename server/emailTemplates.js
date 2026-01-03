@@ -80,10 +80,13 @@ export const bookkeeperReportTemplate = (data) => {
 };
 
 export const teamInvitationTemplate = (data) => {
-  const { employeeName, companyName, role, appUrl, companyLogoUrl } = data;
+  const { employeeName, companyName, role, appUrl, companyLogoUrl, invitationToken } = data;
   
   // Use custom logo if provided, otherwise fall back to default Ollie logo
   const logoUrl = companyLogoUrl || 'https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg';
+  
+  // Create the invitation URL with token
+  const invitationUrl = `${appUrl}/accept-invitation?token=${invitationToken}`;
 
   return `
 <!DOCTYPE html>
@@ -138,7 +141,7 @@ export const teamInvitationTemplate = (data) => {
 
     <!-- CTA Button -->
     <div style="margin: 0 0 32px;">
-      <a href="${appUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <a href="${invitationUrl}" style="display: inline-block; background-color: #2CA01C; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         Join ${companyName}
       </a>
     </div>

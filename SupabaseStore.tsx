@@ -24,7 +24,7 @@ interface AppState {
   updateEntry: (entry: TimeEntry) => void;
   submitChangeRequest: (entry: TimeEntry) => void;
   deleteEntry: (entryId: string) => void;
-  addEmployee: (employee: Omit<Employee, 'id' | 'isActive'>) => void;
+  addEmployee: (employee: Omit<Employee, 'id' | 'isActive'>) => Promise<{ invitationToken?: string }>;
   updateEmployee: (id: string, updates: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
   toggleEmployeeStatus: (id: string) => void;
@@ -495,7 +495,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
     console.log('Adding employee to Supabase:', newEmp);
 
-    const { error } = await supabase
+    // Set invitation expiration to 7 days from now
+    const invitationExpiry = new Date();
+    invitationExpiry.setDate(invitationExpiry.getDate() + 7);
+
+    const { error, data: createdEmployee } = await supabase
       .from('employees')
       .insert({
         id: newEmp.id,
@@ -507,8 +511,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         hourly_rate: newEmp.hourlyRate || null,
         vacation_days_total: newEmp.vacationDaysTotal || 10,
         is_admin: newEmp.isAdmin,
-        is_active: true
-      });
+        is_active: true,
+        invitation_expires_at: invitationExpiry.toISOString()
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error('Supabase insert error:', error);
@@ -517,6 +524,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
     console.log('Employee added to database, updating local state');
     setEmployees(prev => [...prev, newEmp]);
+    
+    // Return the invitation token so it can be sent via email
+    return { invitationToken: createdEmployee?.invitation_token };
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {

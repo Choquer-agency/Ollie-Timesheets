@@ -100,7 +100,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       // Add employee to database
       console.log('Adding employee:', { name, email, role, rate, vacationDays, isAdmin });
       
-      await addEmployee({
+      const { invitationToken } = await addEmployee({
         name,
         email,
         role,
@@ -109,14 +109,15 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         isAdmin
       });
       
-      console.log('Employee added successfully');
+      console.log('Employee added successfully, invitation token:', invitationToken);
       
       // Send invitation email if email is provided
-      if (email) {
+      if (email && invitationToken) {
         try {
           console.log('Sending invitation with settings:', {
             companyName: settings.companyName,
-            companyLogoUrl: settings.companyLogoUrl
+            companyLogoUrl: settings.companyLogoUrl,
+            invitationToken
           });
           
           await sendTeamInvitation({
@@ -125,7 +126,8 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             companyName: settings.companyName,
             role,
             appUrl: window.location.origin,
-            companyLogoUrl: settings.companyLogoUrl
+            companyLogoUrl: settings.companyLogoUrl,
+            invitationToken
           });
           console.log('Invitation email sent successfully');
           setShowSuccess(true);
@@ -1839,9 +1841,15 @@ import { useAuth } from './AuthContext';
 import { Auth } from './pages/Auth';
 import { SupabaseStoreProvider, useSupabaseStore } from './SupabaseStore';
 import { OAuthSetup } from './pages/OAuthSetup';
+import { AcceptInvitation } from './pages/AcceptInvitation';
 
 const AppContent = () => {
   const { needsSetup, loading } = useSupabaseStore();
+
+  // Check if we're on the accept-invitation route
+  if (window.location.pathname === '/accept-invitation') {
+    return <AcceptInvitation />;
+  }
 
   // Show loading state while checking setup status
   if (loading) {
@@ -1866,6 +1874,11 @@ const AppContent = () => {
 
 const App = () => {
   const { user, loading } = useAuth();
+
+  // Check if we're on the accept-invitation route (allow access without auth)
+  if (window.location.pathname === '/accept-invitation') {
+    return <AcceptInvitation />;
+  }
 
   // Show loading state while checking auth
   if (loading) {

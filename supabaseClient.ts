@@ -56,6 +56,9 @@ export interface Database {
           vacation_days_total: number;
           is_admin: boolean;
           is_active: boolean;
+          invitation_token: string | null;
+          invitation_expires_at: string | null;
+          invitation_accepted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -70,6 +73,8 @@ export interface Database {
           vacation_days_total?: number;
           is_admin?: boolean;
           is_active?: boolean;
+          invitation_token?: string | null;
+          invitation_expires_at?: string | null;
         };
         Update: {
           name?: string;
@@ -79,6 +84,8 @@ export interface Database {
           vacation_days_total?: number;
           is_admin?: boolean;
           is_active?: boolean;
+          user_id?: string | null;
+          invitation_accepted_at?: string | null;
         };
       };
       time_entries: {
