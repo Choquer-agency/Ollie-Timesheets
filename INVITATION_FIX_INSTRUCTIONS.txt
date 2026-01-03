@@ -1,0 +1,105 @@
+INVITATION FLOW FIX - CRITICAL DATABASE POLICY UPDATE NEEDED
+============================================================
+
+PROBLEM IDENTIFIED:
+-------------------
+When employees accept an invitation and create their account, they are redirected to
+the "Let's setup your account" page (OAuthSetup) instead of the main app. This happens
+because the employee cannot read their own employee record due to missing RLS policies.
+
+ROOT CAUSE:
+-----------
+The employees table has this RLS policy:
+  CREATE POLICY "owner_full_access" ON employees
+  USING (owner_id = auth.uid())
+
+This only allows users to see employee records where owner_id equals their own user ID.
+But for employees, owner_id is the company OWNER's ID, not theirs!
+
+So when they log in:
+1. They query: SELECT * FROM employees WHERE user_id = auth.uid()
+2. RLS blocks this because owner_id != auth.uid()
+3. App thinks they have no employee record
+4. App redirects them to setup flow (thinking they're a new company owner)
+
+SOLUTION:
+---------
+You MUST run this SQL in your Supabase SQL Editor to add the missing policies:
+
+```sql
+-- Allow employees to SELECT their own employee record
+CREATE POLICY IF NOT EXISTS "employee_read_own_record"
+ON employees
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+-- Allow employees to SELECT their coworkers (same company)
+CREATE POLICY IF NOT EXISTS "employee_read_coworkers"
+ON employees
+FOR SELECT
+TO authenticated
+USING (
+  owner_id IN (
+    SELECT owner_id FROM employees WHERE user_id = auth.uid() LIMIT 1
+  )
+);
+```
+
+WHAT THIS DOES:
+---------------
+1. "employee_read_own_record" - Lets employees read records where user_id matches their auth.uid()
+2. "employee_read_coworkers" - Lets employees see other employees in their company
+
+These policies are SAFE because:
+- Employees can only SELECT (read), not modify
+- They can only see employees in their own company
+- Owners still have full access via the "owner_full_access" policy
+
+CODE CHANGES MADE:
+------------------
+1. AcceptInvitation.tsx:
+   - Added localStorage flag 'just_accepted_invitation' to track fresh signups
+   - Increased wait time before redirect to allow DB propagation
+   - Added session verification before redirect
+
+2. SupabaseStore.tsx:
+   - Added detection of 'just_accepted_invitation' flag
+   - Added retry logic for employee record lookup
+   - Added detailed console logging for debugging
+   - Better error handling
+
+TESTING STEPS:
+--------------
+1. Run the SQL commands above in Supabase SQL Editor
+2. As company owner, invite a new employee
+3. Have employee click invitation link
+4. Employee should set password and click "Join Team"
+5. Employee should be taken to the employee dashboard (NOT setup page)
+6. Check browser console for logs to verify employee record was found
+
+VERIFICATION:
+-------------
+To verify policies are installed, run this in Supabase SQL Editor:
+
+```sql
+SELECT 
+  tablename,
+  policyname,
+  cmd as operation
+FROM pg_policies
+WHERE tablename = 'employees'
+ORDER BY policyname;
+```
+
+You should see:
+- owner_full_access
+- employee_read_own_record
+- employee_read_coworkers
+- public_invitation_lookup
+
+If you're missing any, run the CREATE POLICY commands above.
+
+============================================================
+IMPORTANT: You MUST run the SQL commands before this fix will work!
+============================================================

@@ -98,15 +98,57 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           employeesError = result.error;
         } else {
           // Potential employee: first try to find their employee record
-          const { data: myEmployeeRecord } = await supabase
+          console.log('Looking for employee record for user:', user.id);
+          
+          // Check if this user just accepted an invitation
+          const justAcceptedInvitation = localStorage.getItem('just_accepted_invitation') === 'true';
+          if (justAcceptedInvitation) {
+            console.log('User just accepted invitation - will retry employee lookup with delay');
+            // Wait a moment for database replication
+            await new Promise(resolve => setTimeout(resolve, 500));
+            // Clear the flag
+            localStorage.removeItem('just_accepted_invitation');
+          }
+          
+          const { data: myEmployeeRecord, error: empLookupError } = await supabase
             .from('employees')
-            .select('owner_id')
+            .select('owner_id, id, email, user_id')
             .eq('user_id', user.id)
             .single();
           
-          if (myEmployeeRecord?.owner_id) {
+          console.log('Employee lookup result:', { myEmployeeRecord, empLookupError });
+          
+          // If not found and just accepted invitation, try one more time
+          if (!myEmployeeRecord && justAcceptedInvitation) {
+            console.log('Employee not found on first try after invitation, retrying...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const { data: retryRecord } = await supabase
+              .from('employees')
+              .select('owner_id, id, email, user_id')
+              .eq('user_id', user.id)
+              .single();
+            
+            if (retryRecord) {
+              console.log('Employee found on retry:', retryRecord);
+              // Use the retry result
+              resolvedOwnerId = retryRecord.owner_id;
+              const result = await supabase
+                .from('employees')
+                .select('*')
+                .eq('owner_id', retryRecord.owner_id)
+                .order('created_at', { ascending: true });
+              employeesData = result.data;
+              employeesError = result.error;
+              console.log('Loaded company employees:', employeesData?.length, 'employees');
+            } else {
+              console.log('Employee still not found on retry - user may need setup');
+              employeesData = [];
+              employeesError = null;
+            }
+          } else if (myEmployeeRecord?.owner_id) {
             // Found their employee record, load all employees from that owner
             resolvedOwnerId = myEmployeeRecord.owner_id; // Use the owner's ID
+            console.log('Found employee record, loading company employees with owner_id:', resolvedOwnerId);
             const result = await supabase
               .from('employees')
               .select('*')
@@ -114,8 +156,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               .order('created_at', { ascending: true });
             employeesData = result.data;
             employeesError = result.error;
+            console.log('Loaded company employees:', employeesData?.length, 'employees');
           } else {
             // Not found as employee either - they might need to complete setup
+            console.log('No employee record found - user may need setup');
             employeesData = [];
             employeesError = null;
           }

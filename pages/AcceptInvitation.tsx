@@ -178,6 +178,23 @@ export const AcceptInvitation: React.FC = () => {
       
       console.log('Employee linked and verified:', verifyData);
 
+      // CRITICAL: Store a flag so the app knows this is a fresh employee signup
+      // This helps the app distinguish between:
+      // 1. New company owner who needs setup (needsSetup = true)
+      // 2. New employee who just accepted invitation (needsSetup = false, but just signed up)
+      localStorage.setItem('just_accepted_invitation', 'true');
+      
+      // Wait a bit longer for all database updates to propagate
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Ensure we have a valid session before redirecting
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session not established. Please try logging in.');
+      }
+      
+      console.log('Session confirmed, redirecting to app...');
+
       // Force a hard refresh to reload all state
       window.location.replace('/');
     } catch (err: any) {
