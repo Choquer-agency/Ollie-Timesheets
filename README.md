@@ -139,11 +139,37 @@ Ollie Timesheet/
 
 ## 🔐 Security
 
-- **Row Level Security (RLS)** - Database-level access control
+Ollie Timesheets implements **multi-layer security** to protect sensitive employee data:
+
+- **Row Level Security (RLS)** - Database-level access control (see `supabase-security-policies.sql`)
 - **JWT Authentication** - Secure user sessions via Supabase
+- **Application-Level Filtering** - Hourly rates are NEVER sent to non-admin users
+- **Role-Based Access Control** - Employees cannot access admin features
 - **API Key Protection** - Backend server keeps Resend key secure
 - **Rate Limiting** - Prevents email spam
 - **Email Validation** - Verifies all email addresses before sending
+
+### 🛡️ Employee Data Protection
+
+**Critical Security Feature:** Employees CANNOT see other employees' hourly rates.
+
+This is enforced at THREE levels:
+1. **Database RLS Policies** - Prevents unauthorized queries
+2. **Application Logic** - Filters `hourlyRate` before it reaches the browser
+3. **UI Access Control** - Admin-only settings and features
+
+📖 **For detailed security documentation, see [`SECURITY.md`](SECURITY.md)**
+
+### 🚨 Security Setup Required
+
+**IMPORTANT:** Before using in production, you MUST apply the RLS policies:
+
+1. Go to your Supabase Dashboard → SQL Editor
+2. Copy the contents of `supabase-security-policies.sql`
+3. Run the SQL script
+4. Verify no errors occurred
+
+Without RLS policies, employees may be able to see sensitive data!
 
 ## 🎨 Design System
 

@@ -162,7 +162,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               name: emp.name,
               email: emp.email || undefined,
               role: emp.role,
-              hourlyRate: emp.hourly_rate || undefined,
+              // SECURITY: Only expose hourly rates to owners/admins
+              // For employees, set hourlyRate to undefined to prevent exposure
+              hourlyRate: userIsOwner ? (emp.hourly_rate || undefined) : undefined,
               vacationDaysTotal: emp.vacation_days_total,
               isAdmin: emp.is_admin,
               isActive: emp.is_active
@@ -211,7 +213,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        // Load time entries (last 30 days) - ONLY for this owner
+        // Load time entries (last 30 days)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -221,14 +223,15 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         // For employees: use the owner_id from their employee record
         let queryOwnerId = resolvedOwnerId;
 
-        // For employees, only load their own entries
+        // SECURITY: For employees, ONLY load their own entries
+        // For owners/admins, load all entries for their organization
         let entriesQuery = supabase
           .from('time_entries')
           .select('*, breaks(*)')
           .eq('owner_id', queryOwnerId)
           .gte('date', thirtyDaysAgoStr);
         
-        // If user is an employee, filter to only their entries
+        // CRITICAL: If user is an employee, filter to ONLY their entries
         if (mappedUserEmployee && !userIsOwner) {
           entriesQuery = entriesQuery.eq('employee_id', mappedUserEmployee.id);
         }
