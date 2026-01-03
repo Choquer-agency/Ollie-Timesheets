@@ -205,38 +205,67 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
         </div>
 
         {/* Change Request Banner (Admin Only) */}
-        {!isEmployeeView && entry?.changeRequest && (
-            <div className="mb-6 p-4 bg-[#FFF7ED] border border-[#FDBA74] rounded-2xl">
-                <div className="mb-3">
-                    <h4 className="font-bold text-[#263926] text-base">Change Requested</h4>
-                    <p className="text-sm text-[#263926]">Showing employee's requested changes. Original values below for reference.</p>
-                </div>
-                <div className="mt-3 pt-3 border-t border-[#FDBA74]/30 space-y-2 text-xs text-[#6B6B6B]">
-                    <div className="flex justify-between items-center">
-                        <span className="font-medium">Original Clock In:</span>
-                        <span className="font-mono">{formatTimeForDisplay(entry.clockIn)}</span>
+        {!isEmployeeView && entry?.changeRequest && (() => {
+            // Calculate the time difference between original and requested
+            const originalStats = calculateStats(entry);
+            const requestedStats = calculateStats(entry.changeRequest);
+            const timeDiffMinutes = requestedStats.totalWorkedMinutes - originalStats.totalWorkedMinutes;
+            const isIncrease = timeDiffMinutes > 0;
+            const absMinutes = Math.abs(timeDiffMinutes);
+            const hours = Math.floor(absMinutes / 60);
+            const minutes = absMinutes % 60;
+            
+            let adjustmentText = '';
+            if (timeDiffMinutes === 0) {
+                adjustmentText = 'No change';
+            } else {
+                const sign = isIncrease ? '+' : '-';
+                if (hours > 0 && minutes > 0) {
+                    adjustmentText = `${sign}${hours} ${hours === 1 ? 'hour' : 'hours'} ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+                } else if (hours > 0) {
+                    adjustmentText = `${sign}${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+                } else {
+                    adjustmentText = `${sign}${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
+                }
+            }
+            
+            return (
+                <div className="mb-6 p-4 bg-[#FFF7ED] border border-[#FDBA74] rounded-2xl">
+                    <div className="mb-3">
+                        <h4 className="font-bold text-[#263926] text-base">Change Requested</h4>
+                        <p className="text-sm text-[#263926]">Showing employee's requested changes. Original values below for reference.</p>
                     </div>
-                    <div className="flex justify-between items-center">
-                        <span className="font-medium">Original Clock Out:</span>
-                        <span className="font-mono">{formatTimeForDisplay(entry.clockOut)}</span>
+                    <div className="mt-3 pt-3 border-t border-[#FDBA74]/30 space-y-2 text-xs text-[#6B6B6B]">
+                        <div className="flex justify-between items-center">
+                            <span className="font-medium">Original Clock In:</span>
+                            <span className="font-mono">{formatTimeForDisplay(entry.clockIn)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="font-medium">Original Clock Out:</span>
+                            <span className="font-mono">{formatTimeForDisplay(entry.clockOut)}</span>
+                        </div>
+                        <div className={`flex justify-between items-center pt-1 border-t border-[#FDBA74]/20 ${isIncrease ? 'text-emerald-600' : timeDiffMinutes < 0 ? 'text-rose-600' : 'text-[#6B6B6B]'}`}>
+                            <span className="font-bold">Total Time Adjustment:</span>
+                            <span className="font-mono font-bold">{adjustmentText}</span>
+                        </div>
+                        {entry.breaks && entry.breaks.length > 0 && (
+                            <div className="flex justify-between items-center">
+                                <span className="font-medium">Original Breaks:</span>
+                                <span className="font-mono">{entry.breaks.length} break(s)</span>
+                            </div>
+                        )}
+                        {(entry.isSickDay || entry.isVacationDay) && (
+                            <div className="flex justify-between items-center">
+                                <span className="font-medium">Original Status:</span>
+                                <span className="font-semibold">
+                                    {entry.isSickDay ? 'Sick Day' : entry.isVacationDay ? 'Vacation' : 'Regular Day'}
+                                </span>
+                            </div>
+                        )}
                     </div>
-                    {entry.breaks && entry.breaks.length > 0 && (
-                        <div className="flex justify-between items-center">
-                            <span className="font-medium">Original Breaks:</span>
-                            <span className="font-mono">{entry.breaks.length} break(s)</span>
-                        </div>
-                    )}
-                    {(entry.isSickDay || entry.isVacationDay) && (
-                        <div className="flex justify-between items-center">
-                            <span className="font-medium">Original Status:</span>
-                            <span className="font-semibold">
-                                {entry.isSickDay ? 'Sick Day' : entry.isVacationDay ? 'Vacation' : 'Regular Day'}
-                            </span>
-                        </div>
-                    )}
                 </div>
-            </div>
-        )}
+            );
+        })()}
 
         {/* Change Request Info (Employee Only) */}
         {isEmployeeView && entry?.changeRequest && (
