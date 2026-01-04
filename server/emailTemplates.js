@@ -221,41 +221,43 @@ export const changeRequestNotificationTemplate = (data) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Timecard Change Request - ${employeeName}</title>
+  <title>Time Adjustment Request</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #FAF9F5;">
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     
     <!-- Header -->
     <div style="text-align: center; margin-bottom: 32px;">
-      <div style="width: 64px; height: 64px; background: #EEF2FF; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-        <span style="font-size: 32px;">📋</span>
-      </div>
-      <h1 style="margin: 0; font-size: 28px; color: #263926; font-weight: 700;">Timecard change request</h1>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 16px;">
+        <tr>
+          <td>
+            <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; margin: 0 auto;">
+          </td>
+        </tr>
+      </table>
+      <h1 style="margin: 0; font-size: 24px; color: #263926; font-weight: 700;">Time Adjustment Request</h1>
     </div>
 
     <!-- Message Card -->
     <div style="background: white; border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid #F6F5F1;">
-      <p style="margin: 0 0 16px; color: #263926; font-size: 18px;">Hi ${adminName},</p>
-      <p style="margin: 0 0 24px; color: #484848; line-height: 1.6;">
-        <strong>${employeeName}</strong> has submitted a change request for their timecard on <strong>${date}</strong>.
+      <p style="margin: 0 0 16px; color: #263926; font-size: 16px;">Hi ${adminName},</p>
+      <p style="margin: 0 0 24px; color: #484848; line-height: 1.6; font-size: 15px;">
+        <strong>${employeeName}</strong> requested a time adjustment for <strong>${date}</strong>:
       </p>
       
       <!-- Request Details -->
       <div style="background: #F0EEE6; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-        <p style="margin: 0 0 8px; color: #6B6B6B; font-size: 12px; font-weight: 600; text-transform: uppercase;">Requested changes</p>
-        <p style="margin: 0; color: #263926; font-size: 14px; line-height: 1.6;">${requestSummary}</p>
+        <p style="margin: 0; color: #263926; font-size: 15px; line-height: 1.6;">${requestSummary}</p>
       </div>
       
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${appUrl}" style="display: inline-block; background: #2CA01C; color: white; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 16px;">Review request</a>
+      <div style="text-align: center; margin: 24px 0 0;">
+        <a href="${appUrl}" style="display: inline-block; background: #2CA01C; color: white; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px;">Review Request</a>
       </div>
     </div>
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
       <p style="margin: 0;">Sent from Ollie Timesheets</p>
-      <p style="margin: 8px 0 0;">This is an automated notification.</p>
     </div>
 
   </div>

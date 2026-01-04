@@ -734,11 +734,40 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       // Send notification
       const employee = employees.find(emp => emp.id === proposedEntry.employeeId);
       if (employee && settings.ownerEmail) {
-        const requestSummary = proposedEntry.isSickDay 
-          ? 'Marked as sick day' 
-          : proposedEntry.isVacationDay 
-          ? 'Marked as vacation day' 
-          : `Clock in: ${proposedEntry.clockIn ? new Date(proposedEntry.clockIn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}, Clock out: ${proposedEntry.clockOut ? new Date(proposedEntry.clockOut).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}`;
+        let requestSummary = '';
+        
+        if (proposedEntry.isSickDay) {
+          requestSummary = 'Sick day';
+        } else if (proposedEntry.isVacationDay) {
+          requestSummary = 'Vacation day';
+        } else {
+          const clockInTime = proposedEntry.clockIn 
+            ? new Date(proposedEntry.clockIn).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) 
+            : 'Not set';
+          const clockOutTime = proposedEntry.clockOut 
+            ? new Date(proposedEntry.clockOut).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) 
+            : 'Not set';
+          
+          requestSummary = `Clock in: ${clockInTime} • Clock out: ${clockOutTime}`;
+          
+          // Add breaks information if any
+          if (proposedEntry.breaks && proposedEntry.breaks.length > 0) {
+            const breakCount = proposedEntry.breaks.length;
+            const totalBreakMinutes = proposedEntry.breaks.reduce((total, b) => {
+              if (b.startTime && b.endTime) {
+                const duration = (new Date(b.endTime).getTime() - new Date(b.startTime).getTime()) / (1000 * 60);
+                return total + duration;
+              }
+              return total;
+            }, 0);
+            const breakHours = Math.floor(totalBreakMinutes / 60);
+            const breakMins = Math.round(totalBreakMinutes % 60);
+            const breakDuration = breakHours > 0 
+              ? `${breakHours}h ${breakMins}m` 
+              : `${breakMins}m`;
+            requestSummary += ` • ${breakCount} break${breakCount > 1 ? 's' : ''} (${breakDuration})`;
+          }
+        }
         
         sendChangeRequestNotification({
           adminEmail: settings.ownerEmail,
