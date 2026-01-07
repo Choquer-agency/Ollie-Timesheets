@@ -1121,13 +1121,17 @@ const EmployeeDashboard = () => {
           )}
 
           {status === 'working' && (
-            <div className="space-y-3">
-              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="w-full h-[90px] text-2xl bg-orange-200 hover:bg-orange-300 text-orange-900 focus:ring-orange-400">
+            <div className="space-y-3 flex flex-col items-center">
+              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="w-full h-[90px] text-2xl bg-[#ECE5FF] hover:bg-[#E0D4FF] text-[#651CA0] focus:ring-[#651CA0]">
                 Start Break
               </Button>
-              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="sm" className="w-full p-4 text-sm bg-red-200 hover:bg-red-300 text-red-800 focus:ring-red-300">
+              <button 
+                onClick={() => clockOut(currentUser.id)}
+                className="inline-block h-8 px-4 py-2 text-xs font-bold leading-4 tracking-[0.3px] uppercase text-center bg-[#FFE5E5] text-[#C10000] rounded-full border-0 [-webkit-font-smoothing:antialiased] [-webkit-tap-highlight-color:transparent] [font-family:Inter,system-ui,-apple-system,sans-serif] box-border"
+                style={{ fontSize: '12px', lineHeight: '16px' }}
+              >
                 Clock Out
-              </Button>
+              </button>
             </div>
           )}
 
