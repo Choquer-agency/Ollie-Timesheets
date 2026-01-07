@@ -1124,7 +1124,8 @@ const EmployeeDashboard = () => {
             <div className="space-y-3 flex flex-col items-center">
               <button 
                 onClick={() => startBreak(currentUser.id)}
-                className="w-full h-[90px] text-2xl font-bold bg-[#EBE5FF] hover:bg-[#E0D4FF] text-[#651CA0] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#651CA0] focus:ring-offset-1"
+                className="w-full h-[90px] font-bold bg-[#EBE5FF] hover:bg-[#E0D4FF] text-[#651CA0] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#651CA0] focus:ring-offset-1"
+                style={{ fontSize: '20px' }}
               >
                 Start Break
               </button>
