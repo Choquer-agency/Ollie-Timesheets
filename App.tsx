@@ -1122,12 +1122,15 @@ const EmployeeDashboard = () => {
 
           {status === 'working' && (
             <div className="space-y-3 flex flex-col items-center">
-              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="w-full h-[90px] text-2xl bg-[#EBE5FF] hover:bg-[#E0D4FF] text-[#651CA0] focus:ring-[#651CA0]">
+              <button 
+                onClick={() => startBreak(currentUser.id)}
+                className="w-full h-[90px] text-2xl font-bold bg-[#EBE5FF] hover:bg-[#E0D4FF] text-[#651CA0] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#651CA0] focus:ring-offset-1"
+              >
                 Start Break
-              </Button>
+              </button>
               <button 
                 onClick={() => clockOut(currentUser.id)}
-                className="inline-block h-8 px-9 py-2 text-xs font-bold leading-4 tracking-[0.3px] text-center bg-[#FFE5E5] text-[#C10000] rounded-full border-0 [-webkit-font-smoothing:antialiased] [-webkit-tap-highlight-color:transparent] [font-family:Inter,system-ui,-apple-system,sans-serif] box-border"
+                className="inline-block h-[38px] px-9 py-2 text-xs font-bold leading-4 tracking-[0.3px] text-center bg-[#FFE5E5] text-[#C10000] rounded-full border-0 [-webkit-font-smoothing:antialiased] [-webkit-tap-highlight-color:transparent] [font-family:Inter,system-ui,-apple-system,sans-serif] box-border"
                 style={{ fontSize: '12px', lineHeight: '16px' }}
               >
                 Clock out
