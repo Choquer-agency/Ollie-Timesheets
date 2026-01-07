@@ -1121,11 +1121,11 @@ const EmployeeDashboard = () => {
           )}
 
           {status === 'working' && (
-            <div className="grid grid-cols-2 gap-4">
-              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="h-20">
+            <div className="space-y-3">
+              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="w-full h-32 text-2xl bg-orange-200 hover:bg-orange-300 text-orange-900 focus:ring-orange-400">
                 Start Break
               </Button>
-              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="lg" className="h-20 bg-rose-900 hover:bg-rose-800 focus:ring-rose-900">
+              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="sm" className="w-full h-12 text-sm bg-red-200 hover:bg-red-300 text-red-800 focus:ring-red-300">
                 Clock Out
               </Button>
             </div>

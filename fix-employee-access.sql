@@ -88,3 +88,4 @@ ORDER BY tablename, policyname;
 -- 5. Run STEP 5 to verify RLS policies are in place
 -- ================================================
 
+

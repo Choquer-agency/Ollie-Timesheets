@@ -56,3 +56,4 @@ SELECT COUNT(*) as remaining_users FROM auth.users;
 -- 4. Set up your company fresh
 -- ================================================
 
+

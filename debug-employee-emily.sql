@@ -68,3 +68,4 @@ ORDER BY s.created_at DESC;
 -- Query 4: Should show the business owner's company info
 -- ================================================
 
+

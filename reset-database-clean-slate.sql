@@ -142,3 +142,4 @@ BEGIN
   RAISE NOTICE '🚀 Then log in to the app and start fresh!';
 END $$;
 
+
