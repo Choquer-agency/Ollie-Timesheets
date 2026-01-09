@@ -452,6 +452,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     >
       <div 
         className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[80vh] flex overflow-hidden animate-slide-in-right"
+        style={{ transform: 'scale(0.75)' }}
         onClick={e => e.stopPropagation()}
       >
         
