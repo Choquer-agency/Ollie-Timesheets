@@ -79,6 +79,9 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         const userIsOwner = settingsData && !settingsError;
         setIsOwner(userIsOwner);
         
+        // Track if user is an admin employee (will be set later when we find their employee record)
+        let isAdminEmployee = false;
+        
         console.log('User role check:', { userId: user.id, userIsOwner });
 
         // Load employees
@@ -178,6 +181,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             // Check if this employee is an admin
             if (myEmployeeRecord.is_admin) {
               // Admin employee: load ALL employees from their organization
+              isAdminEmployee = true;
+              console.log('✓ User identified as ADMIN EMPLOYEE');
               console.log('Admin employee - loading all team members');
               const result = await supabase
                 .from('employees')
@@ -249,8 +254,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               email: emp.email || undefined,
               role: emp.role,
               // SECURITY: Only expose hourly rates to owners/admins
-              // For employees, set hourlyRate to undefined to prevent exposure
-              hourlyRate: userIsOwner ? (emp.hourly_rate || undefined) : undefined,
+              // For regular employees, set hourlyRate to undefined to prevent exposure
+              hourlyRate: (userIsOwner || isAdminEmployee) ? (emp.hourly_rate || undefined) : undefined,
               vacationDaysTotal: emp.vacation_days_total,
               isAdmin: emp.is_admin,
               isActive: emp.is_active,
@@ -278,12 +283,21 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           userId: user.id,
           userEmail: user.email,
           userIsOwner,
+          isAdminEmployee,
           employeesDataCount: employeesData?.length,
           hasEmployeeMatch: !!mappedUserEmployee,
           employeeMatchById: !!employeeMatchById,
           employeeMatchByEmail: !!employeeMatchByEmail,
           resolvedEmployeeRecord: resolvedEmployeeRecord ? { id: resolvedEmployeeRecord.id, user_id: resolvedEmployeeRecord.user_id, email: resolvedEmployeeRecord.email, is_admin: resolvedEmployeeRecord.is_admin } : null,
           isAdmin: mappedUserEmployee?.isAdmin
+        });
+
+        console.log('🔍 Role determination:', {
+          userIsOwner,
+          isAdminEmployee,
+          hasEmployeeRecord: !!mappedUserEmployee,
+          employeeIsAdmin: mappedUserEmployee?.isAdmin,
+          willSetAsAdmin: userIsOwner || (mappedUserEmployee && mappedUserEmployee.isAdmin)
         });
 
         // Automatically set currentUser based on role
@@ -325,7 +339,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           .gte('date', thirtyDaysAgoStr);
         
         // CRITICAL: If user is a regular employee (not admin), filter to ONLY their entries
-        if (mappedUserEmployee && !mappedUserEmployee.isAdmin && !userIsOwner) {
+        if (mappedUserEmployee && !userIsOwner && !isAdminEmployee) {
           entriesQuery = entriesQuery.eq('employee_id', mappedUserEmployee.id);
         }
         
