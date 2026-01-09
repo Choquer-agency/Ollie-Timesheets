@@ -100,7 +100,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       // Add employee to database
       console.log('Adding employee:', { name, email, role, rate, vacationDays, isAdmin });
       
-      await addEmployee({
+      const { invitationToken } = await addEmployee({
         name,
         email,
         role,
@@ -109,14 +109,15 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         isAdmin
       });
       
-      console.log('Employee added successfully');
+      console.log('Employee added successfully, invitation token:', invitationToken);
       
       // Send invitation email if email is provided
-      if (email) {
+      if (email && invitationToken) {
         try {
           console.log('Sending invitation with settings:', {
             companyName: settings.companyName,
-            companyLogoUrl: settings.companyLogoUrl
+            companyLogoUrl: settings.companyLogoUrl,
+            invitationToken
           });
           
           await sendTeamInvitation({
@@ -125,7 +126,8 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             companyName: settings.companyName,
             role,
             appUrl: window.location.origin,
-            companyLogoUrl: settings.companyLogoUrl
+            companyLogoUrl: settings.companyLogoUrl,
+            invitationToken
           });
           console.log('Invitation email sent successfully');
           setShowSuccess(true);
@@ -272,7 +274,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 };
 
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, updateEmployee } = useSupabaseStore();
+  const { settings, updateSettings, employees, updateEmployee, currentUser } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -290,6 +292,10 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   // Local state for form fields
   const [localSettings, setLocalSettings] = useState(settings);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  // Detect if current user is an admin employee (not the business owner)
+  const isAdminEmployee = currentUser !== 'ADMIN' && currentUser.isAdmin;
+  const currentEmployee = isAdminEmployee ? currentUser : null;
 
   // Filter employees based on active/past toggle
   const filteredEmployees = employees.filter(emp => 
@@ -486,11 +492,22 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                     <div className="space-y-4">
                         <div>
                             <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Your Name</label>
-                            <input 
-                                value={localSettings.ownerName}
-                                onChange={e => setLocalSettings({...localSettings, ownerName: e.target.value})}
-                                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-                            />
+                            {isAdminEmployee ? (
+                                <>
+                                    <input 
+                                        value={currentEmployee?.name || ''}
+                                        disabled
+                                        className="w-full p-3 border border-[#F6F5F1] rounded-2xl bg-[#FAF9F5] text-[#6B6B6B] cursor-not-allowed" 
+                                    />
+                                    <p className="text-xs text-[#9CA3AF] mt-2">To update your name, ask the business owner to edit it in Team Management.</p>
+                                </>
+                            ) : (
+                                <input 
+                                    value={localSettings.ownerName}
+                                    onChange={e => setLocalSettings({...localSettings, ownerName: e.target.value})}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Company Name</label>
@@ -502,12 +519,24 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Your Email</label>
-                            <input 
-                                type="email"
-                                value={localSettings.ownerEmail}
-                                onChange={e => setLocalSettings({...localSettings, ownerEmail: e.target.value})}
-                                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-                            />
+                            {isAdminEmployee ? (
+                                <>
+                                    <input 
+                                        type="email"
+                                        value={currentEmployee?.email || ''}
+                                        disabled
+                                        className="w-full p-3 border border-[#F6F5F1] rounded-2xl bg-[#FAF9F5] text-[#6B6B6B] cursor-not-allowed" 
+                                    />
+                                    <p className="text-xs text-[#9CA3AF] mt-2">To update your email, ask the business owner to edit it in Team Management.</p>
+                                </>
+                            ) : (
+                                <input 
+                                    type="email"
+                                    value={localSettings.ownerEmail}
+                                    onChange={e => setLocalSettings({...localSettings, ownerEmail: e.target.value})}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                                />
+                            )}
                         </div>
                         
                         <div>
