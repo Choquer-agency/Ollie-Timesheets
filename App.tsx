@@ -1880,6 +1880,7 @@ const MainLayout = () => {
 // Import auth components and Supabase store
 import { useAuth } from './AuthContext';
 import { Auth } from './pages/Auth';
+import { AcceptInvitation } from './pages/AcceptInvitation';
 import { SupabaseStoreProvider } from './SupabaseStore';
 
 const App = () => {
@@ -1895,6 +1896,15 @@ const App = () => {
         </div>
       </div>
     );
+  }
+
+  // Check if this is an invitation acceptance route
+  const path = window.location.pathname;
+  const isInvitationRoute = path === '/accept-invitation';
+  
+  // If on invitation route and not authenticated, show invitation page
+  if (isInvitationRoute && !user) {
+    return <AcceptInvitation />;
   }
 
   // If not authenticated, show auth pages
