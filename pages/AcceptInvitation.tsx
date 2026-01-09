@@ -196,11 +196,14 @@ export const AcceptInvitation: React.FC = () => {
         throw new Error('Session not established. Please try logging in.');
       }
       
-      console.log('Session confirmed, redirecting to employee dashboard...');
+      console.log('Session confirmed, redirecting to employee view...');
 
-      // Redirect to dedicated employee dashboard route
-      // This bypasses the SupabaseStore role detection that was causing 406 errors
-      window.location.replace('/employee/dashboard');
+      // Set a flag so the app knows this user just accepted an invitation
+      localStorage.setItem('just_accepted_invitation', 'true');
+
+      // Redirect to employee view
+      // The role detection in SupabaseStore will handle routing them correctly
+      window.location.replace('/employee');
     } catch (err: any) {
       console.error('Error accepting invitation:', err);
       setError(err.message || 'Failed to create account');

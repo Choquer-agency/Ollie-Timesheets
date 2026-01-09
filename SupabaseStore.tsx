@@ -53,11 +53,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [needsSetup, setNeedsSetup] = useState(false);
   const [ownerId, setOwnerId] = useState<string | null>(null);
 
-  // Protected setCurrentUser - DISABLED for security
-  // Users cannot switch views - admins stay in admin view, employees stay in employee view
+  // setCurrentUser is disabled - routing enforces role-based access
+  // Users cannot manually switch views
   const setCurrentUser = (user: Employee | 'ADMIN') => {
-    console.warn('setCurrentUser is disabled - users cannot switch views');
-    // Do nothing - view switching is not allowed
+    // No-op: View switching is not allowed
   };
 
   // Load data from Supabase when user logs in
@@ -69,19 +68,6 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const loadData = async () => {
       try {
-        // Check if this is an employee coming from invitation acceptance
-        const isEmployeeFlag = localStorage.getItem('is_employee');
-        const employeeId = localStorage.getItem('employee_id');
-        const employeeOwnerId = localStorage.getItem('employee_owner_id');
-        
-        if (isEmployeeFlag === 'true' && employeeId && employeeOwnerId) {
-          console.log('Employee flag detected - redirecting to employee dashboard');
-          // This user just accepted an invitation, redirect to employee dashboard
-          // to bypass the role detection that causes RLS issues
-          window.location.href = '/employee/dashboard';
-          return;
-        }
-
         // First, check if user is owner or employee to determine which owner_id to use for settings
         const { data: settingsData, error: settingsError } = await supabase
           .from('settings')
@@ -185,18 +171,33 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           }
           
           if (myEmployeeRecord?.owner_id) {
-            // Found their employee record - employee only needs their own record
+            // Found their employee record
             resolvedOwnerId = myEmployeeRecord.owner_id;
-            console.log('Found employee record for:', myEmployeeRecord.id);
-            // Employee only loads their OWN record, not all company employees
-            const { data: fullRecord } = await supabase
-              .from('employees')
-              .select('*')
-              .eq('user_id', user.id)
-              .single();
-            employeesData = fullRecord ? [fullRecord] : [];
-            employeesError = null;
-            console.log('Loaded employee own record:', fullRecord?.name);
+            console.log('Found employee record for:', myEmployeeRecord.id, 'is_admin:', myEmployeeRecord.is_admin);
+            
+            // Check if this employee is an admin
+            if (myEmployeeRecord.is_admin) {
+              // Admin employee: load ALL employees from their organization
+              console.log('Admin employee - loading all team members');
+              const result = await supabase
+                .from('employees')
+                .select('*')
+                .eq('owner_id', resolvedOwnerId)
+                .order('created_at', { ascending: true });
+              employeesData = result.data;
+              employeesError = result.error;
+            } else {
+              // Regular employee: only loads their OWN record
+              console.log('Regular employee - loading own record only');
+              const { data: fullRecord } = await supabase
+                .from('employees')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+              employeesData = fullRecord ? [fullRecord] : [];
+              employeesError = null;
+            }
+            console.log('Loaded employee data:', employeesData?.length, 'record(s)');
           } else {
             // Not found as employee either - they might need to complete setup
             console.log('No employee record found - user may need setup');
@@ -281,15 +282,20 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           hasEmployeeMatch: !!mappedUserEmployee,
           employeeMatchById: !!employeeMatchById,
           employeeMatchByEmail: !!employeeMatchByEmail,
-          resolvedEmployeeRecord: resolvedEmployeeRecord ? { id: resolvedEmployeeRecord.id, user_id: resolvedEmployeeRecord.user_id, email: resolvedEmployeeRecord.email } : null
+          resolvedEmployeeRecord: resolvedEmployeeRecord ? { id: resolvedEmployeeRecord.id, user_id: resolvedEmployeeRecord.user_id, email: resolvedEmployeeRecord.email, is_admin: resolvedEmployeeRecord.is_admin } : null,
+          isAdmin: mappedUserEmployee?.isAdmin
         });
 
         // Automatically set currentUser based on role
+        // CRITICAL: Check is_admin field for both owners and employees
         if (userIsOwner) {
-          // Owner can access admin view
+          // Business owner - always gets admin access
+          setCurrentUserState('ADMIN');
+        } else if (mappedUserEmployee && mappedUserEmployee.isAdmin) {
+          // Employee with admin privileges - gets admin access
           setCurrentUserState('ADMIN');
         } else if (mappedUserEmployee) {
-          // Employee can only access their own account
+          // Regular employee - only accesses their own account
           setCurrentUserState(mappedUserEmployee);
         } else {
           // User has no settings record and no employee record
@@ -310,7 +316,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         // For employees: use the owner_id from their employee record
         let queryOwnerId = resolvedOwnerId;
 
-        // SECURITY: For employees, ONLY load their own entries
+        // SECURITY: For regular employees, ONLY load their own entries
         // For owners/admins, load all entries for their organization
         let entriesQuery = supabase
           .from('time_entries')
@@ -318,8 +324,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           .eq('owner_id', queryOwnerId)
           .gte('date', thirtyDaysAgoStr);
         
-        // CRITICAL: If user is an employee, filter to ONLY their entries
-        if (mappedUserEmployee && !userIsOwner) {
+        // CRITICAL: If user is a regular employee (not admin), filter to ONLY their entries
+        if (mappedUserEmployee && !mappedUserEmployee.isAdmin && !userIsOwner) {
           entriesQuery = entriesQuery.eq('employee_id', mappedUserEmployee.id);
         }
         

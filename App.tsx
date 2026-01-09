@@ -100,7 +100,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       // Add employee to database
       console.log('Adding employee:', { name, email, role, rate, vacationDays, isAdmin });
       
-      const { invitationToken } = await addEmployee({
+      await addEmployee({
         name,
         email,
         role,
@@ -109,15 +109,14 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         isAdmin
       });
       
-      console.log('Employee added successfully, invitation token:', invitationToken);
+      console.log('Employee added successfully');
       
       // Send invitation email if email is provided
-      if (email && invitationToken) {
+      if (email) {
         try {
           console.log('Sending invitation with settings:', {
             companyName: settings.companyName,
-            companyLogoUrl: settings.companyLogoUrl,
-            invitationToken
+            companyLogoUrl: settings.companyLogoUrl
           });
           
           await sendTeamInvitation({
@@ -126,8 +125,7 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
             companyName: settings.companyName,
             role,
             appUrl: window.location.origin,
-            companyLogoUrl: settings.companyLogoUrl,
-            invitationToken
+            companyLogoUrl: settings.companyLogoUrl
           });
           console.log('Invitation email sent successfully');
           setShowSuccess(true);
@@ -274,13 +272,11 @@ const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 };
 
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, updateEmployee, resendInvitation } = useSupabaseStore();
+  const { settings, updateSettings, employees, updateEmployee } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [showPastEmployees, setShowPastEmployees] = useState(false);
-  const [resendingInviteId, setResendingInviteId] = useState<string | null>(null);
-  const [inviteResendSuccess, setInviteResendSuccess] = useState<string | null>(null);
   
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -355,32 +351,6 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     } catch (error) {
       console.error('Failed to archive/restore employee:', error);
       alert('Failed to update employee. Please try again.');
-    }
-  };
-
-  const handleResendInvitation = async (employee: Employee, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click from opening edit modal
-    
-    if (!employee.email) {
-      alert('This employee has no email address on file.');
-      return;
-    }
-
-    if (employee.userId) {
-      alert('This employee has already created their account.');
-      return;
-    }
-
-    try {
-      setResendingInviteId(employee.id);
-      await resendInvitation(employee.id);
-      setInviteResendSuccess(employee.id);
-      setTimeout(() => setInviteResendSuccess(null), 3000);
-    } catch (error: any) {
-      console.error('Failed to resend invitation:', error);
-      alert(`Failed to resend invitation: ${error.message || 'Please try again.'}`);
-    } finally {
-      setResendingInviteId(null);
     }
   };
 
@@ -666,10 +636,10 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                                             <td className="px-6 py-4 text-right">
                                                 {emp.isAdmin ? (
                                                     <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">Admin</span>
-                                                ) : emp.userId ? (
+                                                ) : emp.isActive ? (
                                                     <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Active</span>
                                                 ) : (
-                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">Pending</span>
+                                                    <span className="px-3 py-1 bg-[#E5E3DA] text-[#6B6B6B] rounded-full text-xs font-bold">Past</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -776,25 +746,6 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         </div>
 
                         <div className="flex gap-3 mt-8 pt-6 border-t border-[#F6F5F1]">
-                            {!editingEmployee?.userId && editingEmployee?.email && editingEmployee?.isActive && (
-                                <button
-                                    onClick={(e) => editingEmployee && handleResendInvitation(editingEmployee, e)}
-                                    disabled={resendingInviteId === editingEmployee?.id}
-                                    className={`px-4 py-2 text-sm font-medium rounded-2xl transition-colors ${
-                                        inviteResendSuccess === editingEmployee?.id
-                                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                            : resendingInviteId === editingEmployee?.id
-                                            ? 'bg-[#E5E3DA] text-[#9CA3AF] cursor-not-allowed'
-                                            : 'text-[#2CA01C] hover:bg-emerald-50'
-                                    }`}
-                                >
-                                    {inviteResendSuccess === editingEmployee?.id 
-                                        ? '✓ Invitation Sent!' 
-                                        : resendingInviteId === editingEmployee?.id 
-                                        ? 'Sending...' 
-                                        : '📧 Resend Invitation'}
-                                </button>
-                            )}
                             <button
                                 onClick={handleArchiveEmployee}
                                 className={`px-4 py-2 text-sm font-medium rounded-2xl transition-colors ${
@@ -843,7 +794,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 // --- Sub-View: Employee Dashboard ---
 
 const EmployeeDashboard = () => {
-  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, settings } = useSupabaseStore();
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest } = useSupabaseStore();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
   const [view, setView] = useState<'clock' | 'history'>('clock');
@@ -1001,15 +952,15 @@ const EmployeeDashboard = () => {
 
             <div className="grid md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-sky-50 p-6 rounded-2xl border border-sky-100 text-sky-900">
-                    <h3 className="text-xs font-bold opacity-70 mb-1">Vacation remaining</h3>
+                    <h3 className="text-xs font-bold uppercase opacity-70 mb-1">Vacation Remaining</h3>
                     <div className="text-3xl font-bold">{vacationRemaining} <span className="text-sm font-normal opacity-70">Days</span></div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                    <h3 className="text-xs font-bold text-[#6B6B6B] mb-1">Total hours worked</h3>
+                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Hours Worked</h3>
                     <div className="text-3xl font-bold">{formatDuration(totalWorkedMins)}</div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                    <h3 className="text-xs font-bold text-[#6B6B6B] mb-1">Total break time</h3>
+                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Break Time</h3>
                     <div className="text-3xl font-bold">{formatDuration(totalBreakMins)}</div>
                 </div>
             </div>
@@ -1087,7 +1038,6 @@ const EmployeeDashboard = () => {
   return (
     <div className="max-w-md mx-auto mt-12 px-6 pb-20">
       <div className="text-center mb-10">
-        <p className="text-xs font-bold tracking-wide uppercase text-[#6B6B6B] mb-3">{settings.companyName || 'My Company'}</p>
         <h2 className="text-3xl font-bold text-[#263926] mb-2">Good morning, {currentUser.name.split(' ')[0]}</h2>
         <p className="text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       </div>
@@ -1121,21 +1071,13 @@ const EmployeeDashboard = () => {
           )}
 
           {status === 'working' && (
-            <div className="space-y-3 flex flex-col items-center">
-              <button 
-                onClick={() => startBreak(currentUser.id)}
-                className="w-full h-[90px] font-bold bg-[#EBE5FF] hover:bg-[#E0D4FF] text-[#651CA0] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#651CA0] focus:ring-offset-1"
-                style={{ fontSize: '20px' }}
-              >
+            <div className="grid grid-cols-2 gap-4">
+              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="h-20">
                 Start Break
-              </button>
-              <button 
-                onClick={() => clockOut(currentUser.id)}
-                className="inline-block h-[38px] px-9 py-2 text-xs font-bold leading-4 tracking-[0.3px] text-center bg-[#FFE5E5] text-[#C10000] rounded-full border-0 [-webkit-font-smoothing:antialiased] [-webkit-tap-highlight-color:transparent] [font-family:Inter,system-ui,-apple-system,sans-serif] box-border"
-                style={{ fontSize: '12px', lineHeight: '16px' }}
-              >
-                Clock out
-              </button>
+              </Button>
+              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="lg" className="h-20 bg-rose-900 hover:bg-rose-800 focus:ring-rose-900">
+                Clock Out
+              </Button>
             </div>
           )}
 
@@ -1233,7 +1175,7 @@ const EmployeeDashboard = () => {
 // --- Sub-View: Admin Dashboard ---
 
 const AdminDashboard = () => {
-  const { employees, entries, updateEntry, approveChangeRequest, denyChangeRequest, deleteEntry, settings } = useSupabaseStore();
+  const { employees, entries, updateEntry, deleteEntry, settings } = useSupabaseStore();
   const [viewDate, setViewDate] = useState(getTodayISO());
   const [activeTab, setActiveTab] = useState<'daily' | 'period'>('daily');
   const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
@@ -1709,14 +1651,6 @@ const AdminDashboard = () => {
               }
           }}
           onDelete={deleteEntry}
-          onApprove={(approvedEntry) => {
-              approveChangeRequest(approvedEntry);
-              setSelectedEmployeeEntry(null);
-          }}
-          onDeny={(entryId) => {
-              denyChangeRequest(entryId);
-              setSelectedEmployeeEntry(null);
-          }}
         />
       )}
 
@@ -1778,10 +1712,67 @@ const AdminDashboard = () => {
   );
 };
 
+// --- Main Layout with Routing ---
+
+const AppRouter = () => {
+  const { currentUser, loading } = useSupabaseStore();
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  // Listen for route changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
+
+  // Handle role-based redirects
+  useEffect(() => {
+    if (loading || currentUser === null) return;
+
+    const isAdmin = currentUser === 'ADMIN';
+    const path = window.location.pathname;
+
+    console.log('Route check:', { path, isAdmin, currentUser });
+
+    // Redirect based on role and current path
+    if (isAdmin) {
+      // Admin users should be on /admin
+      if (path === '/' || path === '/employee') {
+        console.log('Redirecting admin to /admin');
+        window.history.pushState({}, '', '/admin');
+        setCurrentPath('/admin');
+      }
+    } else {
+      // Employee users should be on /employee
+      if (path === '/' || path === '/admin') {
+        console.log('Redirecting employee to /employee');
+        window.history.pushState({}, '', '/employee');
+        setCurrentPath('/employee');
+      }
+    }
+  }, [currentUser, loading]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
+          <p className="text-[#6B6B6B]">Loading your data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <MainLayout />;
+};
+
 // --- Main Layout ---
 
 const MainLayout = () => {
-  const { currentUser, setCurrentUser, employees, settings, loading, needsSetup } = useSupabaseStore();
+  const { currentUser, setCurrentUser, employees, settings, loading } = useSupabaseStore();
   const { signOut } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -1797,11 +1788,6 @@ const MainLayout = () => {
     );
   }
 
-  // If user needs to complete setup (OAuth flow without settings)
-  if (needsSetup) {
-    return null; // The App component will handle showing OAuthSetup
-  }
-
   return (
     <div className="min-h-screen bg-[#FAF9F5] font-sans text-[#484848]">
       {/* Clean Top Bar */}
@@ -1813,16 +1799,8 @@ const MainLayout = () => {
         />
         <div className="flex items-center gap-3">
           {currentUser === 'ADMIN' ? (
-            // Admin view - show admin name, settings and sign out
+            // Admin view - show settings and sign out
             <>
-              <div className="flex items-center gap-2 text-sm text-[#263926]">
-                <svg className="w-4 h-4 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="font-medium">
-                  {settings.ownerName ? `${settings.ownerName} - Admin` : 'Admin'}
-                </span>
-              </div>
               <button
                 onClick={() => setIsSettingsOpen(true)}
                 className="p-2 text-[#6B6B6B] hover:text-[#263926] hover:bg-[#F6F5F1] rounded-lg transition-colors"
@@ -1839,7 +1817,7 @@ const MainLayout = () => {
               </button>
             </>
           ) : (
-            // Employee view - show name and sign out only
+            // Employee view - show name and sign out
             <>
               <div className="flex items-center gap-2 text-sm text-[#263926]">
                 <svg className="w-4 h-4 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1872,74 +1850,10 @@ const MainLayout = () => {
 // Import auth components and Supabase store
 import { useAuth } from './AuthContext';
 import { Auth } from './pages/Auth';
-import { SupabaseStoreProvider, useSupabaseStore } from './SupabaseStore';
-import { OAuthSetup } from './pages/OAuthSetup';
-import { AcceptInvitation } from './pages/AcceptInvitation';
-import { EmployeeApp } from './pages/EmployeeApp';
-
-const AppContent = () => {
-  // Check routes that bypass SupabaseStore BEFORE calling useSupabaseStore hook
-  // This prevents SupabaseStore from loading when we don't need it
-  
-  // Check if we're on the accept-invitation route
-  if (window.location.pathname === '/accept-invitation') {
-    return <AcceptInvitation />;
-  }
-
-  // Check if we're on the employee dashboard route
-  // This route bypasses SupabaseStore role detection to avoid RLS issues
-  if (window.location.pathname === '/employee/dashboard') {
-    return <EmployeeApp />;
-  }
-
-  // Now safe to use SupabaseStore for business owner flow
-  const { needsSetup, loading } = useSupabaseStore();
-
-  // Show loading state while checking setup status
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
-          <p className="text-[#6B6B6B]">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user needs to complete setup, show setup screen
-  if (needsSetup) {
-    return <OAuthSetup />;
-  }
-
-  // Otherwise show main app
-  return <MainLayout />;
-};
+import { SupabaseStoreProvider } from './SupabaseStore';
 
 const App = () => {
   const { user, loading } = useAuth();
-
-  // Check if we're on the accept-invitation route (allow access without auth)
-  if (window.location.pathname === '/accept-invitation') {
-    return <AcceptInvitation />;
-  }
-
-  // Check if we're on the employee dashboard route
-  // This needs to be checked before auth check to allow proper routing
-  if (window.location.pathname === '/employee/dashboard') {
-    if (!user && !loading) {
-      // Not authenticated, redirect to login
-      window.location.href = '/';
-      return null;
-    }
-    // User is authenticated, show employee app
-    return <EmployeeApp />;
-  }
-
-  // Check if we're on the accept-invitation route (allow access without auth)
-  if (window.location.pathname === '/accept-invitation') {
-    return <AcceptInvitation />;
-  }
 
   // Show loading state while checking auth
   if (loading) {
@@ -1961,7 +1875,7 @@ const App = () => {
   // User is authenticated, show the main app with Supabase store
   return (
     <SupabaseStoreProvider>
-      <AppContent />
+      <AppRouter />
     </SupabaseStoreProvider>
   );
 };
