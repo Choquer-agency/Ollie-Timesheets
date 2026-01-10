@@ -1230,9 +1230,20 @@ const AdminDashboard = () => {
     });
   } else {
     // Normal daily view for specific date
+    console.log('📊 Daily view - filtering employees:', {
+      totalEmployees: employees.length,
+      employeeDetails: employees.map(e => ({ name: e.name, isActive: e.isActive, id: e.id })),
+      viewDate
+    });
+    
     const relevantEmployees = employees.filter(e => 
       e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate)
     );
+    
+    console.log('📊 After filtering:', {
+      relevantCount: relevantEmployees.length,
+      filtered: relevantEmployees.map(e => e.name)
+    });
 
     dailySummaries = relevantEmployees.map(emp => {
       const entry = entries.find(e => e.employeeId === emp.id && e.date === viewDate);
