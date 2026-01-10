@@ -1205,7 +1205,7 @@ const EmployeeDashboard = () => {
 // --- Sub-View: Admin Dashboard ---
 
 const AdminDashboard = () => {
-  const { employees, entries, updateEntry, deleteEntry, settings } = useSupabaseStore();
+  const { employees, entries, updateEntry, deleteEntry, settings, currentUser } = useSupabaseStore();
   const [viewDate, setViewDate] = useState(getTodayISO());
   const [activeTab, setActiveTab] = useState<'daily' | 'period'>('daily');
   const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
@@ -1215,6 +1215,9 @@ const AdminDashboard = () => {
 
   // Count pending change requests
   const pendingReviewCount = entries.filter(e => e.changeRequest).length;
+  
+  // Check if current user is admin (owner or admin employee)
+  const isAdmin = currentUser === 'ADMIN';
 
   // -- Daily Logic --
 
@@ -1233,16 +1236,24 @@ const AdminDashboard = () => {
     console.log('📊 Daily view - filtering employees:', {
       totalEmployees: employees.length,
       employeeDetails: employees.map(e => ({ name: e.name, isActive: e.isActive, id: e.id })),
-      viewDate
+      viewDate,
+      isAdmin
     });
     
-    const relevantEmployees = employees.filter(e => 
-      e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate)
-    );
+    // FIXED: Admins see ALL active employees, not just those with entries for the day
+    const relevantEmployees = employees.filter(e => {
+      if (isAdmin) {
+        // Admins see all active employees OR any employee with an entry on this date
+        return e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate);
+      } else {
+        // Non-admins (shouldn't happen, but keep the old logic)
+        return e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate);
+      }
+    });
     
     console.log('📊 After filtering:', {
       relevantCount: relevantEmployees.length,
-      filtered: relevantEmployees.map(e => e.name)
+      filtered: relevantEmployees.map(e => ({ name: e.name, isActive: e.isActive }))
     });
 
     dailySummaries = relevantEmployees.map(emp => {
