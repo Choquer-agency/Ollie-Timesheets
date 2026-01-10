@@ -120,7 +120,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             const { data, error } = await supabase
               .from('employees')
-              .select('owner_id, id, email, user_id')
+              .select('owner_id, id, email, user_id, is_admin')
               .eq('user_id', user.id)
               .single();
             
