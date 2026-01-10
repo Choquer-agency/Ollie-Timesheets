@@ -194,50 +194,35 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
               });
               
-              // Try regular query first
-              let result = await supabase
-                .from('employees')
-                .select('*')
-                .eq('owner_id', resolvedOwnerId)
-                .order('created_at', { ascending: true });
-              
-              console.log('📊 Regular query result:', {
-                hasData: !!result.data,
-                dataCount: result.data?.length || 0,
-                error: result.error,
-                employeeNames: result.data?.map(e => ({ name: e.name, isActive: e.is_active }))
-              });
-              
-              // If RLS blocks the query, use SECURITY DEFINER function
-              if (result.error || !result.data || result.data.length <= 1) {
-                console.log('⚠️ Regular query returned insufficient data, trying SECURITY DEFINER function for admin...');
-                try {
-                  const { data: teamData, error: teamError } = await supabase.rpc('get_team_employees', {
-                    p_user_id: user.id
-                  });
-                  
-                  console.log('📊 SECURITY DEFINER result:', {
-                    hasData: !!teamData,
-                    dataCount: teamData?.length || 0,
-                    error: teamError,
-                    employeeNames: teamData?.map(e => ({ name: e.name, isActive: e.is_active, owner_id: e.owner_id }))
-                  });
-                  
-                  if (teamData && !teamError) {
-                    result = { data: teamData, error: null };
-                    console.log('✅ Loaded employees via SECURITY DEFINER:', teamData.length);
-                  } else {
-                    console.error('❌ SECURITY DEFINER function failed:', teamError);
-                  }
-                } catch (err) {
-                  console.error('❌ Failed to call get_team_employees:', err);
+              // CRITICAL FIX: Admin employees MUST use SECURITY DEFINER function
+              // Regular queries are still filtered by RLS even for admins
+              console.log('🔓 Using SECURITY DEFINER function to bypass RLS...');
+              try {
+                const { data: teamData, error: teamError } = await supabase.rpc('get_team_employees', {
+                  p_user_id: user.id
+                });
+                
+                console.log('📊 SECURITY DEFINER result:', {
+                  hasData: !!teamData,
+                  dataCount: teamData?.length || 0,
+                  error: teamError,
+                  employeeNames: teamData?.map(e => ({ name: e.name, isActive: e.is_active, owner_id: e.owner_id }))
+                });
+                
+                if (teamData && !teamError) {
+                  employeesData = teamData;
+                  employeesError = null;
+                  console.log('✅ Loaded', teamData.length, 'employees via SECURITY DEFINER');
+                } else {
+                  console.error('❌ SECURITY DEFINER function failed:', teamError);
+                  employeesData = [];
+                  employeesError = teamError;
                 }
-              } else {
-                console.log('✅ Regular query succeeded with', result.data.length, 'employees');
+              } catch (err) {
+                console.error('❌ Failed to call get_team_employees:', err);
+                employeesData = [];
+                employeesError = err as any;
               }
-              
-              employeesData = result.data;
-              employeesError = result.error;
             } else {
               // Regular employee: only loads their OWN record
               console.log('Regular employee - loading own record only');
