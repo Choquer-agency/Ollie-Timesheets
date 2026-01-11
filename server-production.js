@@ -65,7 +65,7 @@ app.get('/api/health', (req, res) => {
 // Email API routes
 app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
   try {
-    const { bookkeeperEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = req.body;
+    const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = req.body;
 
     if (!bookkeeperEmail || !companyName || !periodStart || !periodEnd || !employees || totalPayroll === undefined) {
       return res.status(400).json({
@@ -76,6 +76,7 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
 
     const result = await sendBookkeeperReport({
       bookkeeperEmail,
+      ownerEmail,
       companyName,
       periodStart,
       periodEnd,

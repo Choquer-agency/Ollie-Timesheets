@@ -4,6 +4,7 @@ const API_BASE_URL = '/api';
 
 interface BookkeeperReportData {
   bookkeeperEmail: string;
+  ownerEmail?: string;
   companyName: string;
   periodStart: string;
   periodEnd: string;

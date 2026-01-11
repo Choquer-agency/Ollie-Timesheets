@@ -1401,6 +1401,9 @@ const AdminDashboard = () => {
     
     // FIXED: Admins see ALL active employees, not just those with entries for the day
     const relevantEmployees = employees.filter(e => {
+      // Filter out admin employees - they don't clock in/out
+      if (e.isAdmin) return false;
+      
       if (isAdmin) {
         // Admins see all active employees OR any employee with an entry on this date
         return e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate);
@@ -1441,7 +1444,9 @@ const AdminDashboard = () => {
 
   // Removed handlePeriodChange (14-day cycle buttons) in favor of direct date inputs
 
-  const periodSummaries = employees.map(emp => {
+  const periodSummaries = employees
+    .filter(emp => !emp.isAdmin) // Exclude admin employees - they don't clock in/out
+    .map(emp => {
       // Find entries in range
       const empEntries = entries.filter(e => 
           e.employeeId === emp.id && 
@@ -1508,6 +1513,7 @@ const AdminDashboard = () => {
 
       await sendBookkeeperReport({
         bookkeeperEmail: settings.bookkeeperEmail || '',
+        ownerEmail: settings.ownerEmail,
         companyName: settings.companyName,
         periodStart: formatDateForDisplay(periodStart),
         periodEnd: formatDateForDisplay(periodEnd),

@@ -63,7 +63,7 @@ app.get('/api/health', (req, res) => {
 // POST /api/email/bookkeeper - Send pay period report to bookkeeper
 app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
   try {
-    const { bookkeeperEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = req.body;
+    const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = req.body;
 
     // Validate required fields
     if (!bookkeeperEmail || !companyName || !periodStart || !periodEnd || !employees || totalPayroll === undefined) {
@@ -75,6 +75,7 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
 
     const result = await sendBookkeeperReport({
       bookkeeperEmail,
+      ownerEmail,
       companyName,
       periodStart,
       periodEnd,

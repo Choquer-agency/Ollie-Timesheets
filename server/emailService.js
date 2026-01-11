@@ -18,10 +18,15 @@ const isValidEmail = (email) => {
 
 // Send bookkeeper report email
 export const sendBookkeeperReport = async (data) => {
-  const { bookkeeperEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = data;
+  const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = data;
 
   if (!isValidEmail(bookkeeperEmail)) {
     throw new Error('Invalid bookkeeper email address');
+  }
+
+  // Validate owner email if provided
+  if (ownerEmail && !isValidEmail(ownerEmail)) {
+    throw new Error('Invalid owner email address');
   }
 
   const html = bookkeeperReportTemplate({
@@ -33,12 +38,19 @@ export const sendBookkeeperReport = async (data) => {
   });
 
   try {
-    const result = await resend.emails.send({
+    const emailOptions = {
       from: `${companyName} Timesheets <${FROM_EMAIL}>`,
       to: bookkeeperEmail,
       subject: `${companyName}: Timesheet Report (${periodStart} - ${periodEnd})`,
       html
-    });
+    };
+
+    // Add CC if owner email is provided
+    if (ownerEmail) {
+      emailOptions.cc = ownerEmail;
+    }
+
+    const result = await resend.emails.send(emailOptions);
 
     return { success: true, messageId: result.id };
   } catch (error) {
