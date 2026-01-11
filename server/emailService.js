@@ -7,6 +7,7 @@ import {
   changeApprovalTemplate
 } from './emailTemplates.js';
 
+// Environment variables should already be loaded by index.js
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 
@@ -18,7 +19,7 @@ const isValidEmail = (email) => {
 
 // Send bookkeeper report email
 export const sendBookkeeperReport = async (data) => {
-  const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = data;
+  const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees } = data;
 
   if (!isValidEmail(bookkeeperEmail)) {
     throw new Error('Invalid bookkeeper email address');
@@ -33,8 +34,7 @@ export const sendBookkeeperReport = async (data) => {
     companyName,
     periodStart,
     periodEnd,
-    employees,
-    totalPayroll
+    employees
   });
 
   try {
@@ -188,4 +188,3 @@ export const sendChangeApprovalNotification = async (data) => {
     throw new Error(`Failed to send change approval notification: ${error.message}`);
   }
 };
-

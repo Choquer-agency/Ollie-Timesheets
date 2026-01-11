@@ -1,15 +1,14 @@
 // Professional HTML email templates for Ollie Timesheets
 
 export const bookkeeperReportTemplate = (data) => {
-  const { companyName, periodStart, periodEnd, employees, totalPayroll } = data;
+  const { companyName, periodStart, periodEnd, employees } = data;
   
   const employeeRows = employees.map(emp => `
     <tr style="border-bottom: 1px solid #F6F5F1;">
       <td style="padding: 12px 16px; font-weight: 500; color: #263926;">${emp.name}</td>
-      <td style="padding: 12px 16px; text-align: right; font-family: 'Courier New', monospace; color: #263926;">${emp.hours}</td>
       <td style="padding: 12px 16px; text-align: right; color: #484848;">${emp.sickDays}</td>
       <td style="padding: 12px 16px; text-align: right; color: #484848;">${emp.vacationDays}</td>
-      <td style="padding: 12px 16px; text-align: right; font-weight: 600; color: #2CA01C;">$${emp.totalPay.toFixed(2)}</td>
+      <td style="padding: 12px 16px; text-align: right; font-family: 'Courier New', monospace; color: #263926;">${emp.hours}</td>
     </tr>
   `).join('');
 
@@ -49,22 +48,15 @@ export const bookkeeperReportTemplate = (data) => {
         <thead>
           <tr style="background-color: #F0EEE6; border-bottom: 1px solid #F6F5F1;">
             <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Employee</th>
-            <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Hours</th>
             <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Sick</th>
             <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Vacation</th>
-            <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Total pay</th>
+            <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Hours</th>
           </tr>
         </thead>
         <tbody>
           ${employeeRows}
         </tbody>
       </table>
-    </div>
-
-    <!-- Total Payroll -->
-    <div style="background: #2CA01C; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 32px;">
-      <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total payroll</p>
-      <p style="margin: 8px 0 0; color: white; font-size: 36px; font-weight: 700;">$${totalPayroll.toFixed(2)}</p>
     </div>
 
     <!-- Footer -->

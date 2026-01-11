@@ -1,4 +1,14 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from parent directory FIRST
+dotenv.config({ path: join(__dirname, '..', '.env') });
+
+// Now import everything else
 import express from 'express';
 import cors from 'cors';
 import {
@@ -20,53 +30,54 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Rate limiting map (simple in-memory rate limiting)
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS = 10;
+// Rate limiting helper (simple in-memory implementation)
+const requestCounts = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 10; // 10 requests per minute
 
-const checkRateLimit = (ip) => {
-  const now = Date.now();
-  const userRequests = rateLimitMap.get(ip) || [];
-  
-  // Filter out old requests
-  const recentRequests = userRequests.filter(time => now - time < RATE_LIMIT_WINDOW);
-  
-  if (recentRequests.length >= MAX_REQUESTS) {
-    return false;
-  }
-  
-  recentRequests.push(now);
-  rateLimitMap.set(ip, recentRequests);
-  return true;
-};
-
-// Rate limiting middleware
 const rateLimiter = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
   
-  if (!checkRateLimit(ip)) {
+  if (!requestCounts.has(ip)) {
+    requestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  const record = requestCounts.get(ip);
+  
+  if (now > record.resetTime) {
+    record.count = 1;
+    record.resetTime = now + RATE_LIMIT_WINDOW;
+    return next();
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
     return res.status(429).json({
       success: false,
       error: 'Too many requests. Please try again later.'
     });
   }
   
+  record.count++;
   next();
 };
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Ollie Timesheets Email Server is running' });
+  res.json({
+    status: 'ok',
+    service: 'ollie-timesheets-email',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// POST /api/email/bookkeeper - Send pay period report to bookkeeper
+// Email API routes
 app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
   try {
-    const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = req.body;
+    const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees } = req.body;
 
-    // Validate required fields
-    if (!bookkeeperEmail || !companyName || !periodStart || !periodEnd || !employees || totalPayroll === undefined) {
+    if (!bookkeeperEmail || !companyName || !periodStart || !periodEnd || !employees) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -79,8 +90,7 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
       companyName,
       periodStart,
       periodEnd,
-      employees,
-      totalPayroll
+      employees
     });
 
     res.json(result);
@@ -93,13 +103,11 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
   }
 });
 
-// POST /api/email/invite-team-member - Send invitation to new team member
 app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
   try {
-    const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl } = req.body;
+    const { employeeEmail, employeeName, companyName, role, appUrl, companyLogoUrl, invitationToken } = req.body;
 
-    // Validate required fields
-    if (!employeeEmail || !employeeName || !companyName || !role) {
+    if (!employeeEmail || !employeeName || !companyName || !role || !invitationToken) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -112,7 +120,8 @@ app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
       companyName,
       role,
       appUrl,
-      companyLogoUrl
+      companyLogoUrl,
+      invitationToken
     });
 
     res.json(result);
@@ -125,12 +134,10 @@ app.post('/api/email/invite-team-member', rateLimiter, async (req, res) => {
   }
 });
 
-// POST /api/email/missing-clockout - Alert employee about missing clockout
 app.post('/api/email/missing-clockout', rateLimiter, async (req, res) => {
   try {
     const { employeeEmail, employeeName, date, appUrl } = req.body;
 
-    // Validate required fields
     if (!employeeEmail || !employeeName || !date) {
       return res.status(400).json({
         success: false,
@@ -155,12 +162,10 @@ app.post('/api/email/missing-clockout', rateLimiter, async (req, res) => {
   }
 });
 
-// POST /api/email/change-request-notification - Notify admin of change request
 app.post('/api/email/change-request-notification', rateLimiter, async (req, res) => {
   try {
     const { adminEmail, adminName, employeeName, date, requestSummary, appUrl } = req.body;
 
-    // Validate required fields
     if (!adminEmail || !adminName || !employeeName || !date || !requestSummary) {
       return res.status(400).json({
         success: false,
@@ -187,12 +192,10 @@ app.post('/api/email/change-request-notification', rateLimiter, async (req, res)
   }
 });
 
-// POST /api/email/change-approval - Notify employee of approval/rejection
 app.post('/api/email/change-approval', rateLimiter, async (req, res) => {
   try {
     const { employeeEmail, employeeName, date, status, adminNotes } = req.body;
 
-    // Validate required fields
     if (!employeeEmail || !employeeName || !date || !status) {
       return res.status(400).json({
         success: false,
@@ -218,19 +221,9 @@ app.post('/api/email/change-approval', rateLimiter, async (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error'
-  });
-});
-
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Ollie Timesheets Email Server running on http://localhost:${PORT}`);
-  console.log(`📧 Resend API configured: ${process.env.RESEND_API_KEY ? 'Yes' : 'No'}`);
-  console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
+  console.log(`✅ Email server running on port ${PORT}`);
+  console.log(`📧 RESEND_API_KEY: ${process.env.RESEND_API_KEY ? 'Set' : 'NOT SET'}`);
+  console.log(`📬 FROM_EMAIL: ${process.env.FROM_EMAIL || 'onboarding@resend.dev'}`);
 });
-

@@ -109,3 +109,5 @@ If you encounter issues after the reset:
 - Or use `supabase-security-policies-clean.sql` for a fresh install
 
 
+
+

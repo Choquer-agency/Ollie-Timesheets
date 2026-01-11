@@ -1507,8 +1507,7 @@ const AdminDashboard = () => {
         hours: formatDuration(s.totalMinutes),
         daysWorked: s.daysWorked,
         sickDays: s.sickDays,
-        vacationDays: s.vacationDays,
-        totalPay: s.totalPay
+        vacationDays: s.vacationDays
       }));
 
       await sendBookkeeperReport({
@@ -1517,8 +1516,7 @@ const AdminDashboard = () => {
         companyName: settings.companyName,
         periodStart: formatDateForDisplay(periodStart),
         periodEnd: formatDateForDisplay(periodEnd),
-        employees,
-        totalPayroll
+        employees
       });
 
       setReportSent(true);

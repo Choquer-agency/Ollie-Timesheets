@@ -15,9 +15,7 @@ interface BookkeeperReportData {
     daysWorked: number;
     sickDays: number;
     vacationDays: number;
-    totalPay: number;
   }>;
-  totalPayroll: number;
 }
 
 interface TeamInvitationData {

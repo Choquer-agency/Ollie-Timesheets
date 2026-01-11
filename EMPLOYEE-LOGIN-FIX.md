@@ -189,3 +189,5 @@ localStorage.setItem('just_accepted_invitation', 'true');
 This flag tells `SupabaseStore.tsx` to retry the employee lookup with delays, accounting for database replication. However, this workaround doesn't help if the RLS policies are blocking access entirely. With the fix applied, this retry logic will work correctly.
 
 
+
+

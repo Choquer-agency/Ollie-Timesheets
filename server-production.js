@@ -65,9 +65,9 @@ app.get('/api/health', (req, res) => {
 // Email API routes
 app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
   try {
-    const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees, totalPayroll } = req.body;
+    const { bookkeeperEmail, ownerEmail, companyName, periodStart, periodEnd, employees } = req.body;
 
-    if (!bookkeeperEmail || !companyName || !periodStart || !periodEnd || !employees || totalPayroll === undefined) {
+    if (!bookkeeperEmail || !companyName || !periodStart || !periodEnd || !employees) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -80,8 +80,7 @@ app.post('/api/email/bookkeeper', rateLimiter, async (req, res) => {
       companyName,
       periodStart,
       periodEnd,
-      employees,
-      totalPayroll
+      employees
     });
 
     res.json(result);
