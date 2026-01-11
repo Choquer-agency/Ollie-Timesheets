@@ -923,58 +923,72 @@ const EmployeeDashboard = () => {
 
   // Auto-save handlers for sick/vacation
   const handleMarkSick = async () => {
-    if (todayEntry?.isSickDay) {
-      // Toggle off - delete the entry
-      await deleteEntry(todayEntry.id);
-    } else {
-      // Toggle on - create or update entry
-      const entry: TimeEntry = todayEntry ? {
-        ...todayEntry,
-        isSickDay: true,
-        isVacationDay: false,
-        clockIn: null,
-        clockOut: null,
-        breaks: []
-      } : {
-        id: crypto.randomUUID(),
-        employeeId: currentUser.id,
-        date: today,
-        clockIn: null,
-        clockOut: null,
-        breaks: [],
-        adminNotes: '',
-        isSickDay: true,
-        isVacationDay: false
-      };
-      await updateEntry(entry);
+    try {
+      if (todayEntry?.isSickDay) {
+        // Toggle off - delete the entry
+        console.log('Toggling OFF sick day, deleting entry:', todayEntry.id);
+        await deleteEntry(todayEntry.id);
+      } else {
+        // Toggle on - create or update entry
+        console.log('Toggling ON sick day');
+        const entry: TimeEntry = todayEntry ? {
+          ...todayEntry,
+          isSickDay: true,
+          isVacationDay: false,
+          clockIn: null,
+          clockOut: null,
+          breaks: []
+        } : {
+          id: crypto.randomUUID(),
+          employeeId: currentUser.id,
+          date: today,
+          clockIn: null,
+          clockOut: null,
+          breaks: [],
+          adminNotes: '',
+          isSickDay: true,
+          isVacationDay: false
+        };
+        await updateEntry(entry);
+      }
+    } catch (error) {
+      console.error('Error toggling sick day:', error);
+      alert('Failed to update. Please try again.');
     }
   };
 
   const handleMarkVacation = async () => {
-    if (todayEntry?.isVacationDay) {
-      // Toggle off - delete the entry
-      await deleteEntry(todayEntry.id);
-    } else {
-      // Toggle on - create or update entry
-      const entry: TimeEntry = todayEntry ? {
-        ...todayEntry,
-        isSickDay: false,
-        isVacationDay: true,
-        clockIn: null,
-        clockOut: null,
-        breaks: []
-      } : {
-        id: crypto.randomUUID(),
-        employeeId: currentUser.id,
-        date: today,
-        clockIn: null,
-        clockOut: null,
-        breaks: [],
-        adminNotes: '',
-        isSickDay: false,
-        isVacationDay: true
-      };
-      await updateEntry(entry);
+    try {
+      if (todayEntry?.isVacationDay) {
+        // Toggle off - delete the entry
+        console.log('Toggling OFF vacation day, deleting entry:', todayEntry.id);
+        await deleteEntry(todayEntry.id);
+      } else {
+        // Toggle on - create or update entry
+        console.log('Toggling ON vacation day');
+        const entry: TimeEntry = todayEntry ? {
+          ...todayEntry,
+          isSickDay: false,
+          isVacationDay: true,
+          clockIn: null,
+          clockOut: null,
+          breaks: []
+        } : {
+          id: crypto.randomUUID(),
+          employeeId: currentUser.id,
+          date: today,
+          clockIn: null,
+          clockOut: null,
+          breaks: [],
+          adminNotes: '',
+          isSickDay: false,
+          isVacationDay: true
+        };
+        await updateEntry(entry);
+      }
+    } catch (error) {
+      console.error('Error toggling vacation day:', error);
+      alert('Failed to update. Please try again.');
     }
   };
 
@@ -1155,10 +1169,10 @@ const EmployeeDashboard = () => {
               disabled={status === 'vacation'}
               className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all ${
                 status === 'sick' 
-                  ? 'bg-rose-50 border-rose-200 shadow-md' 
+                  ? 'bg-rose-50 border-rose-200 shadow-md cursor-pointer hover:bg-rose-100' 
                   : status === 'vacation'
                   ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
-                  : 'bg-white border-[#E5E3DA] hover:border-rose-200 hover:bg-rose-50'
+                  : 'bg-white border-[#E5E3DA] hover:border-rose-200 hover:bg-rose-50 cursor-pointer'
               }`}
             >
               <div className="text-center mb-3">
@@ -1166,6 +1180,9 @@ const EmployeeDashboard = () => {
                 <h3 className={`text-sm font-bold ${status === 'sick' ? 'text-rose-900' : 'text-[#263926]'}`}>
                   Sick Day
                 </h3>
+                {status === 'sick' && (
+                  <p className="text-xs text-rose-600 mt-1">Click to undo</p>
+                )}
               </div>
               
               <div className={`w-12 h-7 rounded-full transition-colors relative ${
@@ -1183,10 +1200,10 @@ const EmployeeDashboard = () => {
               disabled={status === 'sick'}
               className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all ${
                 status === 'vacation' 
-                  ? 'bg-sky-50 border-sky-200 shadow-md' 
+                  ? 'bg-sky-50 border-sky-200 shadow-md cursor-pointer hover:bg-sky-100' 
                   : status === 'sick'
                   ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
-                  : 'bg-white border-[#E5E3DA] hover:border-sky-200 hover:bg-sky-50'
+                  : 'bg-white border-[#E5E3DA] hover:border-sky-200 hover:bg-sky-50 cursor-pointer'
               }`}
             >
               <div className="text-center mb-3">
@@ -1194,6 +1211,9 @@ const EmployeeDashboard = () => {
                 <h3 className={`text-sm font-bold ${status === 'vacation' ? 'text-sky-900' : 'text-[#263926]'}`}>
                   Vacation
                 </h3>
+                {status === 'vacation' && (
+                  <p className="text-xs text-sky-600 mt-1">Click to undo</p>
+                )}
               </div>
               
               <div className={`w-12 h-7 rounded-full transition-colors relative ${
