@@ -879,7 +879,8 @@ const EmployeeDashboard = () => {
     else if (todayEntry.isSickDay) status = 'sick';
     else if (todayEntry.clockOut) status = 'done';
     else if (todayEntry.breaks.some(b => !b.endTime)) status = 'break';
-    else status = 'working';
+    else if (todayEntry.clockIn) status = 'working'; // Only 'working' if actually clocked in
+    else status = 'idle'; // Entry exists but no flags and no clock in = idle state
   }
 
   // Timer logic for break mode
