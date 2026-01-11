@@ -297,10 +297,10 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const isAdminEmployee = currentUser !== 'ADMIN' && currentUser.isAdmin;
   const currentEmployee = isAdminEmployee ? currentUser : null;
 
-  // Filter employees based on active/past toggle
-  const filteredEmployees = employees.filter(emp => 
-    showPastEmployees ? !emp.isActive : emp.isActive
-  );
+  // Filter employees based on active/past toggle and sort alphabetically
+  const filteredEmployees = employees
+    .filter(emp => showPastEmployees ? !emp.isActive : emp.isActive)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleEditEmployee = (emp: Employee) => {
     setEditingEmployee(emp);
@@ -1249,7 +1249,7 @@ const AdminDashboard = () => {
         // Non-admins (shouldn't happen, but keep the old logic)
         return e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate);
       }
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
     
     console.log('📊 After filtering:', {
       relevantCount: relevantEmployees.length,
@@ -1321,7 +1321,8 @@ const AdminDashboard = () => {
           sickDays,
           vacationDays
       };
-  }).filter(s => s.employee.isActive || s.totalMinutes > 0 || s.sickDays > 0 || s.vacationDays > 0); 
+  }).filter(s => s.employee.isActive || s.totalMinutes > 0 || s.sickDays > 0 || s.vacationDays > 0)
+    .sort((a, b) => a.employee.name.localeCompare(b.employee.name)); // Sort alphabetically by employee name 
 
   const totalPayroll = periodSummaries.reduce((acc, s) => acc + s.totalPay, 0);
 
