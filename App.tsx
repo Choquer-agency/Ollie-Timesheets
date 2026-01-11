@@ -824,10 +824,12 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 // --- Sub-View: Employee Dashboard ---
 
 const EmployeeDashboard = () => {
-  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest } = useSupabaseStore();
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, updateEntry, deleteEntry } = useSupabaseStore();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
   const [view, setView] = useState<'clock' | 'history'>('clock');
+  const [isTogglesVisible, setIsTogglesVisible] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   
   // History View State - Moved to top level to avoid hook violation
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<TimeEntry | null>(null);
@@ -906,6 +908,75 @@ const EmployeeDashboard = () => {
     }
     return () => clearInterval(interval);
   }, [status, todayEntry]);
+
+  // Fade out animation when employee clocks in normally
+  useEffect(() => {
+    if (status === 'working' && isTogglesVisible) {
+      setIsFadingOut(true);
+      const timer = setTimeout(() => {
+        setIsTogglesVisible(false);
+        setIsFadingOut(false);
+      }, 600); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [status, isTogglesVisible]);
+
+  // Auto-save handlers for sick/vacation
+  const handleMarkSick = async () => {
+    if (todayEntry?.isSickDay) {
+      // Toggle off - delete the entry
+      await deleteEntry(todayEntry.id);
+    } else {
+      // Toggle on - create or update entry
+      const entry: TimeEntry = todayEntry ? {
+        ...todayEntry,
+        isSickDay: true,
+        isVacationDay: false,
+        clockIn: null,
+        clockOut: null,
+        breaks: []
+      } : {
+        id: crypto.randomUUID(),
+        employeeId: currentUser.id,
+        date: today,
+        clockIn: null,
+        clockOut: null,
+        breaks: [],
+        adminNotes: '',
+        isSickDay: true,
+        isVacationDay: false
+      };
+      await updateEntry(entry);
+    }
+  };
+
+  const handleMarkVacation = async () => {
+    if (todayEntry?.isVacationDay) {
+      // Toggle off - delete the entry
+      await deleteEntry(todayEntry.id);
+    } else {
+      // Toggle on - create or update entry
+      const entry: TimeEntry = todayEntry ? {
+        ...todayEntry,
+        isSickDay: false,
+        isVacationDay: true,
+        clockIn: null,
+        clockOut: null,
+        breaks: []
+      } : {
+        id: crypto.randomUUID(),
+        employeeId: currentUser.id,
+        date: today,
+        clockIn: null,
+        clockOut: null,
+        breaks: [],
+        adminNotes: '',
+        isSickDay: false,
+        isVacationDay: true
+      };
+      await updateEntry(entry);
+    }
+  };
 
   // Full Screen Break Overlay
   if (status === 'break') {
@@ -1072,6 +1143,71 @@ const EmployeeDashboard = () => {
         <p className="text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       </div>
 
+      {/* Sick/Vacation Toggle Section - Show only when idle, sick, or vacation */}
+      {isTogglesVisible && (status === 'idle' || status === 'sick' || status === 'vacation') && (
+        <div 
+          className={`mb-6 transition-all duration-600 ${isFadingOut ? 'opacity-0 max-h-0' : 'opacity-100 max-h-40'} overflow-hidden`}
+        >
+          <div className="grid grid-cols-2 gap-4">
+            {/* Sick Day Toggle */}
+            <button
+              onClick={handleMarkSick}
+              disabled={status === 'vacation'}
+              className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all ${
+                status === 'sick' 
+                  ? 'bg-rose-50 border-rose-200 shadow-md' 
+                  : status === 'vacation'
+                  ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                  : 'bg-white border-[#E5E3DA] hover:border-rose-200 hover:bg-rose-50'
+              }`}
+            >
+              <div className="text-center mb-3">
+                <div className="text-2xl mb-2">🤒</div>
+                <h3 className={`text-sm font-bold ${status === 'sick' ? 'text-rose-900' : 'text-[#263926]'}`}>
+                  Sick Day
+                </h3>
+              </div>
+              
+              <div className={`w-12 h-7 rounded-full transition-colors relative ${
+                status === 'sick' ? 'bg-rose-500' : 'bg-[#E5E3DA]'
+              }`}>
+                <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
+                  status === 'sick' ? 'translate-x-5' : ''
+                }`}></div>
+              </div>
+            </button>
+
+            {/* Vacation Day Toggle */}
+            <button
+              onClick={handleMarkVacation}
+              disabled={status === 'sick'}
+              className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all ${
+                status === 'vacation' 
+                  ? 'bg-sky-50 border-sky-200 shadow-md' 
+                  : status === 'sick'
+                  ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                  : 'bg-white border-[#E5E3DA] hover:border-sky-200 hover:bg-sky-50'
+              }`}
+            >
+              <div className="text-center mb-3">
+                <div className="text-2xl mb-2">✈️</div>
+                <h3 className={`text-sm font-bold ${status === 'vacation' ? 'text-sky-900' : 'text-[#263926]'}`}>
+                  Vacation
+                </h3>
+              </div>
+              
+              <div className={`w-12 h-7 rounded-full transition-colors relative ${
+                status === 'vacation' ? 'bg-sky-500' : 'bg-[#E5E3DA]'
+              }`}>
+                <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
+                  status === 'vacation' ? 'translate-x-5' : ''
+                }`}></div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] p-8 border border-[#F6F5F1] text-center relative overflow-hidden">
         
         <div className="mb-8 mt-4">
@@ -1140,14 +1276,6 @@ const EmployeeDashboard = () => {
           >
             📅 View Schedule & Vacation
           </Button>
-
-          {/* Quick Adjust Button */}
-          <button 
-            onClick={() => setIsAdjustmentModalOpen(true)}
-            className="text-xs text-[#9CA3AF] underline hover:text-[#484848] cursor-pointer text-center"
-          >
-            Adjust Today's Time / Mark Sick or Vacation
-          </button>
       </div>
 
       {/* Mini History */}
