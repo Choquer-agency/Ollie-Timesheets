@@ -417,35 +417,62 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     
     const today = getTodayISO();
     const existing = entries.find(e => e.employeeId === employeeId && e.date === today);
-    if (existing) return;
+    
+    // If entry exists and already has a clockIn time, don't allow re-clocking in
+    if (existing?.clockIn) return;
 
-    const newEntry: TimeEntry = {
-      id: crypto.randomUUID(),
-      employeeId,
-      date: today,
-      clockIn: new Date().toISOString(),
-      clockOut: null,
-      breaks: [],
-      isSickDay: false,
-      isVacationDay: false
-    };
+    const now = new Date().toISOString();
 
-    // Save to Supabase with owner_id
-    const { error } = await supabase
-      .from('time_entries')
-      .insert({
-        id: newEntry.id,
-        owner_id: ownerId!,
-        employee_id: newEntry.employeeId,
-        date: newEntry.date,
-        clock_in: newEntry.clockIn,
-        clock_out: null,
-        is_sick_day: false,
-        is_vacation_day: false
-      });
+    if (existing) {
+      // Entry exists (from toggling sick/vacation) but no clockIn yet - UPDATE it
+      const updatedEntry: TimeEntry = {
+        ...existing,
+        clockIn: now,
+        isSickDay: false,
+        isVacationDay: false
+      };
 
-    if (!error) {
-      setEntries(prev => [...prev, newEntry]);
+      const { error } = await supabase
+        .from('time_entries')
+        .update({
+          clock_in: now,
+          is_sick_day: false,
+          is_vacation_day: false
+        })
+        .eq('id', existing.id);
+
+      if (!error) {
+        setEntries(prev => prev.map(e => e.id === existing.id ? updatedEntry : e));
+      }
+    } else {
+      // No entry exists - CREATE new one
+      const newEntry: TimeEntry = {
+        id: crypto.randomUUID(),
+        employeeId,
+        date: today,
+        clockIn: now,
+        clockOut: null,
+        breaks: [],
+        isSickDay: false,
+        isVacationDay: false
+      };
+
+      const { error } = await supabase
+        .from('time_entries')
+        .insert({
+          id: newEntry.id,
+          owner_id: ownerId!,
+          employee_id: newEntry.employeeId,
+          date: newEntry.date,
+          clock_in: newEntry.clockIn,
+          clock_out: null,
+          is_sick_day: false,
+          is_vacation_day: false
+        });
+
+      if (!error) {
+        setEntries(prev => [...prev, newEntry]);
+      }
     }
   };
 
