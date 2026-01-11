@@ -925,9 +925,14 @@ const EmployeeDashboard = () => {
   const handleMarkSick = async () => {
     try {
       if (todayEntry?.isSickDay) {
-        // Toggle off - delete the entry
-        console.log('Toggling OFF sick day, deleting entry:', todayEntry.id);
-        await deleteEntry(todayEntry.id);
+        // Toggle off - clear the flag instead of deleting (employees can't delete)
+        console.log('Toggling OFF sick day, clearing flag');
+        const entry: TimeEntry = {
+          ...todayEntry,
+          isSickDay: false,
+          isVacationDay: false
+        };
+        await updateEntry(entry);
       } else {
         // Toggle on - create or update entry
         console.log('Toggling ON sick day');
@@ -960,9 +965,14 @@ const EmployeeDashboard = () => {
   const handleMarkVacation = async () => {
     try {
       if (todayEntry?.isVacationDay) {
-        // Toggle off - delete the entry
-        console.log('Toggling OFF vacation day, deleting entry:', todayEntry.id);
-        await deleteEntry(todayEntry.id);
+        // Toggle off - clear the flag instead of deleting (employees can't delete)
+        console.log('Toggling OFF vacation day, clearing flag');
+        const entry: TimeEntry = {
+          ...todayEntry,
+          isSickDay: false,
+          isVacationDay: false
+        };
+        await updateEntry(entry);
       } else {
         // Toggle on - create or update entry
         console.log('Toggling ON vacation day');
