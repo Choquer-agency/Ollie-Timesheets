@@ -838,7 +838,7 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 // --- Sub-View: Employee Dashboard ---
 
 const EmployeeDashboard = () => {
-  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, updateEntry, deleteEntry, requestVacation } = useSupabaseStore();
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, updateEntry, deleteEntry, requestVacation, settings } = useSupabaseStore();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
   const [view, setView] = useState<'clock' | 'history'>('clock');

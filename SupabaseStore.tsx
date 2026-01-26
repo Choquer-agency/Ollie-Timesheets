@@ -48,7 +48,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     companyName: 'My Company',
     ownerName: '',
     ownerEmail: '',
-    companyLogoUrl: undefined
+    companyLogoUrl: undefined,
+    halfDaySickCutoffTime: '12:00'
   });
   const [currentUserState, setCurrentUserState] = useState<Employee | 'ADMIN'>('ADMIN');
   const [isOwner, setIsOwner] = useState(false);
