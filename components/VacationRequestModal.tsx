@@ -144,11 +144,6 @@ export const VacationRequestModal: React.FC<VacationRequestModalProps> = ({
               <p className="text-sm text-[#263926]">
                 <span className="font-bold">{dayCount}</span> day{dayCount === 1 ? '' : 's'} requested
               </p>
-              {dayCount > vacationRemaining && (
-                <p className="text-xs text-rose-600 mt-1">
-                  ⚠️ This exceeds your remaining vacation days
-                </p>
-              )}
             </div>
           )}
 
