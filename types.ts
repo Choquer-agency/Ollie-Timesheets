@@ -30,6 +30,8 @@ export interface TimeEntry {
   adminNotes?: string;
   isSickDay?: boolean;
   isVacationDay?: boolean;
+  isHalfSickDay?: boolean;
+  pendingApproval?: boolean; // For vacation requests awaiting admin approval
   changeRequest?: Partial<TimeEntry>; // Stores the proposed state
 }
 
@@ -39,7 +41,7 @@ export interface DerivedStats {
   issues: IssueType[];
 }
 
-export type IssueType = 'MISSING_CLOCK_OUT' | 'LONG_SHIFT_NO_BREAK' | 'OPEN_BREAK' | 'OVERTIME_WARNING' | 'SICK_DAY' | 'VACATION_DAY' | 'CHANGE_REQUESTED';
+export type IssueType = 'MISSING_CLOCK_OUT' | 'LONG_SHIFT_NO_BREAK' | 'OPEN_BREAK' | 'OVERTIME_WARNING' | 'SICK_DAY' | 'VACATION_DAY' | 'HALF_SICK_DAY' | 'CHANGE_REQUESTED' | 'VACATION_REQUEST_PENDING';
 
 export interface DailySummary {
   employee: Employee;
@@ -53,5 +55,6 @@ export interface AppSettings {
   ownerName: string;
   ownerEmail: string;
   companyLogoUrl?: string;
+  halfDaySickCutoffTime?: string;
 }
 

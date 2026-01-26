@@ -4,6 +4,7 @@ import { useSupabaseStore } from './SupabaseStore';
 import { supabase } from './supabaseClient';
 import { Button } from './components/Button';
 import { TimeCardModal } from './components/TimeCardModal';
+import { VacationRequestModal } from './components/VacationRequestModal';
 import { DatePicker } from './components/DatePicker';
 import { PeriodDetailModal } from './components/PeriodDetailModal';
 import { Employee, TimeEntry, DailySummary } from './types';
@@ -12,7 +13,8 @@ import {
   formatTime, 
   calculateStats, 
   formatDuration, 
-  formatDateForDisplay 
+  formatDateForDisplay,
+  canMarkHalfSickDay
 } from './utils';
 import { 
   sendBookkeeperReport, 
@@ -811,6 +813,18 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                             This email will be pre-filled when you choose "Send to Bookkeeper" in the payroll view.
                         </p>
                     </div>
+                    <div>
+                        <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Half-Day Sick Leave Cutoff Time</label>
+                        <input 
+                            type="time"
+                            value={localSettings.halfDaySickCutoffTime || '12:00'}
+                            onChange={e => setLocalSettings({...localSettings, halfDaySickCutoffTime: e.target.value})}
+                            className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
+                        />
+                        <p className="text-xs text-[#9CA3AF] mt-2">
+                            Employees can only mark half-day sick leave before this time. Default is 12:00 PM (noon).
+                        </p>
+                    </div>
                     <Button onClick={handleSaveSettings}>Save Configuration</Button>
                 </div>
             )}
@@ -824,12 +838,13 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 // --- Sub-View: Employee Dashboard ---
 
 const EmployeeDashboard = () => {
-  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, updateEntry, deleteEntry } = useSupabaseStore();
+  const { currentUser, entries, clockIn, clockOut, startBreak, endBreak, submitChangeRequest, updateEntry, deleteEntry, requestVacation } = useSupabaseStore();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [issueEntry, setIssueEntry] = useState<TimeEntry | null>(null);
   const [view, setView] = useState<'clock' | 'history'>('clock');
   const [isTogglesVisible, setIsTogglesVisible] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
   
   // History View State - Moved to top level to avoid hook violation
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<TimeEntry | null>(null);
@@ -845,7 +860,7 @@ const EmployeeDashboard = () => {
     const issue = entries.find(e => {
         if (e.employeeId !== currentUser.id) return false;
         if (e.date >= today) return false; // Ignore today or future
-        if (e.isSickDay || e.isVacationDay) return false;
+        if (e.isSickDay || e.isVacationDay || e.isHalfSickDay) return false;
         // If they already submitted a change request, they are unblocked for now
         if (e.changeRequest) return false; 
         
@@ -873,10 +888,11 @@ const EmployeeDashboard = () => {
   const vacationRemaining = Math.max(0, vacationTotal - vacationUsed);
 
   // Status Logic
-  let status: 'idle' | 'working' | 'break' | 'done' | 'vacation' | 'sick' = 'idle';
+  let status: 'idle' | 'working' | 'break' | 'done' | 'vacation' | 'sick' | 'halfSick' = 'idle';
   if (todayEntry) {
     if (todayEntry.isVacationDay) status = 'vacation';
     else if (todayEntry.isSickDay) status = 'sick';
+    else if (todayEntry.isHalfSickDay) status = 'halfSick';
     else if (todayEntry.clockOut) status = 'done';
     else if (todayEntry.breaks.some(b => !b.endTime)) status = 'break';
     else if (todayEntry.clockIn) status = 'working'; // Only 'working' if actually clocked in
@@ -1003,6 +1019,53 @@ const EmployeeDashboard = () => {
     }
   };
 
+  const handleMarkHalfSick = async () => {
+    try {
+      // Check cutoff time
+      if (!canMarkHalfSickDay(settings.halfDaySickCutoffTime)) {
+        alert(`Half-day sick leave is only available before ${settings.halfDaySickCutoffTime || '12:00'}`);
+        return;
+      }
+
+      if (todayEntry?.isHalfSickDay) {
+        // Toggle off - clear the flag
+        console.log('Toggling OFF half sick day, clearing flag');
+        const entry: TimeEntry = {
+          ...todayEntry,
+          isHalfSickDay: false,
+          isSickDay: false,
+          isVacationDay: false
+        };
+        await updateEntry(entry);
+      } else {
+        // Toggle on - preserve any worked hours
+        console.log('Toggling ON half sick day, preserving worked hours');
+        const entry: TimeEntry = todayEntry ? {
+          ...todayEntry,
+          isHalfSickDay: true,
+          isSickDay: false,
+          isVacationDay: false
+          // Preserve clockIn, clockOut, and breaks
+        } : {
+          id: crypto.randomUUID(),
+          employeeId: currentUser.id,
+          date: today,
+          clockIn: null,
+          clockOut: null,
+          breaks: [],
+          adminNotes: '',
+          isHalfSickDay: true,
+          isSickDay: false,
+          isVacationDay: false
+        };
+        await updateEntry(entry);
+      }
+    } catch (error) {
+      console.error('Error toggling half sick day:', error);
+      alert('Failed to update. Please try again.');
+    }
+  };
+
   // Full Screen Break Overlay
   if (status === 'break') {
       return (
@@ -1125,6 +1188,8 @@ const EmployeeDashboard = () => {
                                             <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Reviewing</span>
                                         ) : entry.isSickDay ? (
                                             <span className="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full">Sick</span>
+                                        ) : entry.isHalfSickDay ? (
+                                            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">Half Sick</span>
                                         ) : entry.isVacationDay ? (
                                             <span className="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full">Vacation</span>
                                         ) : (
@@ -1168,39 +1233,74 @@ const EmployeeDashboard = () => {
         <p className="text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       </div>
 
-      {/* Sick/Vacation Toggle Section - Show only when idle, sick, or vacation */}
-      {isTogglesVisible && (status === 'idle' || status === 'sick' || status === 'vacation') && (
+      {/* Sick/Vacation Toggle Section - Show only when idle, sick, vacation, or halfSick */}
+      {isTogglesVisible && (status === 'idle' || status === 'sick' || status === 'vacation' || status === 'halfSick') && (
         <div 
           className={`mb-6 transition-all duration-600 ${isFadingOut ? 'opacity-0 max-h-0' : 'opacity-100 max-h-40'} overflow-hidden`}
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             {/* Sick Day Toggle */}
             <button
               onClick={handleMarkSick}
-              disabled={status === 'vacation'}
-              className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all ${
+              disabled={status === 'vacation' || status === 'halfSick'}
+              className={`flex flex-col items-center justify-between p-3 rounded-2xl border transition-all ${
                 status === 'sick' 
                   ? 'bg-rose-50 border-rose-200 shadow-md cursor-pointer hover:bg-rose-100' 
-                  : status === 'vacation'
+                  : status === 'vacation' || status === 'halfSick'
                   ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
                   : 'bg-white border-[#E5E3DA] hover:border-rose-200 hover:bg-rose-50 cursor-pointer'
               }`}
             >
-              <div className="text-center mb-3">
-                <div className="text-2xl mb-2">🤒</div>
-                <h3 className={`text-sm font-bold ${status === 'sick' ? 'text-rose-900' : 'text-[#263926]'}`}>
+              <div className="text-center mb-2">
+                <div className="text-xl mb-1">🤒</div>
+                <h3 className={`text-xs font-bold ${status === 'sick' ? 'text-rose-900' : 'text-[#263926]'}`}>
                   Sick Day
                 </h3>
                 {status === 'sick' && (
-                  <p className="text-xs text-rose-600 mt-1">Click to undo</p>
+                  <p className="text-[10px] text-rose-600 mt-1">Click to undo</p>
                 )}
               </div>
               
-              <div className={`w-12 h-7 rounded-full transition-colors relative ${
+              <div className={`w-10 h-6 rounded-full transition-colors relative ${
                 status === 'sick' ? 'bg-rose-500' : 'bg-[#E5E3DA]'
               }`}>
-                <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
-                  status === 'sick' ? 'translate-x-5' : ''
+                <div className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
+                  status === 'sick' ? 'translate-x-4' : ''
+                }`}></div>
+              </div>
+            </button>
+
+            {/* Half-Day Sick Toggle */}
+            <button
+              onClick={handleMarkHalfSick}
+              disabled={status === 'sick' || status === 'vacation' || !canMarkHalfSickDay(settings.halfDaySickCutoffTime)}
+              className={`flex flex-col items-center justify-between p-3 rounded-2xl border transition-all ${
+                status === 'halfSick' 
+                  ? 'bg-amber-50 border-amber-200 shadow-md cursor-pointer hover:bg-amber-100' 
+                  : status === 'sick' || status === 'vacation' || !canMarkHalfSickDay(settings.halfDaySickCutoffTime)
+                  ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
+                  : 'bg-white border-[#E5E3DA] hover:border-amber-200 hover:bg-amber-50 cursor-pointer'
+              }`}
+              title={!canMarkHalfSickDay(settings.halfDaySickCutoffTime) ? `Available until ${settings.halfDaySickCutoffTime || '12:00'}` : ''}
+            >
+              <div className="text-center mb-2">
+                <div className="text-xl mb-1">🤧</div>
+                <h3 className={`text-xs font-bold ${status === 'halfSick' ? 'text-amber-900' : 'text-[#263926]'}`}>
+                  Half Sick
+                </h3>
+                {status === 'halfSick' && (
+                  <p className="text-[10px] text-amber-600 mt-1">Click to undo</p>
+                )}
+                {status !== 'halfSick' && !canMarkHalfSickDay(settings.halfDaySickCutoffTime) && (
+                  <p className="text-[9px] text-gray-500 mt-1">Past cutoff</p>
+                )}
+              </div>
+              
+              <div className={`w-10 h-6 rounded-full transition-colors relative ${
+                status === 'halfSick' ? 'bg-amber-500' : 'bg-[#E5E3DA]'
+              }`}>
+                <div className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
+                  status === 'halfSick' ? 'translate-x-4' : ''
                 }`}></div>
               </div>
             </button>
@@ -1208,30 +1308,30 @@ const EmployeeDashboard = () => {
             {/* Vacation Day Toggle */}
             <button
               onClick={handleMarkVacation}
-              disabled={status === 'sick'}
-              className={`flex flex-col items-center justify-between p-4 rounded-2xl border transition-all ${
+              disabled={status === 'sick' || status === 'halfSick'}
+              className={`flex flex-col items-center justify-between p-3 rounded-2xl border transition-all ${
                 status === 'vacation' 
                   ? 'bg-sky-50 border-sky-200 shadow-md cursor-pointer hover:bg-sky-100' 
-                  : status === 'sick'
+                  : status === 'sick' || status === 'halfSick'
                   ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
                   : 'bg-white border-[#E5E3DA] hover:border-sky-200 hover:bg-sky-50 cursor-pointer'
               }`}
             >
-              <div className="text-center mb-3">
-                <div className="text-2xl mb-2">✈️</div>
-                <h3 className={`text-sm font-bold ${status === 'vacation' ? 'text-sky-900' : 'text-[#263926]'}`}>
+              <div className="text-center mb-2">
+                <div className="text-xl mb-1">✈️</div>
+                <h3 className={`text-xs font-bold ${status === 'vacation' ? 'text-sky-900' : 'text-[#263926]'}`}>
                   Vacation
                 </h3>
                 {status === 'vacation' && (
-                  <p className="text-xs text-sky-600 mt-1">Click to undo</p>
+                  <p className="text-[10px] text-sky-600 mt-1">Click to undo</p>
                 )}
               </div>
               
-              <div className={`w-12 h-7 rounded-full transition-colors relative ${
+              <div className={`w-10 h-6 rounded-full transition-colors relative ${
                 status === 'vacation' ? 'bg-sky-500' : 'bg-[#E5E3DA]'
               }`}>
-                <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
-                  status === 'vacation' ? 'translate-x-5' : ''
+                <div className={`absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${
+                  status === 'vacation' ? 'translate-x-4' : ''
                 }`}></div>
               </div>
             </button>
@@ -1246,17 +1346,21 @@ const EmployeeDashboard = () => {
             status === 'working' ? 'bg-emerald-100 text-emerald-700' :
             status === 'done' ? 'bg-[#F0EEE6] text-[#6B6B6B]' :
             status === 'sick' ? 'bg-rose-100 text-rose-700' :
+            status === 'halfSick' ? 'bg-amber-100 text-amber-700' :
             status === 'vacation' ? 'bg-sky-100 text-sky-700' :
             'bg-[#F0EEE6] text-[#6B6B6B]'
           }`}>
              {status === 'sick' ? 'Sick Day' : 
+              status === 'halfSick' ? 'Half Sick Day' :
               status === 'vacation' ? 'Vacation' :
               status === 'idle' ? 'Ready to Start' : 
               status === 'done' ? 'Shift Complete' : 
               'Clocked In'}
           </span>
           <div className="mt-4 text-5xl font-mono text-[#263926] tracking-tight">
-             {(status === 'sick' || status === 'vacation') ? 'OFF' : new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase()}
+             {(status === 'sick' || status === 'vacation') ? 'OFF' : 
+              status === 'halfSick' ? new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() :
+              new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase()}
           </div>
         </div>
 
@@ -1300,6 +1404,13 @@ const EmployeeDashboard = () => {
 
       {/* Footer Navigation Area */}
       <div className="mt-8 flex flex-col gap-4">
+          <Button 
+            variant="primary"
+            className="w-full py-4 text-white bg-sky-600 hover:bg-sky-700"
+            onClick={() => setIsVacationModalOpen(true)}
+          >
+            ✈️ Request Vacation Day
+          </Button>
           <Button 
             variant="secondary" 
             className="w-full py-4 text-[#484848] bg-[#F0EEE6] hover:bg-[#E5E3DA] border border-[#F6F5F1]"
@@ -1357,6 +1468,23 @@ const EmployeeDashboard = () => {
           }}
           onDelete={() => {}} // Employees cannot delete
         />
+
+      {/* Vacation Request Modal */}
+      {currentUser !== 'ADMIN' && (
+        <VacationRequestModal
+          isOpen={isVacationModalOpen}
+          onClose={() => setIsVacationModalOpen(false)}
+          employee={currentUser}
+          onSubmit={async (startDate, endDate) => {
+            await requestVacation(currentUser.id, startDate, endDate);
+            setIsVacationModalOpen(false);
+          }}
+          existingDates={entries
+            .filter(e => e.employeeId === currentUser.id)
+            .map(e => e.date)
+          }
+        />
+      )}
     </div>
   );
 };
@@ -1364,7 +1492,7 @@ const EmployeeDashboard = () => {
 // --- Sub-View: Admin Dashboard ---
 
 const AdminDashboard = () => {
-  const { employees, entries, updateEntry, deleteEntry, settings, currentUser } = useSupabaseStore();
+  const { employees, entries, updateEntry, deleteEntry, settings, currentUser, approveChangeRequest, denyChangeRequest, approveVacationRequest, denyVacationRequest } = useSupabaseStore();
   const [viewDate, setViewDate] = useState(getTodayISO());
   const [activeTab, setActiveTab] = useState<'daily' | 'period'>('daily');
   const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
@@ -1373,7 +1501,7 @@ const AdminDashboard = () => {
   const [periodDetailEmployee, setPeriodDetailEmployee] = useState<Employee | null>(null);
 
   // Count pending change requests
-  const pendingReviewCount = entries.filter(e => e.changeRequest).length;
+  const pendingReviewCount = entries.filter(e => e.changeRequest || e.pendingApproval).length;
   
   // Check if current user is admin (owner or admin employee)
   const isAdmin = currentUser === 'ADMIN';
@@ -1383,8 +1511,8 @@ const AdminDashboard = () => {
   let dailySummaries: DailySummary[];
 
   if (showReviewOnly) {
-    // Show ALL entries with change requests across ALL dates
-    const entriesWithReviews = entries.filter(e => e.changeRequest);
+    // Show ALL entries with change requests OR pending vacation requests across ALL dates
+    const entriesWithReviews = entries.filter(e => e.changeRequest || e.pendingApproval);
     dailySummaries = entriesWithReviews.map(entry => {
       const employee = employees.find(emp => emp.id === entry.employeeId)!;
       const stats = calculateStats(entry);
@@ -1464,6 +1592,11 @@ const AdminDashboard = () => {
           const stats = calculateStats(entry);
           if (entry.isSickDay) {
              sickDays++;
+          } else if (entry.isHalfSickDay) {
+             sickDays += 0.5; // Half sick day counts as 0.5
+             // Also count any worked hours
+             totalMinutes += stats.totalWorkedMinutes;
+             if (stats.totalWorkedMinutes > 0) daysWorked++;
           } else if (entry.isVacationDay) {
              vacationDays++;
           } else {
@@ -1642,11 +1775,22 @@ const AdminDashboard = () => {
                       </td>
                     )}
                     <td className="py-4 px-4 font-mono text-sm text-[#484848]">
-                      {entry?.clockIn && !entry.isSickDay && !entry.isVacationDay ? (
+                      {entry?.clockIn && !entry.isSickDay && !entry.isVacationDay && !entry.isHalfSickDay ? (
                         <>
                           {formatTime(entry.clockIn)} <span className="text-[#E5E3DA] mx-1">–</span> {formatTime(entry.clockOut)}
                         </>
-                      ) : entry?.isSickDay ? <span className="text-rose-400">Sick Day</span> : entry?.isVacationDay ? <span className="text-sky-400">Vacation</span> : <span className="text-[#E5E3DA]">--:--</span>}
+                      ) : entry?.isSickDay ? <span className="text-rose-400">Sick Day</span> 
+                      : entry?.isHalfSickDay ? (
+                        <>
+                          {entry.clockIn ? (
+                            <>
+                              {formatTime(entry.clockIn)} <span className="text-[#E5E3DA] mx-1">–</span> {formatTime(entry.clockOut)}
+                            </>
+                          ) : (
+                            <span className="text-amber-400">Half Sick</span>
+                          )}
+                        </>
+                      ) : entry?.isVacationDay ? <span className="text-sky-400">Vacation</span> : <span className="text-[#E5E3DA]">--:--</span>}
                     </td>
                     <td className="py-4 px-4 text-right font-medium text-[#263926]">
                       {!entry?.isSickDay && !entry?.isVacationDay && entry?.clockIn ? formatDuration(stats.totalWorkedMinutes) : '—'}
@@ -1668,16 +1812,20 @@ const AdminDashboard = () => {
                           return (
                             <span key={issue} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
                                 issue === 'SICK_DAY' ? 'bg-rose-50 text-rose-700 border-rose-100' : 
+                                issue === 'HALF_SICK_DAY' ? 'bg-amber-50 text-amber-700 border-amber-100' :
                                 issue === 'VACATION_DAY' ? 'bg-sky-50 text-sky-700 border-sky-100' :
                                 issue === 'CHANGE_REQUESTED' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                                issue === 'VACATION_REQUEST_PENDING' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                                 'bg-amber-50 text-amber-700 border-amber-100'
                             }`}>
                                 {issue === 'MISSING_CLOCK_OUT' && 'Missing Out'}
                                 {issue === 'LONG_SHIFT_NO_BREAK' && 'No Break'}
                                 {issue === 'OPEN_BREAK' && 'On Break'}
                                 {issue === 'SICK_DAY' && 'Sick'}
+                                {issue === 'HALF_SICK_DAY' && 'Half Sick'}
                                 {issue === 'VACATION_DAY' && 'Vacation'}
                                 {issue === 'CHANGE_REQUESTED' && 'Review'}
+                                {issue === 'VACATION_REQUEST_PENDING' && 'Vacation Request'}
                             </span>
                           );
                         })}
@@ -1746,6 +1894,7 @@ const AdminDashboard = () => {
                                 return (
                                   <span key={issue} className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
                                       issue === 'CHANGE_REQUESTED' ? 'bg-indigo-100 text-indigo-700' :
+                                      issue === 'VACATION_REQUEST_PENDING' ? 'bg-purple-100 text-purple-700' :
                                       issue === 'SICK_DAY' ? 'bg-rose-50 text-rose-700' : 
                                       issue === 'VACATION_DAY' ? 'bg-sky-50 text-sky-700' :
                                       'bg-amber-50 text-amber-700'
@@ -1867,6 +2016,22 @@ const AdminDashboard = () => {
               }
           }}
           onDelete={deleteEntry}
+          onApprove={(entry) => {
+            // Check if this is a vacation request or change request
+            if (entry.pendingApproval && !entry.isVacationDay) {
+              approveVacationRequest(entry.id);
+            } else if (entry.changeRequest) {
+              approveChangeRequest(entry);
+            }
+          }}
+          onDeny={(entryId) => {
+            const entry = entries.find(e => e.id === entryId);
+            if (entry?.pendingApproval && !entry.isVacationDay) {
+              denyVacationRequest(entryId);
+            } else if (entry?.changeRequest) {
+              denyChangeRequest(entryId);
+            }
+          }}
         />
       )}
 

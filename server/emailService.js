@@ -4,7 +4,10 @@ import {
   teamInvitationTemplate,
   missingClockoutTemplate,
   changeRequestNotificationTemplate,
-  changeApprovalTemplate
+  changeApprovalTemplate,
+  vacationRequestNotificationTemplate,
+  vacationApprovalTemplate,
+  vacationDenialTemplate
 } from './emailTemplates.js';
 
 // Environment variables should already be loaded by index.js
@@ -188,3 +191,94 @@ export const sendChangeApprovalNotification = async (data) => {
     throw new Error(`Failed to send change approval notification: ${error.message}`);
   }
 };
+
+// Send vacation request notification to admin
+export const sendVacationRequestNotification = async (data) => {
+  const { adminEmail, adminName, employeeName, startDate, endDate, daysCount, appUrl } = data;
+
+  if (!isValidEmail(adminEmail)) {
+    throw new Error('Invalid admin email address');
+  }
+
+  const html = vacationRequestNotificationTemplate({
+    adminName,
+    employeeName,
+    startDate,
+    endDate,
+    daysCount,
+    appUrl: appUrl || process.env.FRONTEND_URL || 'http://localhost:5173'
+  });
+
+  try {
+    const result = await resend.emails.send({
+      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      to: adminEmail,
+      subject: `Vacation Request from ${employeeName}`,
+      html
+    });
+
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('Error sending vacation request notification:', error);
+    throw new Error(`Failed to send vacation request notification: ${error.message}`);
+  }
+};
+
+// Send vacation approval notification to employee
+export const sendVacationApprovalNotification = async (data) => {
+  const { employeeEmail, employeeName, date, appUrl } = data;
+
+  if (!isValidEmail(employeeEmail)) {
+    throw new Error('Invalid employee email address');
+  }
+
+  const html = vacationApprovalTemplate({
+    employeeName,
+    date,
+    appUrl: appUrl || process.env.FRONTEND_URL || 'http://localhost:5173'
+  });
+
+  try {
+    const result = await resend.emails.send({
+      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      to: employeeEmail,
+      subject: `Vacation Approved for ${date}`,
+      html
+    });
+
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('Error sending vacation approval notification:', error);
+    throw new Error(`Failed to send vacation approval notification: ${error.message}`);
+  }
+};
+
+// Send vacation denial notification to employee
+export const sendVacationDenialNotification = async (data) => {
+  const { employeeEmail, employeeName, date, appUrl } = data;
+
+  if (!isValidEmail(employeeEmail)) {
+    throw new Error('Invalid employee email address');
+  }
+
+  const html = vacationDenialTemplate({
+    employeeName,
+    date,
+    appUrl: appUrl || process.env.FRONTEND_URL || 'http://localhost:5173'
+  });
+
+  try {
+    const result = await resend.emails.send({
+      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      to: employeeEmail,
+      subject: `Vacation Request Update for ${date}`,
+      html
+    });
+
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('Error sending vacation denial notification:', error);
+    throw new Error(`Failed to send vacation denial notification: ${error.message}`);
+  }
+};
+

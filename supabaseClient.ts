@@ -99,6 +99,8 @@ export interface Database {
           admin_notes: string | null;
           is_sick_day: boolean;
           is_vacation_day: boolean;
+          is_half_sick_day: boolean;
+          pending_approval: boolean;
           change_request: any | null;
           created_at: string;
           updated_at: string;
@@ -113,6 +115,8 @@ export interface Database {
           admin_notes?: string | null;
           is_sick_day?: boolean;
           is_vacation_day?: boolean;
+          is_half_sick_day?: boolean;
+          pending_approval?: boolean;
           change_request?: any | null;
         };
         Update: {
@@ -121,6 +125,8 @@ export interface Database {
           admin_notes?: string | null;
           is_sick_day?: boolean;
           is_vacation_day?: boolean;
+          is_half_sick_day?: boolean;
+          pending_approval?: boolean;
           change_request?: any | null;
         };
       };
@@ -155,6 +161,7 @@ export interface Database {
           company_name: string;
           owner_name: string;
           owner_email: string;
+          half_day_sick_cutoff_time: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -165,12 +172,14 @@ export interface Database {
           company_name: string;
           owner_name: string;
           owner_email: string;
+          half_day_sick_cutoff_time?: string | null;
         };
         Update: {
           bookkeeper_email?: string | null;
           company_name?: string;
           owner_name?: string;
           owner_email?: string;
+          half_day_sick_cutoff_time?: string | null;
         };
       };
     };

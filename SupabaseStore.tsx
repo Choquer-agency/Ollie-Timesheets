@@ -32,6 +32,9 @@ interface AppState {
   toggleEmployeeStatus: (id: string) => void;
   updateSettings: (settings: AppSettings) => void;
   resendInvitation: (employeeId: string) => Promise<void>;
+  requestVacation: (employeeId: string, startDate: string, endDate: string) => Promise<void>;
+  approveVacationRequest: (entryId: string) => Promise<void>;
+  denyVacationRequest: (entryId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -262,7 +265,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               companyName: ownerSettingsData.company_name,
               ownerName: ownerSettingsData.owner_name,
               ownerEmail: ownerSettingsData.owner_email,
-              companyLogoUrl: ownerSettingsData.company_logo_url || undefined
+              companyLogoUrl: ownerSettingsData.company_logo_url || undefined,
+              halfDaySickCutoffTime: ownerSettingsData.half_day_sick_cutoff_time || '12:00'
             });
           }
         } else if (settingsData && !settingsError) {
@@ -272,7 +276,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             companyName: settingsData.company_name,
             ownerName: settingsData.owner_name,
             ownerEmail: settingsData.owner_email,
-            companyLogoUrl: settingsData.company_logo_url || undefined
+            companyLogoUrl: settingsData.company_logo_url || undefined,
+            halfDaySickCutoffTime: settingsData.half_day_sick_cutoff_time || '12:00'
           });
         }
 
@@ -394,6 +399,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
             adminNotes: entry.admin_notes || undefined,
             isSickDay: entry.is_sick_day,
             isVacationDay: entry.is_vacation_day,
+            isHalfSickDay: entry.is_half_sick_day,
+            pendingApproval: entry.pending_approval || false,
             changeRequest: entry.change_request || undefined
           }));
           setEntries(mappedEntries);
@@ -617,6 +624,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         admin_notes: entryData.adminNotes,
         is_sick_day: entryData.isSickDay || false,
         is_vacation_day: entryData.isVacationDay || false,
+        is_half_sick_day: entryData.isHalfSickDay || false,
         change_request: null // Clear change request
       });
 
@@ -1025,7 +1033,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       company_name: newSettings.companyName,
       owner_name: newSettings.ownerName,
       owner_email: newSettings.ownerEmail,
-      company_logo_url: newSettings.companyLogoUrl || null
+      company_logo_url: newSettings.companyLogoUrl || null,
+      half_day_sick_cutoff_time: newSettings.halfDaySickCutoffTime || '12:00'
     });
 
     const { error } = await supabase
@@ -1035,7 +1044,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         company_name: newSettings.companyName,
         owner_name: newSettings.ownerName,
         owner_email: newSettings.ownerEmail,
-        company_logo_url: newSettings.companyLogoUrl || null
+        company_logo_url: newSettings.companyLogoUrl || null,
+        half_day_sick_cutoff_time: newSettings.halfDaySickCutoffTime || '12:00'
       })
       .eq('owner_id', user.id);
 
@@ -1103,6 +1113,181 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  const requestVacation = async (employeeId: string, startDate: string, endDate: string) => {
+    // Security check: Employees can only request vacation for themselves
+    if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
+      throw new Error('You can only request vacation for yourself');
+    }
+
+    // Import utilities
+    const { generateDateRange, isDateInPast } = await import('./utils');
+    
+    // Validate dates
+    if (isDateInPast(startDate)) {
+      throw new Error('Cannot request vacation for past dates');
+    }
+
+    // Generate all dates in the range
+    const dates = generateDateRange(startDate, endDate);
+
+    // Check for conflicts with existing entries
+    const conflicts = entries.filter(e => 
+      e.employeeId === employeeId && 
+      dates.includes(e.date) &&
+      (e.clockIn || e.isSickDay || e.isVacationDay || e.pendingApproval)
+    );
+
+    if (conflicts.length > 0) {
+      const conflictDates = conflicts.map(c => formatDateForDisplay(c.date)).join(', ');
+      throw new Error(`You already have entries for: ${conflictDates}`);
+    }
+
+    // Create pending vacation entries for each date
+    const newEntries: TimeEntry[] = dates.map(date => ({
+      id: crypto.randomUUID(),
+      employeeId,
+      date,
+      clockIn: null,
+      clockOut: null,
+      breaks: [],
+      isSickDay: false,
+      isVacationDay: false,
+      pendingApproval: true,
+      adminNotes: `Vacation request: ${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
+    }));
+
+    // Insert into Supabase
+    const { error } = await supabase
+      .from('time_entries')
+      .insert(newEntries.map(entry => ({
+        id: entry.id,
+        owner_id: ownerId!,
+        employee_id: entry.employeeId,
+        date: entry.date,
+        clock_in: null,
+        clock_out: null,
+        is_sick_day: false,
+        is_vacation_day: false,
+        is_half_sick_day: false,
+        pending_approval: true,
+        admin_notes: entry.adminNotes
+      })));
+
+    if (error) {
+      console.error('Failed to create vacation request:', error);
+      throw new Error(`Failed to request vacation: ${error.message}`);
+    }
+
+    // Update local state
+    setEntries(prev => [...prev, ...newEntries]);
+
+    // Send notification to admin
+    const employee = employees.find(e => e.id === employeeId);
+    if (employee && settings.ownerEmail) {
+      const { sendVacationRequestNotification } = await import('./apiClient');
+      sendVacationRequestNotification({
+        adminEmail: settings.ownerEmail,
+        adminName: settings.ownerName || 'Admin',
+        employeeName: employee.name,
+        startDate: formatDateForDisplay(startDate),
+        endDate: formatDateForDisplay(endDate),
+        daysCount: dates.length,
+        appUrl: window.location.origin
+      }).catch(err => console.error('Failed to send vacation request notification:', err));
+    }
+  };
+
+  const approveVacationRequest = async (entryId: string) => {
+    // Security check: Only admins can approve vacation requests
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can approve vacation requests');
+    }
+
+    const entry = entries.find(e => e.id === entryId);
+    if (!entry) {
+      throw new Error('Entry not found');
+    }
+
+    if (!entry.pendingApproval) {
+      throw new Error('This is not a pending vacation request');
+    }
+
+    // Update entry to approved vacation
+    const { error } = await supabase
+      .from('time_entries')
+      .update({
+        pending_approval: false,
+        is_vacation_day: true
+      })
+      .eq('id', entryId);
+
+    if (error) {
+      console.error('Failed to approve vacation request:', error);
+      throw new Error(`Failed to approve vacation: ${error.message}`);
+    }
+
+    // Update local state
+    setEntries(prev => prev.map(e => 
+      e.id === entryId 
+        ? { ...e, pendingApproval: false, isVacationDay: true }
+        : e
+    ));
+
+    // Send notification to employee
+    const employee = employees.find(e => e.id === entry.employeeId);
+    if (employee?.email) {
+      const { sendVacationApprovalNotification } = await import('./apiClient');
+      sendVacationApprovalNotification({
+        employeeEmail: employee.email,
+        employeeName: employee.name,
+        date: formatDateForDisplay(entry.date),
+        appUrl: window.location.origin
+      }).catch(err => console.error('Failed to send vacation approval notification:', err));
+    }
+  };
+
+  const denyVacationRequest = async (entryId: string) => {
+    // Security check: Only admins can deny vacation requests
+    if (currentUserState !== 'ADMIN') {
+      throw new Error('Only administrators can deny vacation requests');
+    }
+
+    const entry = entries.find(e => e.id === entryId);
+    if (!entry) {
+      throw new Error('Entry not found');
+    }
+
+    if (!entry.pendingApproval) {
+      throw new Error('This is not a pending vacation request');
+    }
+
+    // Delete the entry
+    const { error } = await supabase
+      .from('time_entries')
+      .delete()
+      .eq('id', entryId);
+
+    if (error) {
+      console.error('Failed to deny vacation request:', error);
+      throw new Error(`Failed to deny vacation: ${error.message}`);
+    }
+
+    // Update local state
+    setEntries(prev => prev.filter(e => e.id !== entryId));
+
+    // Send notification to employee
+    const employee = employees.find(e => e.id === entry.employeeId);
+    if (employee?.email) {
+      const { sendVacationDenialNotification } = await import('./apiClient');
+      sendVacationDenialNotification({
+        employeeEmail: employee.email,
+        employeeName: employee.name,
+        date: formatDateForDisplay(entry.date),
+        appUrl: window.location.origin
+      }).catch(err => console.error('Failed to send vacation denial notification:', err));
+    }
+  };
+
   return (
     <AppContext.Provider value={{ 
       employees, 
@@ -1126,7 +1311,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       deleteEmployee,
       toggleEmployeeStatus,
       updateSettings,
-      resendInvitation
+      resendInvitation,
+      requestVacation,
+      approveVacationRequest,
+      denyVacationRequest
     }}>
       {children}
     </AppContext.Provider>

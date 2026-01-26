@@ -49,7 +49,8 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
           breaks: [],
           adminNotes: '',
           isSickDay: false,
-          isVacationDay: false
+          isVacationDay: false,
+          isHalfSickDay: false
         });
         setClockInInput('');
         setClockOutInput('');
@@ -66,7 +67,7 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isOffDay = formData.isSickDay || formData.isVacationDay;
+  const isOffDay = formData.isSickDay || formData.isVacationDay || formData.isHalfSickDay;
 
   // Live Calculations for UI feedback
   // We only calculate stats based on inputs if it's NOT a sick/vacation day
@@ -84,14 +85,14 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
     const finalIsOffDay = formData.isSickDay || formData.isVacationDay;
 
     // Reconstruct ISO strings from time inputs
-    // If Sick/Vacation Day is checked, we explicitly clear times on SAVE.
+    // If Sick/Vacation/Half-Sick Day is checked, we explicitly clear times on SAVE (except for half-sick which preserves times).
     // Explicitly remove changeRequest to ensure it doesn't persist
     const { changeRequest, ...cleanFormData } = formData as TimeEntry;
     const finalEntry: TimeEntry = {
       ...cleanFormData,
-      clockIn: finalIsOffDay ? null : (clockInInput ? getISOFromTimeInput(date, clockInInput) : null),
-      clockOut: finalIsOffDay ? null : (clockOutInput ? getISOFromTimeInput(date, clockOutInput) : null),
-      breaks: finalIsOffDay ? [] : (formData.breaks || [])
+      clockIn: (formData.isSickDay || formData.isVacationDay) ? null : (clockInInput ? getISOFromTimeInput(date, clockInInput) : null),
+      clockOut: (formData.isSickDay || formData.isVacationDay) ? null : (clockOutInput ? getISOFromTimeInput(date, clockOutInput) : null),
+      breaks: (formData.isSickDay || formData.isVacationDay) ? [] : (formData.breaks || [])
     };
 
     // --- Validation Rules ---
@@ -180,12 +181,14 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
     }));
   };
 
-  const handleToggleOffDay = (type: 'sick' | 'vacation') => {
+  const handleToggleOffDay = (type: 'sick' | 'vacation' | 'halfSick') => {
       setFormData(prev => {
           if (type === 'sick') {
-              return { ...prev, isSickDay: !prev.isSickDay, isVacationDay: false };
+              return { ...prev, isSickDay: !prev.isSickDay, isVacationDay: false, isHalfSickDay: false };
+          } else if (type === 'halfSick') {
+              return { ...prev, isHalfSickDay: !prev.isHalfSickDay, isSickDay: false, isVacationDay: false };
           } else {
-              return { ...prev, isVacationDay: !prev.isVacationDay, isSickDay: false };
+              return { ...prev, isVacationDay: !prev.isVacationDay, isSickDay: false, isHalfSickDay: false };
           }
       });
   };
@@ -210,6 +213,23 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
             <svg className="w-8 h-8 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
+
+        {/* Vacation Request Banner (Admin Only) */}
+        {!isEmployeeView && entry?.pendingApproval && !entry?.isVacationDay && (
+          <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-2xl">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <span className="text-2xl">✈️</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-purple-900 text-base mb-1">Vacation Request Pending</h4>
+                <p className="text-sm text-purple-700">
+                  {employee.name} has requested this day off as vacation. Review and approve or deny the request below.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Change Request Banner (Admin Only) */}
         {!isEmployeeView && entry?.changeRequest && (() => {
@@ -269,7 +289,7 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                             <div className="flex justify-between items-center">
                                 <span className="font-medium">Original Status:</span>
                                 <span className="font-semibold">
-                                    {entry.isSickDay ? 'Sick Day' : entry.isVacationDay ? 'Vacation' : 'Regular Day'}
+                                    {entry.isSickDay ? 'Sick Day' : entry.isHalfSickDay ? 'Half Sick Day' : entry.isVacationDay ? 'Vacation' : 'Regular Day'}
                                 </span>
                             </div>
                         )}
@@ -301,6 +321,21 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                   
                   <div className={`w-12 h-7 rounded-full transition-colors relative ${formData.isSickDay ? 'bg-rose-500' : 'bg-[#E5E3DA]'}`}>
                       <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${formData.isSickDay ? 'translate-x-5' : ''}`}></div>
+                  </div>
+              </div>
+
+              {/* Half-Sick Day Toggle */}
+              <div 
+                onClick={() => handleToggleOffDay('halfSick')}
+                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border cursor-pointer ${formData.isHalfSickDay ? 'bg-amber-50 border-amber-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
+              >
+                  <div>
+                      <h3 className={`text-base font-bold ${formData.isHalfSickDay ? 'text-amber-900' : 'text-[#263926]'}`}>Half Sick</h3>
+                      <p className={`text-sm ${formData.isHalfSickDay ? 'text-amber-700' : 'text-[#6B6B6B]'}`}>0.5 sick day</p>
+                  </div>
+                  
+                  <div className={`w-12 h-7 rounded-full transition-colors relative ${formData.isHalfSickDay ? 'bg-amber-500' : 'bg-[#E5E3DA]'}`}>
+                      <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform ${formData.isHalfSickDay ? 'translate-x-5' : ''}`}></div>
                   </div>
               </div>
 
@@ -489,6 +524,41 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                   Delete Entry
                 </button>
               )}
+            </div>
+          ) : !isEmployeeView && entry?.pendingApproval && !entry?.isVacationDay && onApprove && onDeny ? (
+            // Admin viewing a vacation request - show Approve/Deny Vacation buttons
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3 w-full">
+                <Button 
+                  variant="outline" 
+                  onClick={onClose} 
+                  className="flex-1 justify-center"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (onDeny && entry) {
+                      onDeny(entry.id);
+                      onClose();
+                    }
+                  }}
+                  className="flex-1 justify-center bg-rose-600 hover:bg-rose-700 focus:ring-rose-600"
+                >
+                  Deny Vacation
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (onApprove && entry) {
+                      onApprove(entry);
+                      onClose();
+                    }
+                  }}
+                  className="flex-1 justify-center bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-600"
+                >
+                  Approve Vacation
+                </Button>
+              </div>
             </div>
           ) : (
             // Normal edit mode or employee view

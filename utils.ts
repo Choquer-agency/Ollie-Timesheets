@@ -29,6 +29,44 @@ export const getTodayISO = (): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+/**
+ * Checks if a date string (YYYY-MM-DD) is in the past
+ * @param dateStr - Date string in YYYY-MM-DD format
+ * @returns true if the date is in the past, false otherwise
+ */
+export const isDateInPast = (dateStr: string): boolean => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const inputDate = new Date(year, month - 1, day);
+  const todayParts = getTodayISO().split('-').map(Number);
+  const today = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+  return inputDate < today;
+};
+
+/**
+ * Generates an array of date strings (YYYY-MM-DD) between start and end dates (inclusive)
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format
+ * @returns Array of date strings
+ */
+export const generateDateRange = (startDate: string, endDate: string): string[] => {
+  const dates: string[] = [];
+  const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+  const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+  
+  const currentDate = new Date(startYear, startMonth - 1, startDay);
+  const lastDate = new Date(endYear, endMonth - 1, endDay);
+  
+  while (currentDate <= lastDate) {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    dates.push(`${year}-${month}-${day}`);
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return dates;
+};
+
 export const getISOFromTimeInput = (baseDateStr: string, timeInput: string): string => {
   // baseDateStr is YYYY-MM-DD, timeInput is HH:mm
   const [year, month, day] = baseDateStr.split('-').map(Number);
@@ -67,6 +105,18 @@ export const calculateStats = (entry?: TimeEntry): DerivedStats => {
   if (entry.isVacationDay) {
     issues.push('VACATION_DAY');
     return { totalWorkedMinutes: 0, totalBreakMinutes: 0, issues };
+  }
+
+  // Check for pending vacation request
+  if (entry.pendingApproval && !entry.isVacationDay) {
+    issues.push('VACATION_REQUEST_PENDING');
+    return { totalWorkedMinutes: 0, totalBreakMinutes: 0, issues };
+  }
+
+  // Half sick day: flag it but DON'T return 0 worked minutes
+  // The employee may have worked hours before marking as half sick
+  if (entry.isHalfSickDay) {
+    issues.push('HALF_SICK_DAY');
   }
 
   if (entry.changeRequest) {
@@ -125,6 +175,39 @@ export const formatDuration = (minutes: number): string => {
   return `${h}h ${m}m`;
 };
 
+// --- Half-Day Sick Leave Helpers ---
+
+/**
+ * Checks if the current time is before the specified cutoff time
+ * @param cutoffTime - Time in "HH:MM" format (e.g., "12:00")
+ * @returns true if current time is before cutoff, false otherwise
+ */
+export const isBeforeCutoffTime = (cutoffTime: string): boolean => {
+  if (!cutoffTime) return false;
+  
+  try {
+    const now = new Date();
+    const [cutoffHours, cutoffMinutes] = cutoffTime.split(':').map(Number);
+    
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const cutoffMinutesTotal = cutoffHours * 60 + cutoffMinutes;
+    
+    return currentMinutes < cutoffMinutesTotal;
+  } catch (error) {
+    console.error('Error parsing cutoff time:', error);
+    return false;
+  }
+};
+
+/**
+ * Checks if an employee can mark a half-day sick leave based on cutoff time
+ * @param cutoffTime - Time cutoff from settings (defaults to "12:00")
+ * @returns true if employee can mark half-sick day, false otherwise
+ */
+export const canMarkHalfSickDay = (cutoffTime?: string): boolean => {
+  return isBeforeCutoffTime(cutoffTime || '12:00');
+};
+
 // --- Export ---
 
 export const generateCSV = (summaries: DailySummary[]): string => {
@@ -136,6 +219,7 @@ export const generateCSV = (summaries: DailySummary[]): string => {
     
     let status = 'Working';
     if (entry?.isSickDay) status = 'Sick';
+    else if (entry?.isHalfSickDay) status = 'Half Sick';
     else if (entry?.isVacationDay) status = 'Vacation';
     else if (!entry?.clockIn) status = 'Off';
     

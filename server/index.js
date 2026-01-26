@@ -16,7 +16,10 @@ import {
   sendTeamInvitation,
   sendMissingClockoutAlert,
   sendChangeRequestNotification,
-  sendChangeApprovalNotification
+  sendChangeApprovalNotification,
+  sendVacationRequestNotification,
+  sendVacationApprovalNotification,
+  sendVacationDenialNotification
 } from './emailService.js';
 
 const app = express();
@@ -214,6 +217,93 @@ app.post('/api/email/change-approval', rateLimiter, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Change approval notification error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/email/vacation-request', rateLimiter, async (req, res) => {
+  try {
+    const { adminEmail, adminName, employeeName, startDate, endDate, daysCount, appUrl } = req.body;
+
+    if (!adminEmail || !adminName || !employeeName || !startDate || !endDate || !daysCount) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    const result = await sendVacationRequestNotification({
+      adminEmail,
+      adminName,
+      employeeName,
+      startDate,
+      endDate,
+      daysCount,
+      appUrl
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Vacation request notification error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/email/vacation-approval', rateLimiter, async (req, res) => {
+  try {
+    const { employeeEmail, employeeName, date, appUrl } = req.body;
+
+    if (!employeeEmail || !employeeName || !date) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    const result = await sendVacationApprovalNotification({
+      employeeEmail,
+      employeeName,
+      date,
+      appUrl
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Vacation approval notification error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/email/vacation-denial', rateLimiter, async (req, res) => {
+  try {
+    const { employeeEmail, employeeName, date, appUrl } = req.body;
+
+    if (!employeeEmail || !employeeName || !date) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    const result = await sendVacationDenialNotification({
+      employeeEmail,
+      employeeName,
+      date,
+      appUrl
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Vacation denial notification error:', error);
     res.status(500).json({
       success: false,
       error: error.message

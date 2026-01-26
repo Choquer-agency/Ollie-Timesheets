@@ -52,6 +52,30 @@ interface ChangeApprovalData {
   adminNotes?: string;
 }
 
+interface VacationRequestNotificationData {
+  adminEmail: string;
+  adminName: string;
+  employeeName: string;
+  startDate: string;
+  endDate: string;
+  daysCount: number;
+  appUrl?: string;
+}
+
+interface VacationApprovalData {
+  employeeEmail: string;
+  employeeName: string;
+  date: string;
+  appUrl?: string;
+}
+
+interface VacationDenialData {
+  employeeEmail: string;
+  employeeName: string;
+  date: string;
+  appUrl?: string;
+}
+
 interface ApiResponse {
   success: boolean;
   messageId?: string;
@@ -99,5 +123,17 @@ export const sendChangeRequestNotification = async (data: ChangeRequestNotificat
 
 export const sendChangeApprovalNotification = async (data: ChangeApprovalData): Promise<ApiResponse> => {
   return makeRequest('/email/change-approval', data);
+};
+
+export const sendVacationRequestNotification = async (data: VacationRequestNotificationData): Promise<ApiResponse> => {
+  return makeRequest('/email/vacation-request', data);
+};
+
+export const sendVacationApprovalNotification = async (data: VacationApprovalData): Promise<ApiResponse> => {
+  return makeRequest('/email/vacation-approval', data);
+};
+
+export const sendVacationDenialNotification = async (data: VacationDenialData): Promise<ApiResponse> => {
+  return makeRequest('/email/vacation-denial', data);
 };
 

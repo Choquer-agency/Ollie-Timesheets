@@ -319,3 +319,160 @@ export const changeApprovalTemplate = (data) => {
   `;
 };
 
+export const vacationRequestNotificationTemplate = (data) => {
+  const { adminName, employeeName, startDate, endDate, daysCount, appUrl } = data;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Request</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #FAF9F5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <div style="width: 64px; height: 64px; background: #E0F2FE; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <span style="font-size: 32px;">✈️</span>
+      </div>
+      <h1 style="margin: 0; font-size: 24px; color: #263926; font-weight: 700;">Vacation Request</h1>
+    </div>
+
+    <!-- Message Card -->
+    <div style="background: white; border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid #F6F5F1;">
+      <p style="margin: 0 0 16px; color: #263926; font-size: 16px;">Hi ${adminName},</p>
+      <p style="margin: 0 0 24px; color: #484848; line-height: 1.6; font-size: 15px;">
+        <strong>${employeeName}</strong> requested vacation time:
+      </p>
+      
+      <!-- Request Details -->
+      <div style="background: #E0F2FE; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 12px; color: #0369A1; font-size: 14px;"><strong>Start Date:</strong> ${startDate}</p>
+        <p style="margin: 0 0 12px; color: #0369A1; font-size: 14px;"><strong>End Date:</strong> ${endDate}</p>
+        <p style="margin: 0; color: #0369A1; font-size: 14px;"><strong>Total Days:</strong> ${daysCount} day${daysCount === 1 ? '' : 's'}</p>
+      </div>
+      
+      <div style="text-align: center; margin: 24px 0 0;">
+        <a href="${appUrl}" style="display: inline-block; background: #2CA01C; color: white; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px;">Review Request</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
+      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+    </div>
+
+  </div>
+</body>
+</html>
+  `;
+};
+
+export const vacationApprovalTemplate = (data) => {
+  const { employeeName, date, appUrl } = data;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Approved</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #FAF9F5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <div style="width: 64px; height: 64px; background: #ECFDF5; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <span style="font-size: 32px;">✅</span>
+      </div>
+      <h1 style="margin: 0; font-size: 28px; color: #263926; font-weight: 700;">Vacation Approved!</h1>
+    </div>
+
+    <!-- Message Card -->
+    <div style="background: white; border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid #F6F5F1;">
+      <p style="margin: 0 0 16px; color: #263926; font-size: 18px;">Hi ${employeeName},</p>
+      <p style="margin: 0 0 24px; color: #484848; line-height: 1.6;">
+        Great news! Your vacation request for <strong>${date}</strong> has been <strong style="color: #065F46;">approved</strong>.
+      </p>
+      
+      <div style="background: #ECFDF5; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #065F46; font-size: 14px; line-height: 1.6;">
+          Your vacation day is now confirmed in the system. You won't be expected to clock in on this date. Enjoy your time off!
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 24px 0 0;">
+        <a href="${appUrl}" style="display: inline-block; background: #2CA01C; color: white; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px;">View Schedule</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
+      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 8px 0 0;">This is an automated notification.</p>
+    </div>
+
+  </div>
+</body>
+</html>
+  `;
+};
+
+export const vacationDenialTemplate = (data) => {
+  const { employeeName, date, appUrl } = data;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Request Update</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #FAF9F5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <div style="width: 64px; height: 64px; background: #FEF2F2; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <span style="font-size: 32px;">📋</span>
+      </div>
+      <h1 style="margin: 0; font-size: 28px; color: #263926; font-weight: 700;">Vacation Request Update</h1>
+    </div>
+
+    <!-- Message Card -->
+    <div style="background: white; border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid #F6F5F1;">
+      <p style="margin: 0 0 16px; color: #263926; font-size: 18px;">Hi ${employeeName},</p>
+      <p style="margin: 0 0 24px; color: #484848; line-height: 1.6;">
+        We wanted to let you know that your vacation request for <strong>${date}</strong> was <strong style="color: #991B1B;">not approved</strong> at this time.
+      </p>
+      
+      <div style="background: #FEF2F2; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #991B1B; font-size: 14px; line-height: 1.6;">
+          Please speak with your manager if you have questions or would like to discuss alternative dates.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 24px 0 0;">
+        <a href="${appUrl}" style="display: inline-block; background: #2CA01C; color: white; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px;">View Schedule</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
+      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 8px 0 0;">This is an automated notification.</p>
+    </div>
+
+  </div>
+</body>
+</html>
+  `;
+};
+
+
