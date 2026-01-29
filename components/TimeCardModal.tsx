@@ -12,6 +12,7 @@ interface TimeCardModalProps {
   employee: Employee;
   date: string;
   isEmployeeView: boolean; // New prop to determine mode
+  readOnly?: boolean; // When true, all fields are disabled and only Close button is shown
   onSave: (entry: TimeEntry) => void;
   onDelete: (id: string) => void;
   onApprove?: (entry: TimeEntry) => void; // For approving change requests
@@ -19,7 +20,7 @@ interface TimeCardModalProps {
 }
 
 export const TimeCardModal: React.FC<TimeCardModalProps> = ({
-  isOpen, onClose, entry, employee, date, isEmployeeView, onSave, onDelete, onApprove, onDeny
+  isOpen, onClose, entry, employee, date, isEmployeeView, readOnly = false, onSave, onDelete, onApprove, onDeny
 }) => {
   const [formData, setFormData] = useState<Partial<TimeEntry>>({});
   const [clockInInput, setClockInInput] = useState('');
@@ -311,8 +312,8 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
           <div className="flex flex-col md:flex-row gap-4">
               {/* Sick Day Toggle */}
               <div 
-                onClick={() => handleToggleOffDay('sick')}
-                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border cursor-pointer ${formData.isSickDay ? 'bg-rose-50 border-rose-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
+                onClick={() => !readOnly && handleToggleOffDay('sick')}
+                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border ${readOnly ? 'cursor-default opacity-75' : 'cursor-pointer'} ${formData.isSickDay ? 'bg-rose-50 border-rose-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
               >
                   <div>
                       <h3 className={`text-base font-bold ${formData.isSickDay ? 'text-rose-900' : 'text-[#263926]'}`}>Sick Day</h3>
@@ -326,8 +327,8 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
 
               {/* Half-Sick Day Toggle */}
               <div 
-                onClick={() => handleToggleOffDay('halfSick')}
-                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border cursor-pointer ${formData.isHalfSickDay ? 'bg-amber-50 border-amber-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
+                onClick={() => !readOnly && handleToggleOffDay('halfSick')}
+                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border ${readOnly ? 'cursor-default opacity-75' : 'cursor-pointer'} ${formData.isHalfSickDay ? 'bg-amber-50 border-amber-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
               >
                   <div>
                       <h3 className={`text-base font-bold ${formData.isHalfSickDay ? 'text-amber-900' : 'text-[#263926]'}`}>Half Sick</h3>
@@ -341,8 +342,8 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
 
               {/* Vacation Day Toggle */}
               <div 
-                onClick={() => handleToggleOffDay('vacation')}
-                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border cursor-pointer ${formData.isVacationDay ? 'bg-sky-50 border-sky-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
+                onClick={() => !readOnly && handleToggleOffDay('vacation')}
+                className={`flex-1 flex items-center justify-between p-4 rounded-2xl border ${readOnly ? 'cursor-default opacity-75' : 'cursor-pointer'} ${formData.isVacationDay ? 'bg-sky-50 border-sky-200' : 'bg-[#FAF9F5] border-[#E5E3DA]'}`}
               >
                   <div>
                       <h3 className={`text-base font-bold ${formData.isVacationDay ? 'text-sky-900' : 'text-[#263926]'}`}>Vacation</h3>
@@ -365,7 +366,7 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 md:gap-6">
-                   <div>
+                   <div className={readOnly ? 'opacity-75 pointer-events-none' : ''}>
                      <TimePicker 
                         label="Clock In" 
                         value={clockInInput} 
@@ -377,7 +378,7 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                        </div>
                      )}
                    </div>
-                   <div>
+                   <div className={readOnly ? 'opacity-75 pointer-events-none' : ''}>
                      <TimePicker 
                         label="Clock Out" 
                         value={clockOutInput} 
@@ -399,7 +400,9 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                     <h3 className="text-base font-bold text-[#263926]">Unpaid Breaks</h3>
                     <span className="text-xs font-medium text-[#6B6B6B] bg-[#F0EEE6] px-3 py-1 rounded-full">Total: {formatDuration(stats.totalBreakMinutes)}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={addBreak} className="text-[#484848] border border-[#F6F5F1] hover:bg-[#F0EEE6]">+ Add</Button>
+                {!readOnly && (
+                  <Button variant="ghost" size="sm" onClick={addBreak} className="text-[#484848] border border-[#F6F5F1] hover:bg-[#F0EEE6]">+ Add</Button>
+                )}
                 </div>
                 
                 {!isEmployeeView && entry?.changeRequest && entry.breaks && entry.breaks.length > 0 && (
@@ -408,13 +411,13 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                   </div>
                 )}
                 
-                <div className="space-y-3">
+                <div className={`space-y-3 ${readOnly ? 'opacity-75' : ''}`}>
                 {formData.breaks?.length === 0 && (
                     <p className="text-sm text-[#9CA3AF] italic">No breaks recorded.</p>
                 )}
                 {formData.breaks?.map((b, idx) => (
                     <div key={b.id} className="relative group flex flex-col md:flex-row items-center gap-3 p-3 rounded-2xl border border-[#F6F5F1] bg-[#FAF9F5]">
-                        <div className="flex-1 w-full grid grid-cols-2 gap-3">
+                        <div className={`flex-1 w-full grid grid-cols-2 gap-3 ${readOnly ? 'pointer-events-none' : ''}`}>
                             <TimePicker 
                                 value={getTimeInputFromISO(b.startTime)}
                                 onChange={(val) => updateBreak(b.id, 'startTime', val)}
@@ -424,12 +427,14 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
                                 onChange={(val) => updateBreak(b.id, 'endTime', val)}
                             />
                         </div>
-                        <button 
-                            onClick={() => removeBreak(b.id)}
-                            className="absolute -top-2 -right-2 md:static md:bg-transparent md:p-2 bg-white rounded-full shadow-sm border border-[#F6F5F1] md:border-none md:shadow-none text-[#9CA3AF] hover:text-rose-500 transition-colors"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                        {!readOnly && (
+                          <button 
+                              onClick={() => removeBreak(b.id)}
+                              className="absolute -top-2 -right-2 md:static md:bg-transparent md:p-2 bg-white rounded-full shadow-sm border border-[#F6F5F1] md:border-none md:shadow-none text-[#9CA3AF] hover:text-rose-500 transition-colors"
+                          >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        )}
                     </div>
                 ))}
                 </div>
@@ -440,29 +445,36 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
           {/* Notes Section */}
           <section className="bg-[#FAF9F5] p-6 rounded-2xl border border-[#E5E3DA]">
             <h3 className="text-base font-bold text-[#263926] mb-3">
-                {isEmployeeView ? "Reason for Adjustment" : "Admin Notes"}
+                {isEmployeeView ? "Reason for Adjustment" : readOnly ? "Notes" : "Admin Notes"}
             </h3>
             <textarea 
               rows={3}
               value={formData.adminNotes || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, adminNotes: e.target.value }))}
               placeholder={isEmployeeView ? "I forgot to clock in because..." : "Add internal notes about this shift..."}
-              className="w-full p-3 text-sm bg-white border border-[#E5E3DA] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C]"
+              className={`w-full p-3 text-sm bg-white border border-[#E5E3DA] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] focus:border-[#2CA01C] ${readOnly ? 'opacity-75 cursor-default' : ''}`}
+              readOnly={readOnly}
             />
           </section>
         </div>
 
         {/* Footer Actions */}
         <div className="mt-8 pt-6 flex flex-col gap-4 bg-[#FAF9F5] pb-6 md:pb-0">
-          {error && (
+          {error && !readOnly && (
             <div className="bg-rose-50 text-rose-700 p-3 rounded-2xl text-sm flex items-center gap-2">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               {error}
             </div>
           )}
           
-          {/* Different button layouts based on context */}
-          {!isEmployeeView && entry?.changeRequest ? (
+          {/* Read-only mode - only show Close button */}
+          {readOnly ? (
+            <div className="flex justify-center w-full">
+              <Button variant="outline" onClick={onClose} className="px-8 justify-center">
+                Close
+              </Button>
+            </div>
+          ) : !isEmployeeView && entry?.changeRequest ? (
             // Admin viewing a change request - show Approve/Deny buttons
             <div className="flex flex-col gap-3">
               <div className="flex gap-3 w-full">

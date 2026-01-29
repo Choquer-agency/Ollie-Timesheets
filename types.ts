@@ -6,6 +6,7 @@ export interface Employee {
   hourlyRate?: number;
   vacationDaysTotal?: number;
   isAdmin: boolean;
+  isBookkeeper: boolean;
   isActive: boolean;
   userId?: string | null; // null if invitation not accepted yet
   invitationToken?: string | null;

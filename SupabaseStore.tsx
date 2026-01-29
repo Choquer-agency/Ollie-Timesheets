@@ -124,7 +124,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             const { data, error } = await supabase
               .from('employees')
-              .select('owner_id, id, email, user_id, is_admin')
+              .select('owner_id, id, email, user_id, is_admin, is_bookkeeper')
               .eq('user_id', user.id)
               .single();
             
@@ -180,14 +180,14 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           if (myEmployeeRecord?.owner_id) {
             // Found their employee record
             resolvedOwnerId = myEmployeeRecord.owner_id;
-            console.log('Found employee record for:', myEmployeeRecord.id, 'is_admin:', myEmployeeRecord.is_admin);
+            console.log('Found employee record for:', myEmployeeRecord.id, 'is_admin:', myEmployeeRecord.is_admin, 'is_bookkeeper:', myEmployeeRecord.is_bookkeeper);
             
-            // Check if this employee is an admin
-            if (myEmployeeRecord.is_admin) {
-              // Admin employee: load ALL employees from their organization
-              isAdminEmployee = true;
-              console.log('✓ User identified as ADMIN EMPLOYEE');
-              console.log('Admin employee - loading all team members');
+            // Check if this employee is an admin or bookkeeper (both need to load all employees)
+            if (myEmployeeRecord.is_admin || myEmployeeRecord.is_bookkeeper) {
+              // Admin or Bookkeeper employee: load ALL employees from their organization
+              isAdminEmployee = myEmployeeRecord.is_admin;
+              console.log('✓ User identified as', myEmployeeRecord.is_admin ? 'ADMIN EMPLOYEE' : 'BOOKKEEPER');
+              console.log(myEmployeeRecord.is_admin ? 'Admin employee' : 'Bookkeeper', '- loading all team members');
               console.log('🔍 Query details:', {
                 resolvedOwnerId,
                 myEmployeeRecord: {
@@ -284,18 +284,25 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
         let mappedEmployees: Employee[] = [];
         const employeeMapById = new Map<string, Employee>();
+        // Check if user is a bookkeeper (will be fully determined later)
+        let isBookkeeperEmployee = false;
         if (employeesData && !employeesError) {
+          // First pass: check if current user is a bookkeeper
+          const currentUserRecord = employeesData.find(emp => emp.user_id === user.id || (user.email && emp.email?.toLowerCase() === user.email.toLowerCase()));
+          isBookkeeperEmployee = currentUserRecord?.is_bookkeeper || false;
+          
           mappedEmployees = employeesData.map(emp => {
             const mapped: Employee = {
               id: emp.id,
               name: emp.name,
               email: emp.email || undefined,
               role: emp.role,
-              // SECURITY: Only expose hourly rates to owners/admins
+              // SECURITY: Only expose hourly rates to owners/admins/bookkeepers
               // For regular employees, set hourlyRate to undefined to prevent exposure
-              hourlyRate: (userIsOwner || isAdminEmployee) ? (emp.hourly_rate || undefined) : undefined,
+              hourlyRate: (userIsOwner || isAdminEmployee || isBookkeeperEmployee) ? (emp.hourly_rate || undefined) : undefined,
               vacationDaysTotal: emp.vacation_days_total,
               isAdmin: emp.is_admin,
+              isBookkeeper: emp.is_bookkeeper || false,
               isActive: emp.is_active,
               userId: emp.user_id,
               invitationToken: emp.invitation_token
@@ -333,19 +340,25 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log('🔍 Role determination:', {
           userIsOwner,
           isAdminEmployee,
+          isBookkeeperEmployee,
           hasEmployeeRecord: !!mappedUserEmployee,
           employeeIsAdmin: mappedUserEmployee?.isAdmin,
+          employeeIsBookkeeper: mappedUserEmployee?.isBookkeeper,
           willSetAsAdmin: userIsOwner || (mappedUserEmployee && mappedUserEmployee.isAdmin)
         });
 
         // Automatically set currentUser based on role
-        // CRITICAL: Check is_admin field for both owners and employees
+        // CRITICAL: Check is_admin and is_bookkeeper fields for role determination
         if (userIsOwner) {
           // Business owner - always gets admin access
           setCurrentUserState('ADMIN');
         } else if (mappedUserEmployee && mappedUserEmployee.isAdmin) {
           // Employee with admin privileges - gets admin access
           setCurrentUserState('ADMIN');
+        } else if (mappedUserEmployee && mappedUserEmployee.isBookkeeper) {
+          // Bookkeeper - gets view-only access to admin dashboard
+          // Set as the employee object so we can detect bookkeeper status in UI
+          setCurrentUserState(mappedUserEmployee);
         } else if (mappedUserEmployee) {
           // Regular employee - only accesses their own account
           setCurrentUserState(mappedUserEmployee);
@@ -369,15 +382,15 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         let queryOwnerId = resolvedOwnerId;
 
         // SECURITY: For regular employees, ONLY load their own entries
-        // For owners/admins, load all entries for their organization
+        // For owners/admins/bookkeepers, load all entries for their organization
         let entriesQuery = supabase
           .from('time_entries')
           .select('*, breaks(*)')
           .eq('owner_id', queryOwnerId)
           .gte('date', thirtyDaysAgoStr);
         
-        // CRITICAL: If user is a regular employee (not admin), filter to ONLY their entries
-        if (mappedUserEmployee && !userIsOwner && !isAdminEmployee) {
+        // CRITICAL: If user is a regular employee (not admin or bookkeeper), filter to ONLY their entries
+        if (mappedUserEmployee && !userIsOwner && !isAdminEmployee && !isBookkeeperEmployee) {
           entriesQuery = entriesQuery.eq('employee_id', mappedUserEmployee.id);
         }
         
@@ -418,6 +431,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user]);
 
   const clockIn = async (employeeId: string) => {
+    // Security check: Bookkeepers cannot clock in
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot clock in');
+    }
     // Security check: Employees can only clock in for themselves
     if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
       throw new Error('You can only clock in for yourself');
@@ -485,6 +502,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const clockOut = async (employeeId: string) => {
+    // Security check: Bookkeepers cannot clock out
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot clock out');
+    }
     // Security check: Employees can only clock out for themselves
     if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
       throw new Error('You can only clock out for yourself');
@@ -527,6 +548,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const startBreak = async (employeeId: string) => {
+    // Security check: Bookkeepers cannot start breaks
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot start breaks');
+    }
     // Security check: Employees can only start breaks for themselves
     if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
       throw new Error('You can only start breaks for yourself');
@@ -567,6 +592,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const endBreak = async (employeeId: string) => {
+    // Security check: Bookkeepers cannot end breaks
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot end breaks');
+    }
     // Security check: Employees can only end breaks for themselves
     if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
       throw new Error('You can only end breaks for yourself');
@@ -602,6 +631,11 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateEntry = async (updatedEntry: TimeEntry) => {
     const exists = entries.find(e => e.id === updatedEntry.id);
+    
+    // Security check: Bookkeepers cannot update any entries
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot edit time entries');
+    }
     
     // Security check: Employees can only update their own entries
     if (currentUserState !== 'ADMIN' && currentUserState.id !== updatedEntry.employeeId) {
@@ -802,6 +836,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const submitChangeRequest = async (proposedEntry: TimeEntry) => {
+    // Security check: Bookkeepers cannot submit change requests
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot submit change requests');
+    }
     // Security check: Employees can only submit change requests for their own entries
     if (currentUserState !== 'ADMIN' && currentUserState.id !== proposedEntry.employeeId) {
       throw new Error('You can only submit change requests for your own time entries');
@@ -919,6 +957,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         hourly_rate: newEmp.hourlyRate || null,
         vacation_days_total: newEmp.vacationDaysTotal || 10,
         is_admin: newEmp.isAdmin,
+        is_bookkeeper: newEmp.isBookkeeper || false,
         is_active: true,
         invitation_expires_at: invitationExpiry.toISOString()
       })
@@ -958,7 +997,8 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         hourly_rate: updates.hourlyRate || null,
         vacation_days_total: updates.vacationDaysTotal,
         is_active: updates.isActive,
-        is_admin: updates.isAdmin
+        is_admin: updates.isAdmin,
+        is_bookkeeper: updates.isBookkeeper
       })
       .eq('id', id);
 
@@ -1115,6 +1155,10 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const requestVacation = async (employeeId: string, startDate: string, endDate: string) => {
+    // Security check: Bookkeepers cannot request vacation
+    if (currentUserState !== 'ADMIN' && currentUserState.isBookkeeper) {
+      throw new Error('Bookkeepers cannot request vacation');
+    }
     // Security check: Employees can only request vacation for themselves
     if (currentUserState !== 'ADMIN' && currentUserState.id !== employeeId) {
       throw new Error('You can only request vacation for yourself');
