@@ -1543,22 +1543,39 @@ const BookkeeperDashboard = () => {
   const [selectedEmployeeEntry, setSelectedEmployeeEntry] = useState<{employee: Employee, entry?: TimeEntry} | null>(null);
   const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
   const [periodDetailEmployee, setPeriodDetailEmployee] = useState<Employee | null>(null);
+  const [showReviewOnly, setShowReviewOnly] = useState(false);
 
   // Get bookkeeper's email for sending reports to themselves
   const bookkeeperEmail = currentUser !== 'ADMIN' ? currentUser.email : '';
 
-  // -- Daily Logic --
-  const relevantEmployees = employees.filter(e => {
-    // Filter out admin and bookkeeper employees - they don't clock in/out
-    if (e.isAdmin || e.isBookkeeper) return false;
-    return e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate);
-  }).sort((a, b) => a.name.localeCompare(b.name));
+  // Count pending reviews (change requests and vacation requests)
+  const pendingReviewCount = entries.filter(e => e.changeRequest || e.pendingApproval).length;
 
-  const dailySummaries: DailySummary[] = relevantEmployees.map(emp => {
-    const entry = entries.find(e => e.employeeId === emp.id && e.date === viewDate);
-    const stats = calculateStats(entry);
-    return { employee: emp, entry, stats };
-  });
+  // -- Daily Logic --
+  let dailySummaries: DailySummary[];
+
+  if (showReviewOnly) {
+    // Show ALL entries with change requests OR pending vacation requests across ALL dates
+    const entriesWithReviews = entries.filter(e => e.changeRequest || e.pendingApproval);
+    dailySummaries = entriesWithReviews.map(entry => {
+      const employee = employees.find(emp => emp.id === entry.employeeId)!;
+      const stats = calculateStats(entry);
+      return { employee, entry, stats };
+    });
+  } else {
+    // Normal daily view for specific date
+    const relevantEmployees = employees.filter(e => {
+      // Filter out admin and bookkeeper employees - they don't clock in/out
+      if (e.isAdmin || e.isBookkeeper) return false;
+      return e.isActive || entries.some(entry => entry.employeeId === e.id && entry.date === viewDate);
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+    dailySummaries = relevantEmployees.map(emp => {
+      const entry = entries.find(e => e.employeeId === emp.id && e.date === viewDate);
+      const stats = calculateStats(entry);
+      return { employee: emp, entry, stats };
+    });
+  }
 
   const handleDateChange = (days: number) => {
     const d = new Date(viewDate);
@@ -1677,20 +1694,44 @@ const BookkeeperDashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[#263926]">{settings.companyName || 'Timesheets'}</h1>
-          <p className="text-[#6B6B6B] text-sm mt-1">View-only access to timesheets and pay periods.</p>
+          <p className="text-[#6B6B6B] text-sm mt-1">Review timesheets and pay periods.</p>
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Review Filter Button */}
+          {activeTab === 'daily' && pendingReviewCount > 0 && (
+            <button
+              onClick={() => setShowReviewOnly(!showReviewOnly)}
+              className={`relative p-3 rounded-full transition-all ${showReviewOnly ? 'bg-red-600 text-white shadow-md' : 'bg-white text-[#6B6B6B] hover:text-[#263926] border border-[#F6F5F1] shadow-sm'}`}
+              title="Filter to show pending reviews"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              {!showReviewOnly && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                  {pendingReviewCount}
+                </span>
+              )}
+            </button>
+          )}
+          
           {/* Tab Buttons */}
           <div className="flex items-center gap-2 md:gap-4 bg-white p-1 rounded-full border border-[#F6F5F1] shadow-sm overflow-x-auto">
             <button 
-                onClick={() => setActiveTab('daily')}
+                onClick={() => {
+                  setActiveTab('daily');
+                  setShowReviewOnly(false);
+                }}
                 className={`px-4 py-2 text-sm font-medium rounded-full transition-all whitespace-nowrap ${activeTab === 'daily' ? 'bg-[#2CA01C] text-white shadow-md' : 'text-[#6B6B6B] hover:text-[#263926]'}`}
             >
                 Daily Review
             </button>
             <button 
-                onClick={() => setActiveTab('period')}
+                onClick={() => {
+                  setActiveTab('period');
+                  setShowReviewOnly(false);
+                }}
                 className={`px-4 py-2 text-sm font-medium rounded-full transition-all whitespace-nowrap ${activeTab === 'period' ? 'bg-[#2CA01C] text-white shadow-md' : 'text-[#6B6B6B] hover:text-[#263926]'}`}
             >
                 Pay Period
@@ -1701,19 +1742,29 @@ const BookkeeperDashboard = () => {
 
       {activeTab === 'daily' && (
         <>
-          {/* Date Navigator */}
-          <div className="flex items-center justify-center gap-6 mb-8">
-            <button onClick={() => handleDateChange(-1)} className="p-2 text-[#9CA3AF] hover:text-[#263926] hover:bg-[#F0EEE6] rounded-full transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <div className="text-center w-48">
-              <span className="block text-lg font-semibold text-[#263926]">{formatDateForDisplay(viewDate)}</span>
-              {viewDate === getTodayISO() && <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Today</span>}
+          {/* Date Navigator - Hide when in review mode */}
+          {!showReviewOnly && (
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <button onClick={() => handleDateChange(-1)} className="p-2 text-[#9CA3AF] hover:text-[#263926] hover:bg-[#F0EEE6] rounded-full transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="text-center w-48">
+                <span className="block text-lg font-semibold text-[#263926]">{formatDateForDisplay(viewDate)}</span>
+                {viewDate === getTodayISO() && <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Today</span>}
+              </div>
+              <button onClick={() => handleDateChange(1)} className="p-2 text-[#9CA3AF] hover:text-[#263926] hover:bg-[#F0EEE6] rounded-full transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
             </div>
-            <button onClick={() => handleDateChange(1)} className="p-2 text-[#9CA3AF] hover:text-[#263926] hover:bg-[#F0EEE6] rounded-full transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
+          )}
+
+          {/* Review Mode Header */}
+          {showReviewOnly && (
+            <div className="mb-8 text-center">
+              <h2 className="text-2xl font-bold text-[#263926] mb-2">Pending Reviews</h2>
+              <p className="text-[#6B6B6B] text-sm">Showing all pending time card changes and vacation requests</p>
+            </div>
+          )}
 
           {/* Desktop Table View */}
           <div className="hidden md:block bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] overflow-hidden">
@@ -1721,6 +1772,7 @@ const BookkeeperDashboard = () => {
               <thead>
                 <tr className="border-b border-[#F6F5F1] bg-[#F0EEE6]">
                   <th className="py-4 px-5 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Employee</th>
+                  {showReviewOnly && <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Date</th>}
                   <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Time Range</th>
                   <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Worked</th>
                   <th className="py-4 px-4 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider text-right">Break</th>
@@ -1731,7 +1783,7 @@ const BookkeeperDashboard = () => {
               <tbody className="divide-y divide-[#F6F5F1]">
                 {dailySummaries.map(({ employee, entry, stats }) => (
                   <tr 
-                    key={employee.id} 
+                    key={showReviewOnly && entry ? `${employee.id}-${entry.date}` : employee.id} 
                     onClick={() => setSelectedEmployeeEntry({ employee, entry })}
                     className="hover:bg-[#F0EEE6] cursor-pointer transition-colors group"
                   >
@@ -1739,6 +1791,11 @@ const BookkeeperDashboard = () => {
                       <div className="font-medium text-[#263926]">{employee.name}</div>
                       <div className="text-xs text-[#6B6B6B]">{employee.role} {!employee.isActive && '(Archived)'}</div>
                     </td>
+                    {showReviewOnly && entry && (
+                      <td className="py-4 px-4 text-sm text-[#263926] font-medium">
+                        {formatDateForDisplay(entry.date)}
+                      </td>
+                    )}
                     <td className="py-4 px-4 font-mono text-sm text-[#484848]">
                       {entry?.clockIn && !entry.isSickDay && !entry.isVacationDay && !entry.isHalfSickDay ? (
                         <>
@@ -1763,11 +1820,13 @@ const BookkeeperDashboard = () => {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex gap-2">
-                        {stats.issues.filter(i => i !== 'CHANGE_REQUESTED' && i !== 'VACATION_REQUEST_PENDING').map(issue => (
+                        {stats.issues.map(issue => (
                           <span key={issue} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
                               issue === 'SICK_DAY' ? 'bg-rose-50 text-rose-700 border-rose-100' : 
                               issue === 'HALF_SICK_DAY' ? 'bg-amber-50 text-amber-700 border-amber-100' :
                               issue === 'VACATION_DAY' ? 'bg-sky-50 text-sky-700 border-sky-100' :
+                              issue === 'CHANGE_REQUESTED' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                              issue === 'VACATION_REQUEST_PENDING' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                               'bg-amber-50 text-amber-700 border-amber-100'
                           }`}>
                               {issue === 'MISSING_CLOCK_OUT' && 'Missing Out'}
@@ -1776,6 +1835,8 @@ const BookkeeperDashboard = () => {
                               {issue === 'SICK_DAY' && 'Sick'}
                               {issue === 'HALF_SICK_DAY' && 'Half Sick'}
                               {issue === 'VACATION_DAY' && 'Vacation'}
+                              {issue === 'CHANGE_REQUESTED' && 'Review Needed'}
+                              {issue === 'VACATION_REQUEST_PENDING' && 'Vacation Request'}
                           </span>
                         ))}
                         {stats.issues.length === 0 && entry?.clockIn && !entry.clockOut && (
@@ -1804,14 +1865,17 @@ const BookkeeperDashboard = () => {
           <div className="md:hidden space-y-4">
              {dailySummaries.map(({ employee, entry, stats }) => (
                  <div 
-                    key={employee.id}
+                    key={showReviewOnly && entry ? `${employee.id}-${entry.date}` : employee.id}
                     onClick={() => setSelectedEmployeeEntry({ employee, entry })}
                     className="bg-white p-4 rounded-2xl shadow-sm border border-[#F6F5F1] active:scale-[0.98] transition-transform"
                  >
                     <div className="flex justify-between items-start mb-3">
                         <div>
                             <div className="font-bold text-[#263926]">{employee.name}</div>
-                            <div className="text-xs text-[#6B6B6B]">{employee.role}</div>
+                            <div className="text-xs text-[#6B6B6B]">
+                              {employee.role}
+                              {showReviewOnly && entry && ` • ${formatDateForDisplay(entry.date)}`}
+                            </div>
                         </div>
                         {entry?.clockIn && !entry.isSickDay && !entry.isVacationDay ? (
                             <div className="text-right">
@@ -1831,13 +1895,17 @@ const BookkeeperDashboard = () => {
                     
                     <div className="flex justify-between items-center border-t border-[#F6F5F1] pt-3">
                         <div className="flex gap-2 flex-wrap">
-                            {stats.issues.length > 0 ? stats.issues.filter(i => i !== 'CHANGE_REQUESTED' && i !== 'VACATION_REQUEST_PENDING').map(issue => (
+                            {stats.issues.length > 0 ? stats.issues.map(issue => (
                               <span key={issue} className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${
                                   issue === 'SICK_DAY' ? 'bg-rose-50 text-rose-700' : 
                                   issue === 'VACATION_DAY' ? 'bg-sky-50 text-sky-700' :
+                                  issue === 'CHANGE_REQUESTED' ? 'bg-indigo-100 text-indigo-700' :
+                                  issue === 'VACATION_REQUEST_PENDING' ? 'bg-purple-100 text-purple-700' :
                                   'bg-amber-50 text-amber-700'
                               }`}>
-                                  {issue.replace(/_/g, ' ')}
+                                  {issue === 'CHANGE_REQUESTED' ? 'REVIEW NEEDED' : 
+                                   issue === 'VACATION_REQUEST_PENDING' ? 'VACATION REQ' : 
+                                   issue.replace(/_/g, ' ')}
                               </span>
                             )) : (
                                 entry?.clockIn && !entry.clockOut ? 
@@ -2717,14 +2785,13 @@ const MainLayout = () => {
               </button>
             </>
           ) : isBookkeeper ? (
-            // Bookkeeper view - show name with badge and sign out (no settings)
+            // Bookkeeper view - show name and sign out (no settings)
             <>
               <div className="flex items-center gap-2 text-sm text-[#263926]">
                 <svg className="w-4 h-4 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span className="font-medium">{currentUser.name}</span>
-                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">View Only</span>
               </div>
               <button
                 onClick={() => signOut()}
