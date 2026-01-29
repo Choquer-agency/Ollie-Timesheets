@@ -2598,12 +2598,13 @@ const AdminDashboard = () => {
               }
           }}
           onDelete={deleteEntry}
-          onApprove={(entry) => {
-            // Check if this is a vacation request or change request
-            if (entry.pendingApproval && !entry.isVacationDay) {
-              approveVacationRequest(entry.id);
-            } else if (entry.changeRequest) {
-              approveChangeRequest(entry);
+          onApprove={(approvedEntry) => {
+            // Look up the original entry to check its properties
+            const originalEntry = entries.find(e => e.id === approvedEntry.id);
+            if (originalEntry?.pendingApproval && !originalEntry.isVacationDay) {
+              approveVacationRequest(approvedEntry.id);
+            } else if (originalEntry?.changeRequest) {
+              approveChangeRequest(approvedEntry);
             }
           }}
           onDeny={(entryId) => {
