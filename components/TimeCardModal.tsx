@@ -200,7 +200,7 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="h-full md:h-full w-full md:max-w-2xl bg-[#FAF9F5] shadow-2xl md:rounded-none flex flex-col animate-slide-in-right"
+        className="h-full md:h-full w-full md:max-w-2xl bg-[#FAF9F5] shadow-2xl md:rounded-none flex flex-col animate-slide-in-right overflow-hidden"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
         onClick={(e) => e.stopPropagation()}
       >
