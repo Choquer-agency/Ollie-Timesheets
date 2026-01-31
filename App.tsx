@@ -2702,20 +2702,20 @@ const AppRouter = () => {
 
     console.log('Route check:', { path, isAdmin, isBookkeeper, currentUser });
 
-    // Redirect based on role and current path
+    // Redirect based on role and current path (app routes are under /app)
     if (isAdmin || isBookkeeper) {
-      // Admin and Bookkeeper users should be on /admin
-      if (path === '/' || path === '/employee') {
-        console.log('Redirecting', isBookkeeper ? 'bookkeeper' : 'admin', 'to /admin');
-        window.history.pushState({}, '', '/admin');
-        setCurrentPath('/admin');
+      // Admin and Bookkeeper users should be on /app/admin
+      if (path === '/app' || path === '/app/' || path === '/app/employee') {
+        console.log('Redirecting', isBookkeeper ? 'bookkeeper' : 'admin', 'to /app/admin');
+        window.history.pushState({}, '', '/app/admin');
+        setCurrentPath('/app/admin');
       }
     } else {
-      // Regular employee users should be on /employee
-      if (path === '/' || path === '/admin') {
-        console.log('Redirecting employee to /employee');
-        window.history.pushState({}, '', '/employee');
-        setCurrentPath('/employee');
+      // Regular employee users should be on /app/employee
+      if (path === '/app' || path === '/app/' || path === '/app/admin') {
+        console.log('Redirecting employee to /app/employee');
+        window.history.pushState({}, '', '/app/employee');
+        setCurrentPath('/app/employee');
       }
     }
   }, [currentUser, loading]);
@@ -2838,12 +2838,24 @@ import { useAuth } from './AuthContext';
 import { Auth } from './pages/Auth';
 import { AcceptInvitation } from './pages/AcceptInvitation';
 import { SupabaseStoreProvider } from './SupabaseStore';
+import { Website } from './website/Website';
 
 const App = () => {
   const { user, loading } = useAuth();
+  const path = window.location.pathname;
 
-  // Show loading state while checking auth
-  if (loading) {
+  // Check if this is the marketing website (root path, not /app)
+  const isMarketingRoute = path === '/' || path === '';
+  const isAppRoute = path.startsWith('/app');
+  const isInvitationRoute = path === '/accept-invitation';
+
+  // Marketing website - show to everyone (no auth required)
+  if (isMarketingRoute) {
+    return <Website />;
+  }
+
+  // Show loading state while checking auth for app routes
+  if (loading && (isAppRoute || isInvitationRoute)) {
     return (
       <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
         <div className="text-center">
@@ -2854,26 +2866,28 @@ const App = () => {
     );
   }
 
-  // Check if this is an invitation acceptance route
-  const path = window.location.pathname;
-  const isInvitationRoute = path === '/accept-invitation';
-  
   // If on invitation route and not authenticated, show invitation page
   if (isInvitationRoute && !user) {
     return <AcceptInvitation />;
   }
 
-  // If not authenticated, show auth pages
-  if (!user) {
-    return <Auth />;
+  // App route - requires authentication
+  if (isAppRoute) {
+    // If not authenticated, show auth pages
+    if (!user) {
+      return <Auth />;
+    }
+
+    // User is authenticated, show the main app with Supabase store
+    return (
+      <SupabaseStoreProvider>
+        <AppRouter />
+      </SupabaseStoreProvider>
+    );
   }
 
-  // User is authenticated, show the main app with Supabase store
-  return (
-    <SupabaseStoreProvider>
-      <AppRouter />
-    </SupabaseStoreProvider>
-  );
+  // Default: redirect to marketing site for unknown routes
+  return <Website />;
 };
 
 export default App;
