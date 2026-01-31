@@ -25,6 +25,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // Interactive State: Employee Timer (starts at ~45 minutes)
   const [elapsedSeconds, setElapsedSeconds] = useState(2732);
 
+  // Interactive State: Bookkeeper week selector (0 = current week, 1 = last week, 2 = two weeks ago)
+  const [bookkeeperWeekIndex, setBookkeeperWeekIndex] = useState(0);
+
   // Live timer effect - counts up every second when employee view is active
   useEffect(() => {
     if (activeRole === 'employee') {
@@ -42,6 +45,36 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     const s = seconds % 60;
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
+
+  // Calculate the last 3 weeks from today for bookkeeper view
+  const getWeekData = (weekOffset: number) => {
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() - (weekOffset * 7));
+    const startDate = new Date(endDate);
+    startDate.setDate(endDate.getDate() - 13); // 2-week period
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    const formatYear = (date: Date) => date.getFullYear();
+    
+    // Mock data that varies by week
+    const weekData = [
+      { hours: '120h 45m', payroll: '$14,280', label: 'Current Period' },
+      { hours: '118h 30m', payroll: '$13,950', label: 'Previous Period' },
+      { hours: '122h 15m', payroll: '$14,520', label: '2 Weeks Ago' }
+    ];
+    
+    return {
+      startDate: formatDate(startDate),
+      endDate: formatDate(endDate),
+      year: formatYear(endDate),
+      ...weekData[weekOffset]
+    };
+  };
+
+  const currentWeekData = getWeekData(bookkeeperWeekIndex);
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
@@ -213,7 +246,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 <div className="flex justify-between items-center mb-5 pb-4 border-b border-[#F6F5F1]">
                   <div>
                     <div className="text-xl font-bold text-[#263926]">Payroll Reports</div>
-                    <div className="text-xs text-[#6B6B6B]">Download period summaries</div>
                   </div>
                   <div className="bg-[#6B6B6B] px-3 py-1.5 rounded-lg text-xs font-bold text-white">VIEW ONLY</div>
                 </div>
@@ -221,14 +253,32 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 {/* Period Selector */}
                 <div className="bg-white rounded-2xl border border-[#F6F5F1] p-4 mb-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <button className="w-8 h-8 rounded-lg bg-[#F6F5F1] flex items-center justify-center text-[#6B6B6B] hover:bg-[#E5E3DA]">←</button>
-                      <div className="text-center">
-                        <div className="font-bold text-[#263926]">Jan 16 - Jan 30, 2026</div>
-                        <div className="text-xs text-[#6B6B6B]">Current Period</div>
-                      </div>
-                      <button className="w-8 h-8 rounded-lg bg-[#F6F5F1] flex items-center justify-center text-[#6B6B6B] hover:bg-[#E5E3DA]">→</button>
+                    <button 
+                      onClick={() => setBookkeeperWeekIndex(prev => Math.min(prev + 1, 2))}
+                      className={`w-8 h-8 rounded-lg bg-[#F6F5F1] flex items-center justify-center text-[#6B6B6B] hover:bg-[#E5E3DA] transition-colors ${bookkeeperWeekIndex === 2 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                      disabled={bookkeeperWeekIndex === 2}
+                    >←</button>
+                    <div className="text-center">
+                      <div className="font-bold text-[#263926]">{currentWeekData.startDate} - {currentWeekData.endDate}, {currentWeekData.year}</div>
+                      <div className="text-xs text-[#6B6B6B]">{currentWeekData.label}</div>
                     </div>
+                    <button 
+                      onClick={() => setBookkeeperWeekIndex(prev => Math.max(prev - 1, 0))}
+                      className={`w-8 h-8 rounded-lg bg-[#F6F5F1] flex items-center justify-center text-[#6B6B6B] hover:bg-[#E5E3DA] transition-colors ${bookkeeperWeekIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                      disabled={bookkeeperWeekIndex === 0}
+                    >→</button>
+                  </div>
+                </div>
+                
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-white rounded-2xl border border-[#F6F5F1] p-4">
+                    <div className="text-xs font-bold text-[#6B6B6B] uppercase mb-1">Total Hours</div>
+                    <div className="text-2xl font-bold text-[#263926]">{currentWeekData.hours}</div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-[#F6F5F1] p-4">
+                    <div className="text-xs font-bold text-[#6B6B6B] uppercase mb-1">Total Payroll</div>
+                    <div className="text-2xl font-bold text-[#2CA01C]">{currentWeekData.payroll}</div>
                   </div>
                 </div>
                 
@@ -237,121 +287,116 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-[#F6F5F1] bg-[#FAF9F5]">
-                        <th className="text-left py-3 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Employee</th>
-                        <th className="text-right py-3 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Hours</th>
-                        <th className="text-right py-3 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Days</th>
+                        <th className="text-left py-2.5 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Employee</th>
+                        <th className="text-right py-2.5 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Hours</th>
+                        <th className="text-right py-2.5 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Pay</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F6F5F1]">
                       <tr className="hover:bg-[#FAF9F5]">
-                        <td className="py-3 px-4 font-medium text-[#263926] text-sm">Sarah Chen</td>
-                        <td className="py-3 px-4 text-right font-mono text-[#484848] text-sm">42h 30m</td>
-                        <td className="py-3 px-4 text-right text-[#6B6B6B] text-sm">10</td>
+                        <td className="py-2.5 px-4 font-medium text-[#263926] text-sm">Sarah Chen</td>
+                        <td className="py-2.5 px-4 text-right font-mono text-[#484848] text-sm">42h 30m</td>
+                        <td className="py-2.5 px-4 text-right font-medium text-[#2CA01C] text-sm">$5,100</td>
                       </tr>
                       <tr className="hover:bg-[#FAF9F5]">
-                        <td className="py-3 px-4 font-medium text-[#263926] text-sm">Mike Johnson</td>
-                        <td className="py-3 px-4 text-right font-mono text-[#484848] text-sm">38h 15m</td>
-                        <td className="py-3 px-4 text-right text-[#6B6B6B] text-sm">9</td>
+                        <td className="py-2.5 px-4 font-medium text-[#263926] text-sm">Mike Johnson</td>
+                        <td className="py-2.5 px-4 text-right font-mono text-[#484848] text-sm">38h 15m</td>
+                        <td className="py-2.5 px-4 text-right font-medium text-[#2CA01C] text-sm">$4,590</td>
                       </tr>
                       <tr className="hover:bg-[#FAF9F5]">
-                        <td className="py-3 px-4 font-medium text-[#263926] text-sm">Alex Rivera</td>
-                        <td className="py-3 px-4 text-right font-mono text-[#484848] text-sm">40h 00m</td>
-                        <td className="py-3 px-4 text-right text-[#6B6B6B] text-sm">10</td>
+                        <td className="py-2.5 px-4 font-medium text-[#263926] text-sm">Alex Rivera</td>
+                        <td className="py-2.5 px-4 text-right font-mono text-[#484848] text-sm">40h 00m</td>
+                        <td className="py-2.5 px-4 text-right font-medium text-[#2CA01C] text-sm">$4,590</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 
-                {/* Download Button */}
-                <div className="mt-4 flex gap-3">
-                  <button className="flex-1 py-3 bg-[#2CA01C] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#238a16] transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download CSV
-                  </button>
-                  <button className="px-6 py-3 bg-white border border-[#F6F5F1] text-[#263926] rounded-xl font-bold hover:bg-[#FAF9F5] transition-colors">
-                    PDF
-                  </button>
-                </div>
+                {/* Email Button */}
+                <button className="mt-4 w-full py-3 bg-[#2CA01C] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#238a16] transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Email Payroll
+                </button>
               </div>
             </div>
 
             {/* Employee View - Matching actual EmployeeDashboard with Live Timer */}
-            <div className={`w-full h-full bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] shadow-2xl p-6 transition-all duration-500 ${
+            <div className={`w-full h-full bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] shadow-2xl p-5 transition-all duration-500 overflow-hidden ${
               activeRole === 'employee' ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
             }`}>
               <div className="h-full flex flex-col">
                 {/* Greeting */}
-                <div className="text-center mb-4">
-                  <div className="text-lg font-bold text-[#263926]">Good morning, Jamie</div>
+                <div className="text-center mb-3">
+                  <div className="text-lg font-bold text-[#263926]">Good morning, Michelle</div>
                   <div className="text-xs text-[#6B6B6B]">Thursday, January 30</div>
                 </div>
                 
                 {/* Sick/Vacation Toggle Cards */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  <div className="bg-white p-2.5 rounded-xl border border-[#F6F5F1] text-center">
-                    <div className="text-lg mb-0.5">🤒</div>
-                    <div className="text-[10px] font-bold text-[#263926]">Sick Day</div>
-                    <div className="mt-1.5 w-8 h-4 bg-[#E5E3DA] rounded-full mx-auto relative">
-                      <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="bg-white p-2 rounded-xl border border-[#F6F5F1] text-center">
+                    <div className="text-base mb-0.5">🤒</div>
+                    <div className="text-[9px] font-bold text-[#263926]">Sick Day</div>
+                    <div className="mt-1 w-7 h-3.5 bg-[#E5E3DA] rounded-full mx-auto relative">
+                      <div className="absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full shadow-sm"></div>
                     </div>
                   </div>
-                  <div className="bg-white p-2.5 rounded-xl border border-[#F6F5F1] text-center">
-                    <div className="text-lg mb-0.5">🤧</div>
-                    <div className="text-[10px] font-bold text-[#263926]">Half Sick</div>
-                    <div className="mt-1.5 w-8 h-4 bg-[#E5E3DA] rounded-full mx-auto relative">
-                      <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                  <div className="bg-white p-2 rounded-xl border border-[#F6F5F1] text-center">
+                    <div className="text-base mb-0.5">🤧</div>
+                    <div className="text-[9px] font-bold text-[#263926]">Half Sick</div>
+                    <div className="mt-1 w-7 h-3.5 bg-[#E5E3DA] rounded-full mx-auto relative">
+                      <div className="absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full shadow-sm"></div>
                     </div>
                   </div>
-                  <div className="bg-white p-2.5 rounded-xl border border-[#F6F5F1] text-center">
-                    <div className="text-lg mb-0.5">✈️</div>
-                    <div className="text-[10px] font-bold text-[#263926]">Vacation</div>
-                    <div className="mt-1.5 w-8 h-4 bg-[#E5E3DA] rounded-full mx-auto relative">
-                      <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                  <div className="bg-white p-2 rounded-xl border border-[#F6F5F1] text-center">
+                    <div className="text-base mb-0.5">✈️</div>
+                    <div className="text-[9px] font-bold text-[#263926]">Vacation</div>
+                    <div className="mt-1 w-7 h-3.5 bg-[#E5E3DA] rounded-full mx-auto relative">
+                      <div className="absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white rounded-full shadow-sm"></div>
                     </div>
                   </div>
                 </div>
                 
                 {/* Timer Circle */}
-                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-6 text-center mb-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                  <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase bg-emerald-100 text-emerald-700 mb-3">
+                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-5 text-center mb-3 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-emerald-100 text-emerald-700 mb-2">
                     Clocked In
                   </span>
                   <div className="text-4xl font-mono text-[#263926] tracking-tight font-bold">
                     {formatElapsed(elapsedSeconds)}
                   </div>
-                  <div className="text-xs text-[#6B6B6B] mt-2">Time worked today</div>
+                  <div className="text-xs text-[#6B6B6B] mt-1.5">Time worked today</div>
                   
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <button className="py-3 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-colors">
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <button className="py-2.5 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-colors">
                       Start Break
                     </button>
-                    <button className="py-3 bg-[#263926] text-white rounded-xl font-bold text-sm hover:bg-[#1a2619] transition-colors">
+                    <button className="py-2.5 bg-[#263926] text-white rounded-xl font-bold text-sm hover:bg-[#1a2619] transition-colors">
                       Clock Out
                     </button>
                   </div>
                 </div>
                 
                 {/* Today's Activity Log */}
-                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-4 flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-bold text-[#6B6B6B] uppercase">Today's Activity</div>
-                    <div className="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded-lg">8 vacation days left</div>
+                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-bold text-[#6B6B6B] uppercase">Today's Activity</div>
+                    <div className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-lg">8 days left</div>
                   </div>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between">
                       <span className="text-[#6B6B6B]">Clock In</span>
                       <span className="font-mono text-[#263926]">8:42 AM</span>
                     </div>
-                    <div className="flex justify-between pl-3 border-l-2 border-amber-100">
+                    <div className="flex justify-between pl-2 border-l-2 border-amber-100">
                       <span className="text-[#6B6B6B]">Break 1</span>
-                      <span className="font-mono text-[#263926]">10:15 – 10:30 AM</span>
+                      <span className="font-mono text-[#263926]">10:15 – 10:30</span>
                     </div>
-                    <div className="flex justify-between pl-3 border-l-2 border-amber-100">
+                    <div className="flex justify-between pl-2 border-l-2 border-amber-100">
                       <span className="text-[#6B6B6B]">Break 2</span>
-                      <span className="font-mono text-[#263926]">12:00 – 12:45 PM</span>
+                      <span className="font-mono text-[#263926]">12:00 – 12:45</span>
                     </div>
                   </div>
                 </div>
