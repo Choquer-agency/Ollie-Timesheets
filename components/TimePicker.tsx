@@ -113,16 +113,16 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, label }
   };
 
   // Button styles
-  const btnClass = "w-full h-10 flex items-center justify-center bg-[#F7F6F3] text-[#C5C1B8] hover:bg-[#F0EEE6] hover:text-[#263926] rounded-lg transition-colors active:bg-[#E5E3DA]";
-  const inputClass = "w-full text-center text-3xl font-bold font-mono bg-transparent border-none focus:ring-0 p-0 text-[#263926] placeholder-[#F0EEE6]";
+  const btnClass = "w-full min-h-[44px] h-10 flex items-center justify-center bg-[#F7F6F3] text-[#C5C1B8] hover:bg-[#F0EEE6] hover:text-[#263926] rounded-lg transition-colors active:bg-[#E5E3DA]";
+  const inputClass = "w-full text-center text-2xl md:text-3xl font-bold font-mono bg-transparent border-none focus:ring-0 p-0 text-[#263926] placeholder-[#F0EEE6]";
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col w-full">
       {label && <span className="mb-2 text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">{label}</span>}
-      <div className="flex items-center gap-3 p-3 bg-[#FCFBF8] border border-[#F6F5F1] rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between gap-2 md:gap-3 p-3 md:p-4 bg-[#FCFBF8] border border-[#F6F5F1] rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
          
          {/* Hour Column */}
-         <div className="flex flex-col gap-1 w-16">
+         <div className="flex flex-col gap-1 flex-1 min-w-0 max-w-[72px] md:max-w-[80px]">
             <button onClick={() => adjust('h', 1)} className={btnClass} tabIndex={-1}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             </button>
@@ -142,12 +142,12 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, label }
             </button>
          </div>
 
-         <div className="flex flex-col justify-center h-full pb-1">
-             <span className="text-2xl font-bold text-[#E5E3DA]">:</span>
+         <div className="flex flex-col justify-center h-full pb-1 flex-shrink-0">
+             <span className="text-xl md:text-2xl font-bold text-[#E5E3DA]">:</span>
          </div>
 
          {/* Minute Column */}
-         <div className="flex flex-col gap-1 w-16">
+         <div className="flex flex-col gap-1 flex-1 min-w-0 max-w-[72px] md:max-w-[80px]">
             <button onClick={() => adjust('m', 5)} className={btnClass} tabIndex={-1}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             </button>
@@ -168,10 +168,10 @@ export const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, label }
          </div>
 
          {/* AM/PM Toggle */}
-         <div className="ml-2 flex flex-col justify-center">
+         <div className="flex flex-col justify-center flex-shrink-0">
              <button 
                 onClick={toggleAMPM}
-                className="px-3 py-2 bg-[#F7F6F3] hover:bg-[#F0EEE6] rounded-lg transition-colors text-sm font-bold font-mono text-[#263926]"
+                className="px-3 md:px-4 py-2 md:py-3 min-h-[44px] bg-[#F7F6F3] hover:bg-[#F0EEE6] rounded-lg transition-colors text-sm md:text-base font-bold font-mono text-[#263926]"
              >
                 {isPM ? 'PM' : 'AM'}
              </button>

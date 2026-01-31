@@ -1137,38 +1137,42 @@ const EmployeeDashboard = () => {
 
   // Action Required Modal (Blocking)
   if (issueEntry) {
+     // When TimeCardModal is open, render it full-screen instead of nested
+     if (isAdjustmentModalOpen) {
+        return (
+            <TimeCardModal 
+                isOpen={true}
+                onClose={() => setIsAdjustmentModalOpen(false)}
+                employee={currentUser}
+                entry={issueEntry}
+                date={issueEntry.date}
+                isEmployeeView={true}
+                onSave={(proposedEntry) => {
+                    submitChangeRequest(proposedEntry);
+                    setIssueEntry(null); 
+                }}
+                onDelete={() => {}} 
+            />
+        );
+     }
+
      return (
-        <div className="fixed inset-0 z-50 bg-[#484848]/90 backdrop-blur-sm flex items-center justify-center p-6">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center animate-slide-in-right">
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <div className="fixed inset-0 z-50 bg-[#484848]/90 backdrop-blur-sm flex items-center justify-center p-4 md:p-6">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 text-center animate-slide-in-right">
+                <div className="w-14 h-14 md:w-12 md:h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
+                     <svg className="w-7 h-7 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 </div>
-                <h2 className="text-xl font-bold text-[#263926] mb-2">Action Required</h2>
-                <p className="text-[#6B6B6B] mb-6 text-sm">
+                <h2 className="text-xl md:text-2xl font-bold text-[#263926] mb-2">Action Required</h2>
+                <p className="text-[#6B6B6B] mb-6 text-sm md:text-base">
                     You didn't clock out on <span className="font-bold text-[#263926]">{formatDateForDisplay(issueEntry.date)}</span>. 
                     Please update your time card.
                 </p>
                 <Button 
-                    className="w-full"
+                    className="w-full min-h-[48px] text-base"
                     onClick={() => setIsAdjustmentModalOpen(true)}
                 >
                     Review & Fix Now
                 </Button>
-
-                {/* Modal that opens when they click fix */}
-                <TimeCardModal 
-                    isOpen={isAdjustmentModalOpen}
-                    onClose={() => setIsAdjustmentModalOpen(false)}
-                    employee={currentUser}
-                    entry={issueEntry}
-                    date={issueEntry.date}
-                    isEmployeeView={true}
-                    onSave={(proposedEntry) => {
-                        submitChangeRequest(proposedEntry);
-                        setIssueEntry(null); 
-                    }}
-                    onDelete={() => {}} 
-                />
             </div>
         </div>
      );
