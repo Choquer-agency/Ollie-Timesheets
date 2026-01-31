@@ -7,7 +7,7 @@ interface HomePageProps {
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // Interactive State: ROI Calculator
   const [employeeCount, setEmployeeCount] = useState(15);
-  const annualSavings = (employeeCount * 0.25 * 5 * 52 * 50).toLocaleString();
+  const annualSavings = (employeeCount * 0.25 * 5 * 52 * 30).toLocaleString();
 
   // Interactive State: Anomaly Fixer
   const [isFixed, setIsFixed] = useState(false);
@@ -131,16 +131,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Core Features Section - Pain Points & Solutions */}
-      <section className="py-20 bg-[#D9F1D6] relative overflow-hidden">
+      <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(44,160,28,0.06),transparent_50%)]"></div>
         
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           {/* Pain-focused heading */}
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-4 text-[#263926]">
+            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-4 text-[#263926] dark:text-[#a8d5a2]">
               Tired of chasing timesheets, fixing errors, and manually calculating payroll?
             </h2>
-            <p className="text-lg text-[#484848] max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               You're not alone. Most agencies lose hours every week on admin that should take minutes. Here's how Ollie fixes that.
             </p>
           </div>
@@ -148,40 +148,40 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           {/* Solution Cards */}
           <div className="grid md:grid-cols-3 gap-6">
             {/* Card 1: Real-Time Tracking */}
-            <div className="bg-white rounded-2xl p-6 border border-[#263926]/10 shadow-sm hover:shadow-lg transition-all group">
-              <div className="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                <svg className="w-7 h-7 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926]">Real-Time Tracking</h3>
-              <p className="text-[#6B6B6B] text-sm leading-relaxed">
+              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Real-Time Tracking</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Employees clock in with one tap. You see who's working, who's on break, and who's done—live, no refreshing needed.
               </p>
             </div>
 
             {/* Card 2: Break Management */}
-            <div className="bg-white rounded-2xl p-6 border border-[#263926]/10 shadow-sm hover:shadow-lg transition-all group">
-              <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                <svg className="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                <svg className="w-7 h-7 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926]">Break Management</h3>
-              <p className="text-[#6B6B6B] text-sm leading-relaxed">
+              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Break Management</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Breaks are tracked automatically. No more guessing if lunch was 30 minutes or 90—it's all logged and deducted.
               </p>
             </div>
 
             {/* Card 3: Payroll Automation */}
-            <div className="bg-white rounded-2xl p-6 border border-[#263926]/10 shadow-sm hover:shadow-lg transition-all group">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-lg transition-all group">
               <div className="w-14 h-14 rounded-xl bg-[#A1EB97]/40 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                 <svg className="w-7 h-7 text-[#2CA01C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926]">Payroll Automation</h3>
-              <p className="text-[#6B6B6B] text-sm leading-relaxed">
+              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Payroll Automation</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Hours are calculated, formatted, and sent to your bookkeeper with one slide. No spreadsheets, no headaches.
               </p>
             </div>
@@ -190,7 +190,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Role Deck Section - Views for Every Role */}
-      <section className="py-24 bg-[#D9F1D6] overflow-hidden relative">
+      <section className="py-24 overflow-hidden relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(44,160,28,0.08),transparent_50%)]"></div>
         
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12 items-center relative z-10">
@@ -610,7 +610,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Predictive Leave Heatmap Section */}
-      <section className="py-24 bg-secondary border-y border-border">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row gap-16 items-center">
             <div className="flex-1">
@@ -870,11 +870,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* ROI Calculator */}
-      <section className="py-16 bg-gradient-to-br from-[#263926] to-[#1a1a1a] text-white relative overflow-hidden">
+      <section className="py-16 relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-4xl font-heading font-medium mb-3">See how much you'll save.</h2>
-            <p className="text-white/60 text-base max-w-xl mx-auto">
+            <h2 className="text-2xl md:text-4xl font-heading font-medium mb-3 text-[#263926] dark:text-[#a8d5a2]">See how much you'll save.</h2>
+            <p className="text-muted-foreground text-base max-w-xl mx-auto">
               Every clock-out you don't chase, every timesheet you don't fix, every payroll you don't manually calculate—it adds up.
             </p>
           </div>
@@ -882,58 +882,58 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             {/* Left: Context - Where the time savings come from */}
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-[#A1EB97] mb-4">Where does 15 min/day come from?</h3>
+              <h3 className="text-lg font-bold text-[#2CA01C] mb-4">Where does 15 min/day come from?</h3>
               
-              <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+                <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <div className="font-bold text-sm">No more chasing missing clock-outs</div>
-                  <div className="text-xs text-white/50">~5 min saved per incident</div>
+                  <div className="font-bold text-sm text-[#263926] dark:text-[#a8d5a2]">No more chasing missing clock-outs</div>
+                  <div className="text-xs text-muted-foreground">~5 min saved per incident</div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </div>
                 <div>
-                  <div className="font-bold text-sm">No manual timesheet corrections</div>
-                  <div className="text-xs text-white/50">~5 min saved per fix</div>
+                  <div className="font-bold text-sm text-[#263926] dark:text-[#a8d5a2]">No manual timesheet corrections</div>
+                  <div className="text-xs text-muted-foreground">~5 min saved per fix</div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                <div className="w-8 h-8 rounded-lg bg-[#2CA01C]/30 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-[#A1EB97]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start gap-3 p-3 bg-card rounded-xl border border-border">
+                <div className="w-8 h-8 rounded-lg bg-[#A1EB97]/30 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-[#2CA01C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <div className="font-bold text-sm">One-click payroll, no spreadsheets</div>
-                  <div className="text-xs text-white/50">~5 min saved per cycle</div>
+                  <div className="font-bold text-sm text-[#263926] dark:text-[#a8d5a2]">One-click payroll, no spreadsheets</div>
+                  <div className="text-xs text-muted-foreground">~5 min saved per cycle</div>
                 </div>
               </div>
             </div>
 
             {/* Right: Calculator */}
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
               <div className="text-center mb-6">
-                <div className="text-4xl md:text-5xl font-bold mb-1 font-mono tracking-tight">
+                <div className="text-4xl md:text-5xl font-bold mb-1 font-mono tracking-tight text-[#263926] dark:text-[#a8d5a2]">
                   ${annualSavings}
                 </div>
-                <div className="text-[#A1EB97] uppercase tracking-wider text-xs font-bold">Estimated Annual Savings</div>
+                <div className="text-[#2CA01C] uppercase tracking-wider text-xs font-bold">Estimated Annual Savings</div>
               </div>
 
               <div className="mb-6">
-                <div className="flex justify-between mb-3 text-sm font-bold">
+                <div className="flex justify-between mb-3 text-sm font-bold text-[#263926] dark:text-[#a8d5a2]">
                   <span>Team Size</span>
-                  <span className="text-[#A1EB97]">{employeeCount} Employees</span>
+                  <span className="text-[#2CA01C]">{employeeCount} Employees</span>
                 </div>
                 <input 
                   type="range" 
@@ -941,19 +941,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   max="100" 
                   value={employeeCount} 
                   onChange={(e) => setEmployeeCount(parseInt(e.target.value))}
-                  className="w-full h-3 bg-[#1a1a1a] rounded-full appearance-none cursor-pointer accent-[#2CA01C]"
+                  className="w-full h-3 bg-secondary rounded-full appearance-none cursor-pointer accent-[#2CA01C]"
                 />
               </div>
               
               {/* Fun math breakdown */}
-              <div className="pt-4 border-t border-white/10 text-xs text-white/50 space-y-1">
+              <div className="pt-4 border-t border-border text-xs text-muted-foreground space-y-1">
                 <div className="flex justify-between">
                   <span>15 min × {employeeCount} employees × 5 days</span>
                   <span className="font-mono">{(employeeCount * 15 * 5 / 60).toFixed(1)}h/week</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>× 52 weeks × $50/hr admin cost</span>
-                  <span className="font-mono text-[#A1EB97]">${annualSavings}/yr</span>
+                  <span>× 52 weeks × $30/hr admin cost</span>
+                  <span className="font-mono text-[#2CA01C]">${annualSavings}/yr</span>
                 </div>
               </div>
             </div>
@@ -962,7 +962,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Payroll Pulse */}
-      <section className="py-20 bg-[#FAF9F5] dark:bg-[#1a1a1a]">
+      <section className="py-20">
         <div className="max-w-5xl mx-auto px-6">
           {/* Green Card Container */}
           <div className="w-full md:w-[80%] mx-auto bg-[#2CA01C] rounded-3xl py-14 px-8 md:px-12 shadow-2xl shadow-[#2CA01C]/20 text-center">
