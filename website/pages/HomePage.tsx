@@ -1,44 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface HomePageProps {
   onNavigate: (page: string, feature?: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
-  // Interactive State: NLP Demo
-  const [chatInput, setChatInput] = useState('');
-  const [chatResponse, setChatResponse] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-
-  const runNlpDemo = (text: string) => {
-    if (isTyping) return;
-    setChatInput('');
-    setChatResponse(null);
-    setIsTyping(true);
-    
-    let i = 0;
-    const interval = setInterval(() => {
-      setChatInput(text.substring(0, i + 1));
-      i++;
-      if (i > text.length) {
-        clearInterval(interval);
-        setIsTyping(false);
-        setTimeout(() => {
-          setChatResponse("Processing complete. I've logged the sick day for Sarah and rescheduled her shifts.");
-        }, 800);
-      }
-    }, 40);
-  };
-
   // Interactive State: ROI Calculator
   const [employeeCount, setEmployeeCount] = useState(15);
   const annualSavings = (employeeCount * 0.25 * 5 * 52 * 50).toLocaleString();
 
   // Interactive State: Anomaly Fixer
   const [isFixed, setIsFixed] = useState(false);
-
-  // Interactive State: Overtime Shield
-  const [shieldActive, setShieldActive] = useState(false);
 
   // Interactive State: Role Deck
   const [activeRole, setActiveRole] = useState<'admin' | 'bookkeeper' | 'employee'>('admin');
@@ -49,6 +21,27 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // Interactive State: Payroll Pulse
   const [sliderValue, setSliderValue] = useState(0);
   const [payrollSent, setPayrollSent] = useState(false);
+
+  // Interactive State: Employee Timer (starts at ~45 minutes)
+  const [elapsedSeconds, setElapsedSeconds] = useState(2732);
+
+  // Live timer effect - counts up every second when employee view is active
+  useEffect(() => {
+    if (activeRole === 'employee') {
+      const interval = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [activeRole]);
+
+  // Format elapsed time as HH:MM:SS
+  const formatElapsed = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
@@ -61,9 +54,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center justify-center py-20 md:py-24 overflow-hidden">
         {/* Animated Background Orbs */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[#2CA01C]/10 rounded-full blur-[120px] -z-10 opacity-60"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#2CA01C]/10 rounded-full blur-[120px] -z-10 opacity-60"></div>
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#A1EB97]/20 rounded-full blur-[100px] -z-10 opacity-40"></div>
 
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
@@ -83,173 +76,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
             Hands-off payroll, smart compliance checks, and a seamless experience for modern agencies. Stop chasing hours. Start automating them.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a 
-              href="/app" 
-              className="w-full sm:w-auto px-8 py-4 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all shadow-xl shadow-[#2CA01C]/20 hover:scale-105 transform"
-            >
-              Get Started for Free
-            </a>
-            <button 
-              onClick={() => onNavigate('features')} 
-              className="w-full sm:w-auto px-8 py-4 bg-card text-foreground font-medium rounded-full hover:bg-secondary border border-border transition-all backdrop-blur-sm"
-            >
-              Explore Features
-            </button>
-          </div>
+          <a 
+            href="/app" 
+            className="inline-block px-8 py-4 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all shadow-xl shadow-[#2CA01C]/20 hover:scale-105 transform"
+          >
+            Get Started for Free
+          </a>
         </div>
       </section>
 
-      {/* Natural Language Command Section */}
-      <section className="py-24 bg-secondary border-y border-border">
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-6 text-[#263926] dark:text-[#a8d5a2]">
-              Just ask Ollie.
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              Managing a team shouldn't require clicking through endless menus. Ollie's natural language engine lets you manage time, leave, and payroll with simple commands.
-            </p>
-            
-            <div className="space-y-4">
-              <div className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-2">Try a command:</div>
-              <button 
-                onClick={() => runNlpDemo('Mark Sarah as sick today')}
-                className="block w-full text-left px-4 py-3 rounded-xl bg-card border border-border hover:border-[#2CA01C] transition-all text-foreground"
-              >
-                "Mark Sarah as sick today"
-              </button>
-              <button 
-                onClick={() => runNlpDemo('Approve all timesheets for this week')}
-                className="block w-full text-left px-4 py-3 rounded-xl bg-card border border-border hover:border-[#2CA01C] transition-all text-foreground"
-              >
-                "Approve all timesheets for this week"
-              </button>
-            </div>
-          </div>
-
-          {/* Chat Interface */}
-          <div className="bg-card rounded-3xl shadow-2xl border border-border p-6 h-[400px] flex flex-col relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#2CA01C]/5 to-transparent pointer-events-none"></div>
-            
-            {/* Messages Area */}
-            <div className="flex-1 space-y-4 overflow-y-auto mb-4">
-              {/* System Welcome */}
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#2CA01C] flex items-center justify-center text-white font-bold text-xs shrink-0">O</div>
-                <div className="bg-secondary p-3 rounded-2xl rounded-tl-none text-sm text-foreground max-w-[80%]">
-                  How can I help you manage your team today?
-                </div>
-              </div>
-
-              {/* User Input Reflection */}
-              {(chatInput || chatResponse) && (
-                <div className="flex gap-3 justify-end">
-                  <div className="bg-[#2CA01C] p-3 rounded-2xl rounded-tr-none text-sm text-white max-w-[80%]">
-                    {chatInput || 'Mark Sarah as sick today'}
-                  </div>
-                </div>
-              )}
-
-              {/* System Response */}
-              {chatResponse && (
-                <div className="flex gap-3 animate-fade-in">
-                  <div className="w-8 h-8 rounded-lg bg-[#2CA01C] flex items-center justify-center text-white font-bold text-xs shrink-0">O</div>
-                  <div className="bg-[#A1EB97]/30 border border-[#2CA01C]/30 p-3 rounded-2xl rounded-tl-none text-sm text-[#263926] dark:text-[#a8d5a2] max-w-[80%]">
-                    {chatResponse}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Input Mockup */}
-            <div className="relative mt-auto">
-              <div className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground flex items-center justify-between">
-                <span>{isTyping ? chatInput + '|' : 'Type a command...'}</span>
-                <div className="w-6 h-6 rounded bg-[#2CA01C] flex items-center justify-center text-white text-xs">↑</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Overtime Shield Section */}
-      <section className="py-24 max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-heading font-medium mb-4 text-[#263926] dark:text-[#a8d5a2]">
-            The Overtime Shield.
-          </h2>
-          <p className="text-lg text-muted-foreground">Visually manage team burnout risks before they impact your budget.</p>
-        </div>
-
-        <div className="bg-card border border-border rounded-3xl p-8 md:p-12 shadow-lg relative overflow-hidden">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
-            <div>
-              <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-1">Weekly Hours Projection</div>
-              <div className="text-3xl font-heading font-medium text-[#263926] dark:text-[#a8d5a2]">Design Team A</div>
-            </div>
-            <button 
-              onClick={() => setShieldActive(!shieldActive)}
-              className={`flex items-center gap-3 px-6 py-3 rounded-full font-bold transition-all ${
-                shieldActive 
-                  ? 'bg-[#2CA01C] text-white shadow-lg shadow-[#2CA01C]/30' 
-                  : 'bg-secondary text-muted-foreground hover:bg-accent'
-              }`}
-            >
-              <div className={`w-4 h-4 rounded-full border-2 ${shieldActive ? 'bg-white border-transparent' : 'border-current'}`}></div>
-              AI Guardrails: {shieldActive ? 'ON' : 'OFF'}
-            </button>
-          </div>
-
-          {/* Bar Chart Visualization */}
-          <div className="flex items-end justify-between h-64 gap-2 md:gap-4 px-4">
-            {[8, 9, 11, 8, 12, 6, 0].map((hours, i) => {
-              const isOver = hours > 8;
-              const displayHours = shieldActive && isOver ? 8 : hours;
-              const heightPercent = (displayHours / 12) * 100;
-              const day = ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i];
-              
-              return (
-                <div key={i} className="flex-1 flex flex-col justify-end items-center group">
-                  <div className="relative w-full max-w-[60px] transition-all duration-500" style={{ height: `${heightPercent}%` }}>
-                    <div className={`absolute bottom-0 left-0 right-0 top-0 rounded-t-lg transition-colors duration-500 ${
-                      shieldActive ? 'bg-[#2CA01C]' : isOver ? 'bg-red-400' : 'bg-muted'
-                    }`}></div>
-                    
-                    {shieldActive && isOver && (
-                      <div className="absolute bottom-full mb-1 left-0 right-0 text-center">
-                        <span className="text-xs font-bold text-[#2CA01C]">SAVED</span>
-                      </div>
-                    )}
-                    
-                    <div className="absolute bottom-2 inset-x-0 text-center text-xs font-bold text-white/90">{displayHours}h</div>
-                  </div>
-                  <div className="mt-3 text-xs font-bold text-muted-foreground">{day}</div>
-                </div>
-              );
-            })}
-          </div>
-          
-          {shieldActive && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card/90 backdrop-blur-sm border border-[#2CA01C]/30 p-4 rounded-xl shadow-2xl flex items-center gap-4 animate-fade-in">
-              <div className="w-10 h-10 bg-[#A1EB97]/30 rounded-full flex items-center justify-center text-[#2CA01C] text-xl">🛡️</div>
-              <div>
-                <div className="font-bold text-[#263926] dark:text-[#a8d5a2]">Optimization Active</div>
-                <div className="text-xs text-muted-foreground">Projected Savings: <span className="text-[#2CA01C] font-bold">$420/week</span></div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Role Deck Section */}
-      <section className="py-24 bg-[#263926] text-white overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(44,160,28,0.1),transparent_70%)]"></div>
+      {/* Role Deck Section - Views for Every Role */}
+      <section className="py-24 bg-[#D9F1D6] overflow-hidden relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(44,160,28,0.08),transparent_50%)]"></div>
         
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12 items-center relative z-10">
           <div className="md:col-span-1 space-y-6">
-            <h2 className="text-4xl font-heading font-medium mb-4">Views for every role.</h2>
-            <p className="text-white/60 mb-8">Click to see how Ollie adapts to your team.</p>
+            <h2 className="text-4xl font-heading font-medium mb-4 text-[#263926]">Views for every role.</h2>
+            <p className="text-[#484848] mb-8">Click to see how Ollie adapts to your team.</p>
             
             <div className="space-y-3">
               {[
@@ -262,8 +105,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   onClick={() => setActiveRole(role.id as 'admin' | 'bookkeeper' | 'employee')}
                   className={`w-full text-left p-4 rounded-xl border transition-all ${
                     activeRole === role.id 
-                      ? 'bg-[#2CA01C]/20 border-[#2CA01C] text-white' 
-                      : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                      ? 'bg-white border-[#2CA01C] text-[#263926] shadow-lg' 
+                      : 'bg-white/50 border-[#263926]/10 text-[#484848] hover:bg-white hover:shadow-md'
                   }`}
                 >
                   <div className="flex items-center gap-3 font-bold mb-1">
@@ -276,71 +119,242 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </div>
 
           {/* Interface Display */}
-          <div className="md:col-span-2 relative h-[500px]">
-            {/* Admin View */}
-            <div className={`w-full h-full bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl p-6 transition-all duration-500 ${
-              activeRole === 'admin' ? 'opacity-100' : 'opacity-0 absolute inset-0'
+          <div className="md:col-span-2 relative h-[520px]">
+            {/* Admin View - Matching actual AdminDashboard */}
+            <div className={`w-full h-full bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] shadow-2xl p-6 transition-all duration-500 ${
+              activeRole === 'admin' ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
             }`}>
               <div className="h-full flex flex-col">
-                <div className="flex justify-between items-center mb-6 pb-6 border-b border-white/10">
-                  <div className="text-xl font-bold">Admin Dashboard</div>
-                  <div className="bg-[#2CA01C] px-3 py-1 rounded text-xs font-bold">OWNER</div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-white/5 p-4 rounded-xl">
-                    <div className="text-2xl font-bold mb-1">$12,450</div>
-                    <div className="text-xs text-white/50">Payroll Run</div>
+                {/* Header */}
+                <div className="flex justify-between items-center mb-5 pb-4 border-b border-[#F6F5F1]">
+                  <div>
+                    <div className="text-xl font-bold text-[#263926]">Today's Team</div>
+                    <div className="text-xs text-[#6B6B6B]">Thursday, January 30</div>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-xl">
-                    <div className="text-2xl font-bold mb-1">3</div>
-                    <div className="text-xs text-white/50">Pending Requests</div>
-                  </div>
+                  <div className="bg-[#2CA01C] px-3 py-1.5 rounded-lg text-xs font-bold text-white">OWNER</div>
                 </div>
-                <div className="flex-1 bg-white/5 rounded-xl p-4">
-                  <div className="h-4 w-1/3 bg-white/10 rounded mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="h-8 bg-white/5 rounded w-full flex items-center px-3 text-xs text-white/50">Alice Chen - 40h</div>
-                    <div className="h-8 bg-white/5 rounded w-full flex items-center px-3 text-xs text-white/50">Bob Smith - 38h</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bookkeeper View */}
-            <div className={`w-full h-full bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl p-6 transition-all duration-500 ${
-              activeRole === 'bookkeeper' ? 'opacity-100' : 'opacity-0 absolute inset-0'
-            }`}>
-              <div className="h-full flex flex-col">
-                <div className="flex justify-between items-center mb-6 pb-6 border-b border-white/10">
-                  <div className="text-xl font-bold">Payroll Reports</div>
-                  <div className="bg-[#6B6B6B] px-3 py-1 rounded text-xs font-bold">VIEW ONLY</div>
-                </div>
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="bg-white/5 p-4 rounded-xl flex justify-between items-center">
+                
+                {/* Employee Status Cards */}
+                <div className="space-y-3 mb-5">
+                  {/* Employee 1 - Working */}
+                  <div className="bg-white p-4 rounded-2xl border border-[#F6F5F1] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">SC</div>
                       <div>
-                        <div className="font-bold text-sm">Oct 1 - Oct 14</div>
-                        <div className="text-xs text-white/50">CSV Generated</div>
+                        <div className="font-bold text-[#263926] text-sm">Sarah Chen</div>
+                        <div className="text-xs text-[#6B6B6B]">Designer</div>
                       </div>
-                      <div className="w-8 h-8 bg-white/10 rounded flex items-center justify-center">⬇</div>
                     </div>
-                  ))}
+                    <div className="text-right">
+                      <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Working</span>
+                      <div className="text-xs text-[#6B6B6B] mt-1 font-mono">8:42 AM</div>
+                    </div>
+                  </div>
+                  
+                  {/* Employee 2 - On Break */}
+                  <div className="bg-white p-4 rounded-2xl border border-[#F6F5F1] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">MJ</div>
+                      <div>
+                        <div className="font-bold text-[#263926] text-sm">Mike Johnson</div>
+                        <div className="text-xs text-[#6B6B6B]">Developer</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">On Break</span>
+                      <div className="text-xs text-[#6B6B6B] mt-1 font-mono">10:15 AM</div>
+                    </div>
+                  </div>
+                  
+                  {/* Employee 3 - Clocked Out */}
+                  <div className="bg-white p-4 rounded-2xl border border-[#F6F5F1] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#F0EEE6] flex items-center justify-center text-[#6B6B6B] font-bold text-sm">AR</div>
+                      <div>
+                        <div className="font-bold text-[#263926] text-sm">Alex Rivera</div>
+                        <div className="text-xs text-[#6B6B6B]">Marketing</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-[#F0EEE6] text-[#6B6B6B]">Done</span>
+                      <div className="text-xs text-[#6B6B6B] mt-1 font-mono">5:12 PM</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Payroll Summary */}
+                <div className="mt-auto bg-white rounded-2xl border border-[#F6F5F1] p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider">Current Period Payroll</div>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold">
+                      <span className="w-4 h-4 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px]">3</span>
+                      Pending
+                    </button>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-3xl font-bold text-[#263926]">$12,450</div>
+                      <div className="text-xs text-[#6B6B6B]">Jan 16 - Jan 30</div>
+                    </div>
+                    <button className="px-4 py-2 bg-[#2CA01C] text-white rounded-xl text-sm font-bold hover:bg-[#238a16] transition-colors">
+                      Send to Bookkeeper
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Employee View */}
-            <div className={`w-full h-full bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl p-6 transition-all duration-500 ${
-              activeRole === 'employee' ? 'opacity-100' : 'opacity-0 absolute inset-0'
+            {/* Bookkeeper View - Matching actual BookkeeperDashboard */}
+            <div className={`w-full h-full bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] shadow-2xl p-6 transition-all duration-500 ${
+              activeRole === 'bookkeeper' ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
             }`}>
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <div className="w-48 h-48 rounded-full border-4 border-[#2CA01C] flex items-center justify-center mb-8 relative">
-                  <div className="text-4xl font-mono font-bold">09:41</div>
-                  <div className="absolute -bottom-4 bg-[#2CA01C] px-4 py-1 rounded-full text-xs font-bold">CLOCKED IN</div>
+              <div className="h-full flex flex-col">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-5 pb-4 border-b border-[#F6F5F1]">
+                  <div>
+                    <div className="text-xl font-bold text-[#263926]">Payroll Reports</div>
+                    <div className="text-xs text-[#6B6B6B]">Download period summaries</div>
+                  </div>
+                  <div className="bg-[#6B6B6B] px-3 py-1.5 rounded-lg text-xs font-bold text-white">VIEW ONLY</div>
                 </div>
-                <button className="w-full max-w-xs bg-white/10 hover:bg-white/20 py-4 rounded-xl font-bold border border-white/10">
-                  Start Break
-                </button>
+                
+                {/* Period Selector */}
+                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button className="w-8 h-8 rounded-lg bg-[#F6F5F1] flex items-center justify-center text-[#6B6B6B] hover:bg-[#E5E3DA]">←</button>
+                      <div className="text-center">
+                        <div className="font-bold text-[#263926]">Jan 16 - Jan 30, 2026</div>
+                        <div className="text-xs text-[#6B6B6B]">Current Period</div>
+                      </div>
+                      <button className="w-8 h-8 rounded-lg bg-[#F6F5F1] flex items-center justify-center text-[#6B6B6B] hover:bg-[#E5E3DA]">→</button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Report Rows */}
+                <div className="flex-1 bg-white rounded-2xl border border-[#F6F5F1] overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#F6F5F1] bg-[#FAF9F5]">
+                        <th className="text-left py-3 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Employee</th>
+                        <th className="text-right py-3 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Hours</th>
+                        <th className="text-right py-3 px-4 text-xs font-bold text-[#6B6B6B] uppercase">Days</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F6F5F1]">
+                      <tr className="hover:bg-[#FAF9F5]">
+                        <td className="py-3 px-4 font-medium text-[#263926] text-sm">Sarah Chen</td>
+                        <td className="py-3 px-4 text-right font-mono text-[#484848] text-sm">42h 30m</td>
+                        <td className="py-3 px-4 text-right text-[#6B6B6B] text-sm">10</td>
+                      </tr>
+                      <tr className="hover:bg-[#FAF9F5]">
+                        <td className="py-3 px-4 font-medium text-[#263926] text-sm">Mike Johnson</td>
+                        <td className="py-3 px-4 text-right font-mono text-[#484848] text-sm">38h 15m</td>
+                        <td className="py-3 px-4 text-right text-[#6B6B6B] text-sm">9</td>
+                      </tr>
+                      <tr className="hover:bg-[#FAF9F5]">
+                        <td className="py-3 px-4 font-medium text-[#263926] text-sm">Alex Rivera</td>
+                        <td className="py-3 px-4 text-right font-mono text-[#484848] text-sm">40h 00m</td>
+                        <td className="py-3 px-4 text-right text-[#6B6B6B] text-sm">10</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Download Button */}
+                <div className="mt-4 flex gap-3">
+                  <button className="flex-1 py-3 bg-[#2CA01C] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#238a16] transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download CSV
+                  </button>
+                  <button className="px-6 py-3 bg-white border border-[#F6F5F1] text-[#263926] rounded-xl font-bold hover:bg-[#FAF9F5] transition-colors">
+                    PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Employee View - Matching actual EmployeeDashboard with Live Timer */}
+            <div className={`w-full h-full bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] shadow-2xl p-6 transition-all duration-500 ${
+              activeRole === 'employee' ? 'opacity-100' : 'opacity-0 absolute inset-0 pointer-events-none'
+            }`}>
+              <div className="h-full flex flex-col">
+                {/* Greeting */}
+                <div className="text-center mb-4">
+                  <div className="text-lg font-bold text-[#263926]">Good morning, Jamie</div>
+                  <div className="text-xs text-[#6B6B6B]">Thursday, January 30</div>
+                </div>
+                
+                {/* Sick/Vacation Toggle Cards */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="bg-white p-2.5 rounded-xl border border-[#F6F5F1] text-center">
+                    <div className="text-lg mb-0.5">🤒</div>
+                    <div className="text-[10px] font-bold text-[#263926]">Sick Day</div>
+                    <div className="mt-1.5 w-8 h-4 bg-[#E5E3DA] rounded-full mx-auto relative">
+                      <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                    </div>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-xl border border-[#F6F5F1] text-center">
+                    <div className="text-lg mb-0.5">🤧</div>
+                    <div className="text-[10px] font-bold text-[#263926]">Half Sick</div>
+                    <div className="mt-1.5 w-8 h-4 bg-[#E5E3DA] rounded-full mx-auto relative">
+                      <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                    </div>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-xl border border-[#F6F5F1] text-center">
+                    <div className="text-lg mb-0.5">✈️</div>
+                    <div className="text-[10px] font-bold text-[#263926]">Vacation</div>
+                    <div className="mt-1.5 w-8 h-4 bg-[#E5E3DA] rounded-full mx-auto relative">
+                      <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Timer Circle */}
+                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-6 text-center mb-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                  <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase bg-emerald-100 text-emerald-700 mb-3">
+                    Clocked In
+                  </span>
+                  <div className="text-4xl font-mono text-[#263926] tracking-tight font-bold">
+                    {formatElapsed(elapsedSeconds)}
+                  </div>
+                  <div className="text-xs text-[#6B6B6B] mt-2">Time worked today</div>
+                  
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <button className="py-3 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-colors">
+                      Start Break
+                    </button>
+                    <button className="py-3 bg-[#263926] text-white rounded-xl font-bold text-sm hover:bg-[#1a2619] transition-colors">
+                      Clock Out
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Today's Activity Log */}
+                <div className="bg-white rounded-2xl border border-[#F6F5F1] p-4 flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-bold text-[#6B6B6B] uppercase">Today's Activity</div>
+                    <div className="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded-lg">8 vacation days left</div>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-[#6B6B6B]">Clock In</span>
+                      <span className="font-mono text-[#263926]">8:42 AM</span>
+                    </div>
+                    <div className="flex justify-between pl-3 border-l-2 border-amber-100">
+                      <span className="text-[#6B6B6B]">Break 1</span>
+                      <span className="font-mono text-[#263926]">10:15 – 10:30 AM</span>
+                    </div>
+                    <div className="flex justify-between pl-3 border-l-2 border-amber-100">
+                      <span className="text-[#6B6B6B]">Break 2</span>
+                      <span className="font-mono text-[#263926]">12:00 – 12:45 PM</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
