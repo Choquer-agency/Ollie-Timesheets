@@ -130,6 +130,65 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
+      {/* Core Features Section - Pain Points & Solutions */}
+      <section className="py-20 bg-[#D9F1D6] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(44,160,28,0.06),transparent_50%)]"></div>
+        
+        <div className="max-w-5xl mx-auto px-6 relative z-10">
+          {/* Pain-focused heading */}
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-4 text-[#263926]">
+              Tired of chasing timesheets, fixing errors, and manually calculating payroll?
+            </h2>
+            <p className="text-lg text-[#484848] max-w-2xl mx-auto">
+              You're not alone. Most agencies lose hours every week on admin that should take minutes. Here's how Ollie fixes that.
+            </p>
+          </div>
+
+          {/* Solution Cards */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Card 1: Real-Time Tracking */}
+            <div className="bg-white rounded-2xl p-6 border border-[#263926]/10 shadow-sm hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926]">Real-Time Tracking</h3>
+              <p className="text-[#6B6B6B] text-sm leading-relaxed">
+                Employees clock in with one tap. You see who's working, who's on break, and who's done—live, no refreshing needed.
+              </p>
+            </div>
+
+            {/* Card 2: Break Management */}
+            <div className="bg-white rounded-2xl p-6 border border-[#263926]/10 shadow-sm hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                <svg className="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926]">Break Management</h3>
+              <p className="text-[#6B6B6B] text-sm leading-relaxed">
+                Breaks are tracked automatically. No more guessing if lunch was 30 minutes or 90—it's all logged and deducted.
+              </p>
+            </div>
+
+            {/* Card 3: Payroll Automation */}
+            <div className="bg-white rounded-2xl p-6 border border-[#263926]/10 shadow-sm hover:shadow-lg transition-all group">
+              <div className="w-14 h-14 rounded-xl bg-[#A1EB97]/40 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                <svg className="w-7 h-7 text-[#2CA01C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-heading font-medium mb-2 text-[#263926]">Payroll Automation</h3>
+              <p className="text-[#6B6B6B] text-sm leading-relaxed">
+                Hours are calculated, formatted, and sent to your bookkeeper with one slide. No spreadsheets, no headaches.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Role Deck Section - Views for Every Role */}
       <section className="py-24 bg-[#D9F1D6] overflow-hidden relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(44,160,28,0.08),transparent_50%)]"></div>
@@ -811,22 +870,68 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* ROI Calculator */}
-      <section className="py-24 bg-gradient-to-br from-[#263926] to-[#1a1a1a] text-white relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-3xl md:text-5xl font-heading font-medium mb-6">See how much you'll save.</h2>
-          <p className="text-white/60 text-lg mb-16">Drag to adjust for your team size.</p>
+      <section className="py-16 bg-gradient-to-br from-[#263926] to-[#1a1a1a] text-white relative overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-4xl font-heading font-medium mb-3">See how much you'll save.</h2>
+            <p className="text-white/60 text-base max-w-xl mx-auto">
+              Every clock-out you don't chase, every timesheet you don't fix, every payroll you don't manually calculate—it adds up.
+            </p>
+          </div>
 
-          <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-12">
-            <div className="mb-12">
-              <div className="text-6xl md:text-8xl font-bold mb-2 font-mono tracking-tighter">
-                ${annualSavings}
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            {/* Left: Context - Where the time savings come from */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-[#A1EB97] mb-4">Where does 15 min/day come from?</h3>
+              
+              <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-sm">No more chasing missing clock-outs</div>
+                  <div className="text-xs text-white/50">~5 min saved per incident</div>
+                </div>
               </div>
-              <div className="text-[#A1EB97] uppercase tracking-widest text-sm font-bold">Estimated Annual Savings</div>
+
+              <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-sm">No manual timesheet corrections</div>
+                  <div className="text-xs text-white/50">~5 min saved per fix</div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                <div className="w-8 h-8 rounded-lg bg-[#2CA01C]/30 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-[#A1EB97]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-sm">One-click payroll, no spreadsheets</div>
+                  <div className="text-xs text-white/50">~5 min saved per cycle</div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-8">
-              <div>
-                <div className="flex justify-between mb-4 text-sm font-bold">
+            {/* Right: Calculator */}
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-6">
+              <div className="text-center mb-6">
+                <div className="text-4xl md:text-5xl font-bold mb-1 font-mono tracking-tight">
+                  ${annualSavings}
+                </div>
+                <div className="text-[#A1EB97] uppercase tracking-wider text-xs font-bold">Estimated Annual Savings</div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex justify-between mb-3 text-sm font-bold">
                   <span>Team Size</span>
                   <span className="text-[#A1EB97]">{employeeCount} Employees</span>
                 </div>
@@ -836,81 +941,98 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   max="100" 
                   value={employeeCount} 
                   onChange={(e) => setEmployeeCount(parseInt(e.target.value))}
-                  className="w-full h-4 bg-[#1a1a1a] rounded-full appearance-none cursor-pointer accent-[#2CA01C]"
+                  className="w-full h-3 bg-[#1a1a1a] rounded-full appearance-none cursor-pointer accent-[#2CA01C]"
                 />
               </div>
-            </div>
-            
-            <div className="mt-12 pt-8 border-t border-white/10 text-xs text-white/40">
-              * Calculation based on 15 mins saved per employee/day at $50/hr admin opportunity cost.
+              
+              {/* Fun math breakdown */}
+              <div className="pt-4 border-t border-white/10 text-xs text-white/50 space-y-1">
+                <div className="flex justify-between">
+                  <span>15 min × {employeeCount} employees × 5 days</span>
+                  <span className="font-mono">{(employeeCount * 15 * 5 / 60).toFixed(1)}h/week</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>× 52 weeks × $50/hr admin cost</span>
+                  <span className="font-mono text-[#A1EB97]">${annualSavings}/yr</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Payroll Pulse */}
-      <section className="py-24 max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-3xl md:text-5xl font-heading font-medium mb-6 text-[#263926] dark:text-[#a8d5a2]">
-          One-Touch Payroll.
-        </h2>
-        <p className="text-lg text-muted-foreground mb-12">
-          Slide to send your finalized reports directly to your bookkeeper. It's that satisfying.
-        </p>
+      <section className="py-20 bg-[#FAF9F5] dark:bg-[#1a1a1a]">
+        <div className="max-w-5xl mx-auto px-6">
+          {/* Green Card Container */}
+          <div className="w-full md:w-[80%] mx-auto bg-[#2CA01C] rounded-3xl py-14 px-8 md:px-12 shadow-2xl shadow-[#2CA01C]/20 text-center">
+            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-4 text-white">
+              One-Touch Payroll.
+            </h2>
+            <p className="text-lg text-white/80 mb-10 max-w-md mx-auto">
+              Slide to send your finalized reports directly to your bookkeeper. It's that satisfying.
+            </p>
 
-        <div className="relative w-full max-w-lg mx-auto h-20 bg-secondary rounded-full p-2 overflow-hidden shadow-inner">
-          {/* Progress Fill */}
-          <div 
-            className="absolute top-0 left-0 bottom-0 bg-[#2CA01C] transition-all duration-75"
-            style={{ width: `${sliderValue}%` }}
-          ></div>
-          
-          {/* Text Label */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 font-bold text-muted-foreground uppercase tracking-widest text-sm">
-            {payrollSent ? 'SENT SUCCESSFULLY' : 'SLIDE TO SEND PAYROLL'}
-          </div>
+            <div className="relative w-full max-w-md mx-auto h-16 bg-[#238a16] rounded-full p-2 overflow-hidden shadow-inner">
+              {/* Progress Fill */}
+              <div 
+                className="absolute top-0 left-0 bottom-0 bg-white/20 transition-all duration-75 rounded-full"
+                style={{ width: `${sliderValue}%` }}
+              ></div>
+              
+              {/* Text Label */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 font-bold text-white uppercase tracking-widest text-xs md:text-sm">
+                {payrollSent ? 'SENT SUCCESSFULLY' : 'SLIDE TO SEND PAYROLL'}
+              </div>
 
-          {/* The Knob */}
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={sliderValue}
-            onChange={handleSliderChange}
-            disabled={payrollSent}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-          />
-          
-          {/* Visual Knob */}
-          <div 
-            className="absolute top-2 bottom-2 w-16 bg-card rounded-full shadow-lg flex items-center justify-center transition-all duration-75 pointer-events-none z-10"
-            style={{ left: `calc(${sliderValue}% - ${sliderValue * 0.64}px)` }}
-          >
-            {payrollSent ? (
-              <span className="text-[#2CA01C] font-bold">✓</span>
-            ) : (
-              <span className="text-[#2CA01C]">➔</span>
+              {/* The Knob */}
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={sliderValue}
+                onChange={handleSliderChange}
+                disabled={payrollSent}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+              
+              {/* Visual Knob - White when sliding */}
+              <div 
+                className={`absolute top-2 bottom-2 w-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-75 pointer-events-none z-10 ${
+                  sliderValue > 0 ? 'bg-white' : 'bg-white/90'
+                }`}
+                style={{ left: `calc(${sliderValue}% - ${sliderValue * 0.48}px)` }}
+              >
+                {payrollSent ? (
+                  <span className="text-[#2CA01C] font-bold text-lg">✓</span>
+                ) : (
+                  <span className="text-[#2CA01C] text-lg">➔</span>
+                )}
+              </div>
+            </div>
+            
+            {payrollSent && (
+              <div className="mt-6 text-white font-bold animate-bounce">
+                Report delivered to accountant@agency.com
+              </div>
             )}
           </div>
         </div>
-        
-        {payrollSent && (
-          <div className="mt-6 text-[#2CA01C] font-bold animate-bounce">
-            Report delivered to accountant@agency.com
-          </div>
-        )}
       </section>
 
       {/* CTA Section */}
       <section className="py-32 text-center px-6 bg-background">
         <h2 className="text-4xl md:text-6xl font-heading font-medium mb-8 text-[#263926] dark:text-[#a8d5a2]">
-          Ready to automate your agency?
+          Payroll in 3 clicks. Seriously.
         </h2>
-        <p className="text-muted-foreground text-lg mb-10">Join the waitlist or start with our free plan today.</p>
+        <p className="text-muted-foreground text-lg mb-10 max-w-lg mx-auto">
+          Clock in. Review hours. Send to bookkeeper. That's it. No learning curve, no setup headaches—just start.
+        </p>
         <a 
           href="/app" 
           className="inline-block px-10 py-5 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all transform hover:scale-105 shadow-2xl shadow-[#2CA01C]/20"
         >
-          Launch Ollie Hours App
+          Start Free Today
         </a>
       </section>
     </div>
