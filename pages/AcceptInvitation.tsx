@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../AuthContext';
 import { Button } from '../components/Button';
+import { OllieHoursLogo } from '../website/components/OllieHoursLogo';
 
 export const AcceptInvitation: React.FC = () => {
   const { user } = useAuth();
@@ -250,11 +251,9 @@ export const AcceptInvitation: React.FC = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" 
-            alt="Ollie Timesheets"
-            className="h-10 mx-auto mb-6"
-          />
+          <div className="flex justify-center mb-6">
+            <OllieHoursLogo height={40} />
+          </div>
           <h1 className="text-3xl font-bold text-[#263926] mb-2">Welcome, {employee.name}!</h1>
           <p className="text-[#6B6B6B]">
             Set your password to join the team

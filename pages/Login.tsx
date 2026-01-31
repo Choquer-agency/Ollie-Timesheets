@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { Button } from '../components/Button';
+import { OllieHoursLogo } from '../website/components/OllieHoursLogo';
 
 interface LoginProps {
   onSwitchToSignup: () => void;
@@ -44,13 +45,11 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignup }) => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" 
-            alt="Ollie Timesheets"
-            className="h-10 mx-auto mb-6"
-          />
+          <div className="flex justify-center mb-6">
+            <OllieHoursLogo height={40} />
+          </div>
           <h1 className="text-3xl font-bold text-[#263926] mb-2">Welcome back</h1>
-          <p className="text-[#6B6B6B]">Sign in to manage your timesheets</p>
+          <p className="text-[#6B6B6B]">Sign in to manage your hours</p>
         </div>
 
         {/* Login Card */}

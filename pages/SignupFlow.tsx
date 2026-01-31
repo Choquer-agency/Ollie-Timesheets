@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { Button } from '../components/Button';
 import { supabase } from '../supabaseClient';
+import { OllieHoursLogo } from '../website/components/OllieHoursLogo';
 
 interface SignupFlowProps {
   onSwitchToLogin: () => void;
@@ -101,11 +102,9 @@ export const SignupFlow: React.FC<SignupFlowProps> = ({ onSwitchToLogin, onCompl
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" 
-            alt="Ollie Timesheets"
-            className="h-10 mx-auto mb-6"
-          />
+          <div className="flex justify-center mb-6">
+            <OllieHoursLogo height={40} />
+          </div>
           <h1 className="text-3xl font-bold text-[#263926] mb-2">Get started</h1>
           <p className="text-[#6B6B6B]">Create your account</p>
         </div>

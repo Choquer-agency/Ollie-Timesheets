@@ -7,6 +7,7 @@ import { TimeCardModal } from './components/TimeCardModal';
 import { VacationRequestModal } from './components/VacationRequestModal';
 import { DatePicker } from './components/DatePicker';
 import { PeriodDetailModal } from './components/PeriodDetailModal';
+import { OllieHoursLogo } from './website/components/OllieHoursLogo';
 import { Employee, TimeEntry, DailySummary } from './types';
 import { 
   getTodayISO, 
@@ -77,231 +78,10 @@ const MobileBreakTimer = ({ breakStartTime }: { breakStartTime: string }) => {
   );
 };
 
-const AddEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { addEmployee, settings } = useSupabaseStore();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState('');
-  const [rate, setRate] = useState('');
-  const [vacationDays, setVacationDays] = useState('10');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isBookkeeper, setIsBookkeeper] = useState(false);
-  const [sendingInvite, setSendingInvite] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [error, setError] = useState('');
-
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !role) return;
-    
-    setError('');
-    setSendingInvite(true);
-    
-    try {
-      // Add employee to database
-      console.log('Adding employee:', { name, email, role, rate, vacationDays, isAdmin, isBookkeeper });
-      
-      const { invitationToken } = await addEmployee({
-        name,
-        email,
-        role,
-        hourlyRate: rate ? parseFloat(rate) : undefined,
-        vacationDaysTotal: parseInt(vacationDays) || 0,
-        isAdmin,
-        isBookkeeper
-      });
-      
-      console.log('Employee added successfully, invitation token:', invitationToken);
-      
-      // Send invitation email if email is provided
-      if (email && invitationToken) {
-        try {
-          console.log('Sending invitation with settings:', {
-            companyName: settings.companyName,
-            companyLogoUrl: settings.companyLogoUrl,
-            invitationToken
-          });
-          
-          await sendTeamInvitation({
-            employeeEmail: email,
-            employeeName: name,
-            companyName: settings.companyName,
-            role,
-            appUrl: window.location.origin,
-            companyLogoUrl: settings.companyLogoUrl,
-            invitationToken
-          });
-          console.log('Invitation email sent successfully');
-          setShowSuccess(true);
-          setTimeout(() => setShowSuccess(false), 3000);
-        } catch (emailError) {
-          console.error('Failed to send invitation email:', emailError);
-          // Don't fail the whole operation - employee is still added
-          setError('Employee added but invitation email failed. You can invite them manually.');
-          setTimeout(() => setError(''), 5000);
-        }
-      }
-      
-      // Reset form
-      setName('');
-      setEmail('');
-      setRole('');
-      setRate('');
-      setVacationDays('10');
-      setIsAdmin(false);
-      setIsBookkeeper(false);
-      
-      // Close modal after brief delay
-      setTimeout(() => {
-        onClose();
-        setError('');
-      }, email ? 2000 : 0);
-      
-    } catch (error: any) {
-      console.error('Failed to add employee:', error);
-      setError(error.message || 'Failed to add employee. Please check your permissions.');
-      setSendingInvite(false);
-    } finally {
-      if (!error) {
-        setSendingInvite(false);
-      }
-    }
-  };
-
-  return (
-    <div 
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#484848]/40 backdrop-blur-sm p-4"
-      onMouseDown={(e) => {
-        // Only close if clicking directly on the overlay (not on children)
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 animate-slide-in-right"
-      >
-        <h2 className="text-xl font-bold text-[#263926] mb-6">Add team member</h2>
-        
-        {error && (
-          <div className="mb-4 p-3 bg-rose-50 text-rose-700 text-sm rounded-2xl border border-rose-100">
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Full Name</label>
-            <input 
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-              placeholder="e.g. Jane Doe"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Email</label>
-            <input 
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-              placeholder="jane@agency.com"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Role</label>
-                <input 
-                required
-                value={role}
-                onChange={e => setRole(e.target.value)}
-                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-                placeholder="e.g. Designer"
-                />
-            </div>
-            <div>
-                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Rate ($/hr)</label>
-                <input 
-                type="number"
-                value={rate}
-                onChange={e => setRate(e.target.value)}
-                className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-                placeholder="0.00"
-                />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Vacation Days (Yearly)</label>
-            <input 
-              type="number"
-              value={vacationDays}
-              onChange={e => setVacationDays(e.target.value)}
-              className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none" 
-              placeholder="10"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 p-4 bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] mt-2">
-             <input 
-               type="checkbox"
-               id="isAdmin"
-               checked={isAdmin}
-               onChange={e => {
-                 setIsAdmin(e.target.checked);
-                 if (e.target.checked) setIsBookkeeper(false);
-               }}
-               className="w-5 h-5 rounded border-[#E5E3DA] text-[#2CA01C] focus:ring-[#2CA01C]"
-             />
-             <div>
-                 <label htmlFor="isAdmin" className="block text-sm font-bold text-[#263926]">Admin Access</label>
-                 <p className="text-xs text-[#6B6B6B]">Can manage team, view all timesheets, and settings.</p>
-             </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-4 bg-[#FAF9F5] rounded-2xl border border-[#F6F5F1] mt-2">
-             <input 
-               type="checkbox"
-               id="isBookkeeper"
-               checked={isBookkeeper}
-               onChange={e => {
-                 setIsBookkeeper(e.target.checked);
-                 if (e.target.checked) setIsAdmin(false);
-               }}
-               className="w-5 h-5 rounded border-[#E5E3DA] text-[#2CA01C] focus:ring-[#2CA01C]"
-             />
-             <div>
-                 <label htmlFor="isBookkeeper" className="block text-sm font-bold text-[#263926]">Bookkeeper Access</label>
-                 <p className="text-xs text-[#6B6B6B]">Can only view timesheets and pay periods. No editing allowed.</p>
-             </div>
-          </div>
-
-          <div className="flex gap-3 mt-6">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-            <Button type="submit" className="flex-1" disabled={sendingInvite}>
-              {sendingInvite ? 'Sending invite...' : 'Add member'}
-            </Button>
-          </div>
-          
-          {showSuccess && (
-            <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-2xl border border-emerald-100 text-center">
-              ✓ Invitation email sent successfully!
-            </div>
-          )}
-        </form>
-      </div>
-    </div>
-  );
-};
-
 const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { settings, updateSettings, employees, updateEmployee, currentUser } = useSupabaseStore();
+  const { settings, updateSettings, employees, updateEmployee, addEmployee, currentUser } = useSupabaseStore();
   const [activeSection, setActiveSection] = useState<'profile' | 'team' | 'config'>('profile');
-  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [isAddingEmployee, setIsAddingEmployee] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [showPastEmployees, setShowPastEmployees] = useState(false);
   
@@ -314,6 +94,18 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [editIsAdmin, setEditIsAdmin] = useState(false);
   const [editIsBookkeeper, setEditIsBookkeeper] = useState(false);
   const [editIsActive, setEditIsActive] = useState(true);
+  
+  // Add form state
+  const [addName, setAddName] = useState('');
+  const [addEmail, setAddEmail] = useState('');
+  const [addRole, setAddRole] = useState('');
+  const [addRate, setAddRate] = useState('');
+  const [addVacationDays, setAddVacationDays] = useState('10');
+  const [addIsAdmin, setAddIsAdmin] = useState(false);
+  const [addIsBookkeeper, setAddIsBookkeeper] = useState(false);
+  const [addingSending, setAddingSending] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState(false);
   
   // Local state for form fields
   const [localSettings, setLocalSettings] = useState(settings);
@@ -385,6 +177,68 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     } catch (error) {
       console.error('Failed to archive/restore employee:', error);
       alert('Failed to update employee. Please try again.');
+    }
+  };
+
+  const handleAddEmployee = async () => {
+    if (!addName.trim() || !addRole.trim()) {
+      setAddError('Please fill in all required fields');
+      return;
+    }
+    
+    setAddError('');
+    setAddingSending(true);
+    
+    try {
+      const { invitationToken } = await addEmployee({
+        name: addName.trim(),
+        email: addEmail.trim() || undefined,
+        role: addRole.trim(),
+        hourlyRate: addRate ? parseFloat(addRate) : undefined,
+        vacationDaysTotal: parseInt(addVacationDays) || 10,
+        isAdmin: addIsAdmin,
+        isBookkeeper: addIsBookkeeper
+      });
+      
+      // Send invitation email if email is provided
+      if (addEmail.trim() && invitationToken) {
+        try {
+          await sendTeamInvitation({
+            employeeEmail: addEmail.trim(),
+            employeeName: addName.trim(),
+            companyName: settings.companyName,
+            role: addRole.trim(),
+            appUrl: window.location.origin,
+            companyLogoUrl: settings.companyLogoUrl,
+            invitationToken
+          });
+          setAddSuccess(true);
+          setTimeout(() => setAddSuccess(false), 3000);
+        } catch (emailError) {
+          console.error('Failed to send invitation email:', emailError);
+          setAddError('Employee added but invitation email failed.');
+        }
+      }
+      
+      // Reset form and close
+      setAddName('');
+      setAddEmail('');
+      setAddRole('');
+      setAddRate('');
+      setAddVacationDays('10');
+      setAddIsAdmin(false);
+      setAddIsBookkeeper(false);
+      
+      setTimeout(() => {
+        setIsAddingEmployee(false);
+        setAddError('');
+      }, addEmail.trim() ? 2000 : 0);
+      
+    } catch (error: any) {
+      console.error('Failed to add employee:', error);
+      setAddError(error.message || 'Failed to add employee. Please try again.');
+    } finally {
+      setAddingSending(false);
     }
   };
 
@@ -628,11 +482,11 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             )}
 
             {/* Team Management Section */}
-            {activeSection === 'team' && !editingEmployee && (
+            {activeSection === 'team' && !editingEmployee && !isAddingEmployee && (
                 <div>
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-2xl font-bold text-[#263926]">Team Management</h3>
-                        <Button onClick={() => setIsAddEmployeeOpen(true)}>+ Add Member</Button>
+                        <Button onClick={() => setIsAddingEmployee(true)}>+ Add Member</Button>
                     </div>
 
                     {/* Filter Toggle */}
@@ -708,7 +562,158 @@ const SettingsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                             </tbody>
                         </table>
                     </div>
-                    <AddEmployeeModal isOpen={isAddEmployeeOpen} onClose={() => setIsAddEmployeeOpen(false)} />
+                </div>
+            )}
+
+            {/* Add Team Member Form (inline like Edit) */}
+            {activeSection === 'team' && isAddingEmployee && (
+                <div>
+                    <div className="flex items-center gap-4 mb-8">
+                        <button 
+                            onClick={() => {
+                                setIsAddingEmployee(false);
+                                setAddError('');
+                                setAddName('');
+                                setAddEmail('');
+                                setAddRole('');
+                                setAddRate('');
+                                setAddVacationDays('10');
+                                setAddIsAdmin(false);
+                                setAddIsBookkeeper(false);
+                            }}
+                            className="p-2 hover:bg-[#FAF9F5] rounded-2xl transition-colors"
+                        >
+                            <svg className="w-5 h-5 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <h3 className="text-2xl font-bold text-[#263926]">Add Team Member</h3>
+                    </div>
+
+                    {addError && (
+                        <div className="mb-6 p-3 bg-rose-50 text-rose-700 text-sm rounded-2xl border border-rose-100 max-w-3xl">
+                            {addError}
+                        </div>
+                    )}
+
+                    {addSuccess && (
+                        <div className="mb-6 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-2xl border border-emerald-100 max-w-3xl text-center">
+                            ✓ Invitation email sent successfully!
+                        </div>
+                    )}
+
+                    <div className="max-w-3xl">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Name *</label>
+                                <input 
+                                    type="text"
+                                    value={addName}
+                                    onChange={e => setAddName(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none"
+                                    placeholder="e.g. Jane Doe"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Email</label>
+                                <input 
+                                    type="email"
+                                    value={addEmail}
+                                    onChange={e => setAddEmail(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none"
+                                    placeholder="jane@company.com"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Position *</label>
+                                <input 
+                                    type="text"
+                                    value={addRole}
+                                    onChange={e => setAddRole(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none"
+                                    placeholder="e.g. Designer"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Hourly Rate ($)</label>
+                                <input 
+                                    type="number"
+                                    step="0.01"
+                                    value={addRate}
+                                    onChange={e => setAddRate(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-[#6B6B6B] uppercase mb-2">Vacation Days</label>
+                                <input 
+                                    type="number"
+                                    value={addVacationDays}
+                                    onChange={e => setAddVacationDays(e.target.value)}
+                                    className="w-full p-3 border border-[#F6F5F1] rounded-2xl focus:ring-2 focus:ring-[#2CA01C] outline-none"
+                                    placeholder="10"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-3 justify-end pb-3">
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="checkbox"
+                                        id="add-admin"
+                                        checked={addIsAdmin}
+                                        onChange={e => {
+                                            setAddIsAdmin(e.target.checked);
+                                            if (e.target.checked) setAddIsBookkeeper(false);
+                                        }}
+                                        className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+                                    />
+                                    <label htmlFor="add-admin" className="text-sm text-[#484848] cursor-pointer">Make Admin</label>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="checkbox"
+                                        id="add-bookkeeper"
+                                        checked={addIsBookkeeper}
+                                        onChange={e => {
+                                            setAddIsBookkeeper(e.target.checked);
+                                            if (e.target.checked) setAddIsAdmin(false);
+                                        }}
+                                        className="w-4 h-4 text-[#2CA01C] rounded focus:ring-[#2CA01C]" 
+                                    />
+                                    <label htmlFor="add-bookkeeper" className="text-sm text-[#484848] cursor-pointer">Make Bookkeeper (View Only)</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-8 pt-6 border-t border-[#F6F5F1]">
+                            <div className="flex-1"></div>
+                            <Button 
+                                onClick={() => {
+                                    setIsAddingEmployee(false);
+                                    setAddError('');
+                                    setAddName('');
+                                    setAddEmail('');
+                                    setAddRole('');
+                                    setAddRate('');
+                                    setAddVacationDays('10');
+                                    setAddIsAdmin(false);
+                                    setAddIsBookkeeper(false);
+                                }} 
+                                variant="outline"
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={handleAddEmployee} disabled={addingSending}>
+                                {addingSending ? 'Adding...' : 'Add Member'}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -1176,30 +1181,86 @@ const EmployeeDashboard = () => {
       const totalBreakMins = myEntries.reduce((acc, e) => acc + calculateStats(e).totalBreakMinutes, 0);
       
       return (
-        <div className="max-w-4xl mx-auto mt-8 px-6 pb-20">
-            <div className="flex items-center gap-4 mb-8">
-                <Button variant="ghost" onClick={() => setView('clock')} className="pl-0 hover:bg-transparent hover:text-[#263926]">
+        <div className="max-w-4xl mx-auto mt-4 md:mt-8 px-4 md:px-6 pb-20">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 md:mb-8">
+                <Button variant="ghost" onClick={() => setView('clock')} className="pl-0 hover:bg-transparent hover:text-[#263926] self-start">
                     ← Back to Clock In
                 </Button>
-                <h1 className="text-2xl font-bold text-[#263926]">My Schedule & History</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-[#263926]">My Schedule & History</h1>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-sky-50 p-6 rounded-2xl border border-sky-100 text-sky-900">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+                <div className="bg-sky-50 p-4 md:p-6 rounded-2xl border border-sky-100 text-sky-900">
                     <h3 className="text-xs font-bold uppercase opacity-70 mb-1">Vacation Remaining</h3>
-                    <div className="text-3xl font-bold">{vacationRemaining} <span className="text-sm font-normal opacity-70">Days</span></div>
+                    <div className="text-2xl md:text-3xl font-bold">{vacationRemaining} <span className="text-sm font-normal opacity-70">Days</span></div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                <div className="bg-white p-4 md:p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                     <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Hours Worked</h3>
-                    <div className="text-3xl font-bold">{formatDuration(totalWorkedMins)}</div>
+                    <div className="text-2xl md:text-3xl font-bold">{formatDuration(totalWorkedMins)}</div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                <div className="bg-white p-4 md:p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                     <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Break Time</h3>
-                    <div className="text-3xl font-bold">{formatDuration(totalBreakMins)}</div>
+                    <div className="text-2xl md:text-3xl font-bold">{formatDuration(totalBreakMins)}</div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] overflow-hidden">
+            {/* Mobile Card Layout */}
+            <div className="md:hidden space-y-3">
+                {myEntries.map(entry => {
+                    const stats = calculateStats(entry);
+                    return (
+                        <div 
+                            key={entry.id}
+                            onClick={() => {
+                                setHistoryEntryDate(entry.date);
+                                setSelectedHistoryEntry(entry);
+                            }}
+                            className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] p-4 cursor-pointer active:bg-[#FAF9F5] transition-colors"
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="font-medium text-[#263926]">{formatDateForDisplay(entry.date)}</div>
+                                {entry.changeRequest ? (
+                                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Reviewing</span>
+                                ) : entry.isSickDay ? (
+                                    <span className="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-full">Sick</span>
+                                ) : entry.isHalfSickDay ? (
+                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">Half Sick</span>
+                                ) : entry.isVacationDay ? (
+                                    <span className="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full">Vacation</span>
+                                ) : (
+                                    <span className="text-xs text-[#9CA3AF]">OK</span>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <div className="text-xs text-[#6B6B6B] uppercase mb-1">Clock In</div>
+                                    <div className="text-[#484848] font-mono">{formatTime(entry.clockIn)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-[#6B6B6B] uppercase mb-1">Clock Out</div>
+                                    <div className="text-[#484848] font-mono">{formatTime(entry.clockOut)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-[#6B6B6B] uppercase mb-1">Break</div>
+                                    <div className="text-[#6B6B6B]">{formatDuration(stats.totalBreakMinutes)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-[#6B6B6B] uppercase mb-1">Worked</div>
+                                    <div className="font-medium text-[#263926]">{formatDuration(stats.totalWorkedMinutes)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+                {myEntries.length === 0 && (
+                    <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] py-8 text-center text-[#9CA3AF]">
+                        No history available.
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop Table Layout */}
+            <div className="hidden md:block bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] border border-[#F6F5F1] overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="border-b border-[#F6F5F1] bg-[#FAF9F5]">
@@ -1272,23 +1333,23 @@ const EmployeeDashboard = () => {
 
   // --- Main Clock View ---
   return (
-    <div className="max-w-md mx-auto mt-12 px-6 pb-20">
-      <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold text-[#263926] mb-2">Good morning, {currentUser.name.split(' ')[0]}</h2>
-        <p className="text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+    <div className="max-w-md mx-auto mt-6 md:mt-12 px-4 md:px-6 pb-20">
+      <div className="text-center mb-8 md:mb-10">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#263926] mb-2">Good morning, {currentUser.name.split(' ')[0]}</h2>
+        <p className="text-sm md:text-base text-[#6B6B6B] font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       </div>
 
       {/* Sick/Vacation Toggle Section - Show only when idle, sick, vacation, or halfSick */}
       {isTogglesVisible && (status === 'idle' || status === 'sick' || status === 'vacation' || status === 'halfSick') && (
         <div 
-          className={`mb-6 transition-all duration-600 ${isFadingOut ? 'opacity-0 max-h-0' : 'opacity-100 max-h-40'} overflow-hidden`}
+          className={`mb-4 md:mb-6 transition-all duration-600 ${isFadingOut ? 'opacity-0 max-h-0' : 'opacity-100 max-h-48 md:max-h-40'} overflow-hidden`}
         >
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
             {/* Sick Day Toggle */}
             <button
               onClick={handleMarkSick}
               disabled={status === 'vacation' || status === 'halfSick'}
-              className={`flex flex-col items-center justify-between p-3 rounded-2xl border transition-all ${
+              className={`flex flex-col items-center justify-between p-2 md:p-3 rounded-2xl border transition-all min-h-[100px] ${
                 status === 'sick' 
                   ? 'bg-rose-50 border-rose-200 shadow-md cursor-pointer hover:bg-rose-100' 
                   : status === 'vacation' || status === 'halfSick'
@@ -1319,7 +1380,7 @@ const EmployeeDashboard = () => {
             <button
               onClick={handleMarkHalfSick}
               disabled={status === 'sick' || status === 'vacation' || !canMarkHalfSickDay(settings.halfDaySickCutoffTime)}
-              className={`flex flex-col items-center justify-between p-3 rounded-2xl border transition-all ${
+              className={`flex flex-col items-center justify-between p-2 md:p-3 rounded-2xl border transition-all min-h-[100px] ${
                 status === 'halfSick' 
                   ? 'bg-amber-50 border-amber-200 shadow-md cursor-pointer hover:bg-amber-100' 
                   : status === 'sick' || status === 'vacation' || !canMarkHalfSickDay(settings.halfDaySickCutoffTime)
@@ -1354,7 +1415,7 @@ const EmployeeDashboard = () => {
             <button
               onClick={handleMarkVacation}
               disabled={status === 'sick' || status === 'halfSick'}
-              className={`flex flex-col items-center justify-between p-3 rounded-2xl border transition-all ${
+              className={`flex flex-col items-center justify-between p-2 md:p-3 rounded-2xl border transition-all min-h-[100px] ${
                 status === 'vacation' 
                   ? 'bg-sky-50 border-sky-200 shadow-md cursor-pointer hover:bg-sky-100' 
                   : status === 'sick' || status === 'halfSick'
@@ -1384,9 +1445,9 @@ const EmployeeDashboard = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] p-8 border border-[#F6F5F1] text-center relative overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.04)] p-6 md:p-8 border border-[#F6F5F1] text-center relative overflow-hidden">
         
-        <div className="mb-8 mt-4">
+        <div className="mb-6 md:mb-8 mt-2 md:mt-4">
           <span className={`inline-block px-4 py-2 rounded-full text-xs font-bold tracking-wide uppercase ${
             status === 'working' ? 'bg-emerald-100 text-emerald-700' :
             status === 'done' ? 'bg-[#F0EEE6] text-[#6B6B6B]' :
@@ -1402,7 +1463,7 @@ const EmployeeDashboard = () => {
               status === 'done' ? 'Shift Complete' : 
               'Clocked In'}
           </span>
-          <div className="mt-4 text-5xl font-mono text-[#263926] tracking-tight">
+          <div className="mt-4 text-4xl md:text-5xl font-mono text-[#263926] tracking-tight">
              {(status === 'sick' || status === 'vacation') ? 'OFF' : 
               status === 'halfSick' ? new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() :
               new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase()}
@@ -1417,11 +1478,11 @@ const EmployeeDashboard = () => {
           )}
 
           {status === 'working' && (
-            <div className="grid grid-cols-2 gap-4">
-              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="h-20">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <Button onClick={() => startBreak(currentUser.id)} variant="secondary" size="lg" className="h-16 md:h-20 text-sm md:text-base">
                 Start Break
               </Button>
-              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="lg" className="h-20 bg-rose-900 hover:bg-rose-800 focus:ring-rose-900">
+              <Button onClick={() => clockOut(currentUser.id)} variant="primary" size="lg" className="h-16 md:h-20 text-sm md:text-base bg-rose-900 hover:bg-rose-800 focus:ring-rose-900">
                 Clock Out
               </Button>
             </div>
@@ -1448,17 +1509,17 @@ const EmployeeDashboard = () => {
       </div>
 
       {/* Footer Navigation Area */}
-      <div className="mt-8 flex flex-col gap-4">
+      <div className="mt-6 md:mt-8 flex flex-col gap-3 md:gap-4">
           <Button 
             variant="primary"
-            className="w-full py-4 text-white bg-sky-600 hover:bg-sky-700"
+            className="w-full py-3 md:py-4 text-white bg-sky-600 hover:bg-sky-700 min-h-[48px]"
             onClick={() => setIsVacationModalOpen(true)}
           >
             ✈️ Request Vacation Day
           </Button>
           <Button 
             variant="secondary" 
-            className="w-full py-4 text-[#484848] bg-[#F0EEE6] hover:bg-[#E5E3DA] border border-[#F6F5F1]"
+            className="w-full py-3 md:py-4 text-[#484848] bg-[#F0EEE6] hover:bg-[#E5E3DA] border border-[#F6F5F1] min-h-[48px]"
             onClick={() => setView('history')}
           >
             📅 View Schedule & Vacation
@@ -2780,11 +2841,7 @@ const MainLayout = () => {
     <div className="min-h-screen bg-[#FAF9F5] font-sans text-[#484848]">
       {/* Clean Top Bar */}
       <div className="bg-white border-b border-[#F6F5F1] py-3 px-4 md:px-6 flex justify-between items-center sticky top-0 z-40">
-        <img 
-          src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" 
-          alt="Ollie Timesheets"
-          className="h-6"
-        />
+        <OllieHoursLogo height={24} />
         <div className="flex items-center gap-3">
           {isAdmin ? (
             // Admin view - show settings and sign out

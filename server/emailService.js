@@ -87,7 +87,7 @@ export const sendTeamInvitation = async (data) => {
     const result = await resend.emails.send({
       from: `${companyName} <${FROM_EMAIL}>`,
       to: employeeEmail,
-      subject: `Welcome to ${companyName} - Get Started with Ollie Timesheets`,
+      subject: `Welcome to ${companyName} - Get Started with Ollie Hours`,
       html
     });
 
@@ -114,7 +114,7 @@ export const sendMissingClockoutAlert = async (data) => {
 
   try {
     const result = await resend.emails.send({
-      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      from: `Ollie Hours <${FROM_EMAIL}>`,
       to: employeeEmail,
       subject: `Action Required: Missing Clock Out for ${date}`,
       html
@@ -145,7 +145,7 @@ export const sendChangeRequestNotification = async (data) => {
 
   try {
     const result = await resend.emails.send({
-      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      from: `Ollie Hours <${FROM_EMAIL}>`,
       to: adminEmail,
       subject: `Timecard Change Request from ${employeeName}`,
       html
@@ -179,7 +179,7 @@ export const sendChangeApprovalNotification = async (data) => {
 
   try {
     const result = await resend.emails.send({
-      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      from: `Ollie Hours <${FROM_EMAIL}>`,
       to: employeeEmail,
       subject: `Timecard ${status === 'approved' ? 'Approved' : 'Update'} for ${date}`,
       html
@@ -211,7 +211,7 @@ export const sendVacationRequestNotification = async (data) => {
 
   try {
     const result = await resend.emails.send({
-      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      from: `Ollie Hours <${FROM_EMAIL}>`,
       to: adminEmail,
       subject: `Vacation Request from ${employeeName}`,
       html
@@ -240,7 +240,7 @@ export const sendVacationApprovalNotification = async (data) => {
 
   try {
     const result = await resend.emails.send({
-      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      from: `Ollie Hours <${FROM_EMAIL}>`,
       to: employeeEmail,
       subject: `Vacation Approved for ${date}`,
       html
@@ -269,7 +269,7 @@ export const sendVacationDenialNotification = async (data) => {
 
   try {
     const result = await resend.emails.send({
-      from: `Ollie Timesheets <${FROM_EMAIL}>`,
+      from: `Ollie Hours <${FROM_EMAIL}>`,
       to: employeeEmail,
       subject: `Vacation Request Update for ${date}`,
       html

@@ -1,4 +1,4 @@
-// Professional HTML email templates for Ollie Timesheets
+// Professional HTML email templates for Ollie Hours
 
 export const bookkeeperReportTemplate = (data) => {
   const { companyName, periodStart, periodEnd, employees } = data;
@@ -28,7 +28,7 @@ export const bookkeeperReportTemplate = (data) => {
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 16px;">
         <tr>
           <td>
-            <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; margin: 0 auto;">
+            <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Hours.svg" alt="Ollie Hours" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; margin: 0 auto;">
           </td>
         </tr>
       </table>
@@ -61,7 +61,7 @@ export const bookkeeperReportTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
       <p style="margin: 8px 0 0;">This is an automated report. Please do not reply to this email.</p>
     </div>
 
@@ -74,8 +74,8 @@ export const bookkeeperReportTemplate = (data) => {
 export const teamInvitationTemplate = (data) => {
   const { employeeName, companyName, role, appUrl, companyLogoUrl, invitationToken } = data;
   
-  // Use custom logo if provided, otherwise fall back to default Ollie logo
-  const logoUrl = companyLogoUrl || 'https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg';
+  // Use custom logo if provided, otherwise fall back to default Ollie Hours logo
+  const logoUrl = companyLogoUrl || 'https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Hours.svg';
   
   // Create the invitation URL with token
   const invitationUrl = `${appUrl}/accept-invitation?token=${invitationToken}`;
@@ -140,7 +140,7 @@ export const teamInvitationTemplate = (data) => {
 
     <!-- Footer -->
     <p style="margin: 0; color: #9CA3AF; font-size: 13px; line-height: 1.6;">
-      Sent from Ollie Timesheets
+      Sent from Ollie Hours
     </p>
 
   </div>
@@ -194,7 +194,7 @@ export const missingClockoutTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
       <p style="margin: 8px 0 0;">This is an automated reminder.</p>
     </div>
 
@@ -223,7 +223,7 @@ export const changeRequestNotificationTemplate = (data) => {
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto 16px;">
         <tr>
           <td>
-            <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Timesheets.svg" alt="Ollie Timesheets" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; margin: 0 auto;">
+            <img src="https://fdqnjninitbyeescipyh.supabase.co/storage/v1/object/public/Timesheets/Ollie%20Hours.svg" alt="Ollie Hours" height="32" style="display: block; height: 32px; width: auto; max-width: 200px; max-height: 32px; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; margin: 0 auto;">
           </td>
         </tr>
       </table>
@@ -249,7 +249,7 @@ export const changeRequestNotificationTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
     </div>
 
   </div>
@@ -309,7 +309,7 @@ export const changeApprovalTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
       <p style="margin: 8px 0 0;">This is an automated notification.</p>
     </div>
 
@@ -362,7 +362,7 @@ export const vacationRequestNotificationTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
     </div>
 
   </div>
@@ -413,7 +413,7 @@ export const vacationApprovalTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
       <p style="margin: 8px 0 0;">This is an automated notification.</p>
     </div>
 
@@ -465,7 +465,7 @@ export const vacationDenialTemplate = (data) => {
 
     <!-- Footer -->
     <div style="text-align: center; color: #9CA3AF; font-size: 12px;">
-      <p style="margin: 0;">Sent from Ollie Timesheets</p>
+      <p style="margin: 0;">Sent from Ollie Hours</p>
       <p style="margin: 8px 0 0;">This is an automated notification.</p>
     </div>
 
