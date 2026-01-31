@@ -76,6 +76,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   const currentWeekData = getWeekData(bookkeeperWeekIndex);
 
+  // Get next month for vacation calendar
+  const getNextMonth = () => {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const monthName = nextMonth.toLocaleDateString('en-US', { month: 'long' });
+    const year = nextMonth.getFullYear();
+    const daysInMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+    return { monthName, year, daysInMonth };
+  };
+
+  const nextMonthData = getNextMonth();
+
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
     setSliderValue(val);
@@ -448,6 +460,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               <div className={`bg-card border-2 rounded-3xl p-8 shadow-lg transition-all duration-500 ${
                 isFixed ? 'border-[#2CA01C]/50 shadow-[#2CA01C]/10' : 'border-red-500/50 shadow-red-500/10'
               }`}>
+                {/* Status Prompt Banner */}
+                {!isFixed && (
+                  <div className="mb-4 px-4 py-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">!</div>
+                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Before you clock in, please resolve yesterday's issue</p>
+                  </div>
+                )}
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex gap-4 items-center">
@@ -508,8 +527,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </div>
           
           <div className="order-1 md:order-2">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-2xl flex items-center justify-center text-red-500 text-3xl mb-6">
-              🛡️
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-2xl flex items-center justify-center text-red-500 mb-6">
+              <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 12h7c-.53 4.11-3.28 7.78-7 8.92zH5V6.3l7-3.11M12 1L3 5v6c0 5.55 3.84 10.73 9 12c5.16-1.27 9-6.45 9-12V5z"/>
+              </svg>
             </div>
             <h2 className="text-3xl md:text-4xl font-heading font-medium mb-6 text-[#263926] dark:text-[#a8d5a2]">
               Self-Healing Timesheets.
@@ -535,27 +556,53 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="flex flex-col md:flex-row gap-16 items-center">
             <div className="flex-1">
               <h2 className="text-3xl md:text-4xl font-heading font-medium mb-6 text-[#263926] dark:text-[#a8d5a2]">
-                Predictive Leave Conflict.
+                Vacation Request Management.
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Don't get caught understaffed during the holidays. Ollie's heatmap predicts high-volume leave requests and helps you resolve conflicts automatically using your seniority rules.
+                Employees can request time off for future dates with just a few clicks. Employers receive instant notifications, approve or deny with one tap, and see exactly who's away and when—all logged and organized in one place.
               </p>
               
               {!conflictResolved && (
-                <button 
-                  onClick={() => setConflictResolved(true)}
-                  className="px-8 py-4 bg-[#2CA01C] hover:bg-[#238a16] text-white rounded-xl font-bold shadow-lg shadow-[#2CA01C]/30 transition-all flex items-center gap-3"
-                >
-                  <span>⚡</span> Auto-Resolve Conflicts
-                </button>
+                <div className="space-y-4">
+                  <div className="p-4 bg-card border border-border rounded-xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold text-sm">JD</div>
+                        <div>
+                          <div className="font-bold text-[#263926] dark:text-[#a8d5a2] text-sm">Jordan Davis</div>
+                          <div className="text-xs text-muted-foreground">Feb 15-19 · 5 days vacation</div>
+                        </div>
+                      </div>
+                      <span className="px-2 py-1 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold rounded">PENDING</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setConflictResolved(true)}
+                        className="flex-1 py-2.5 bg-[#2CA01C] hover:bg-[#238a16] text-white rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Approve
+                      </button>
+                      <button className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-muted-foreground rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Deny
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">Click approve or deny to see how easy it is</p>
+                </div>
               )}
               
               {conflictResolved && (
                 <div className="p-4 bg-[#A1EB97]/20 border border-[#2CA01C]/30 rounded-xl flex items-center gap-4 animate-fade-in">
                   <div className="w-8 h-8 rounded-full bg-[#2CA01C] flex items-center justify-center text-white font-bold">✓</div>
                   <div className="text-[#2CA01C] text-sm font-bold">
-                    Approved: 2 Seniors <br/>
-                    Waitlisted: 3 Juniors
+                    Vacation approved for Jordan Davis <br/>
+                    <span className="font-normal opacity-80">Notification sent · Calendar updated</span>
                   </div>
                 </div>
               )}
@@ -564,13 +611,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="flex-1 w-full max-w-md">
               <div className="bg-card rounded-3xl p-6 shadow-lg border border-border">
                 <div className="mb-6 flex justify-between items-center">
-                  <div className="font-bold text-[#263926] dark:text-[#a8d5a2]">December Schedule</div>
+                  <div className="font-bold text-[#263926] dark:text-[#a8d5a2]">{nextMonthData.monthName} {nextMonthData.year} Schedule</div>
                   <div className={`text-xs font-bold px-2 py-1 rounded ${
                     conflictResolved 
                       ? 'text-[#2CA01C] bg-[#A1EB97]/30' 
-                      : 'text-red-500 bg-red-100 dark:bg-red-500/20'
+                      : 'text-amber-600 bg-amber-100 dark:bg-amber-500/20'
                   }`}>
-                    {conflictResolved ? 'OPTIMIZED' : 'HIGH TRAFFIC'}
+                    {conflictResolved ? 'APPROVED' : 'VACATION REQUESTED'}
                   </div>
                 </div>
                 
@@ -581,15 +628,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </div>
                 
                 <div className="grid grid-cols-7 gap-2">
-                  {Array.from({ length: 31 }).map((_, i) => {
-                    const isHot = i >= 20 && i <= 25;
+                  {Array.from({ length: nextMonthData.daysInMonth }).map((_, i) => {
+                    const isRequested = i >= 14 && i <= 18;
                     let bgClass = 'bg-secondary';
                     
-                    if (isHot) {
+                    if (isRequested) {
                       if (conflictResolved) {
                         bgClass = 'bg-[#2CA01C]';
                       } else {
-                        bgClass = 'bg-red-400 animate-pulse';
+                        bgClass = 'bg-amber-400 animate-pulse';
                       }
                     }
                     
@@ -597,7 +644,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                       <div 
                         key={i} 
                         className={`aspect-square rounded-lg ${bgClass} flex items-center justify-center text-xs ${
-                          isHot ? 'text-white' : 'text-muted-foreground'
+                          isRequested ? 'text-white' : 'text-muted-foreground'
                         }`}
                       >
                         {i + 1}
@@ -616,36 +663,148 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <h2 className="text-3xl md:text-5xl font-heading font-medium text-center mb-16 text-[#263926] dark:text-[#a8d5a2]">
           Everything you need.<br/>Nothing you don't.
         </h2>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Smart Roadblocks */}
           <div 
             onClick={() => onNavigate('features', 'smart-checks')}
-            className="md:col-span-2 bg-card border border-border p-8 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer group shadow-sm hover:shadow-xl"
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer group shadow-sm hover:shadow-xl"
           >
-            <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-6 text-red-600 dark:text-red-400">
+            <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4 text-red-600 dark:text-red-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-heading font-medium mb-3 text-[#263926] dark:text-[#a8d5a2]">Smart Roadblocks</h3>
-            <p className="text-muted-foreground mb-8 max-w-md">
-              Prevent clock-in errors before they happen. If an employee forgot to clock out yesterday, Ollie stops them today until it's resolved.
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Smart Roadblocks</h3>
+            <p className="text-muted-foreground text-sm">
+              Prevent clock-in errors before they happen with intelligent blockers.
             </p>
           </div>
           
-          {/* Card 2: Bookkeeper */}
+          {/* Card 2: Direct-to-Bookkeeper */}
           <div 
             onClick={() => onNavigate('features', 'bookkeeper')}
-            className="bg-card border border-border p-8 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
           >
-            <div className="h-12 w-12 rounded-full bg-[#A1EB97]/30 flex items-center justify-center mb-6 text-[#2CA01C]">
+            <div className="h-12 w-12 rounded-full bg-[#A1EB97]/30 flex items-center justify-center mb-4 text-[#2CA01C]">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 className="text-xl font-heading font-medium mb-3 text-[#263926] dark:text-[#a8d5a2]">Direct-to-Bookkeeper</h3>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Direct-to-Bookkeeper</h3>
             <p className="text-muted-foreground text-sm">
-              Skip the download/upload dance. Send payroll reports directly to your accountant's inbox.
+              Send payroll reports directly to your accountant's inbox.
+            </p>
+          </div>
+
+          {/* Card 3: Self-Healing Timesheets */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center mb-4 text-purple-600 dark:text-purple-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Self-Healing Timesheets</h3>
+            <p className="text-muted-foreground text-sm">
+              AI-powered anomaly detection with one-click fixes.
+            </p>
+          </div>
+
+          {/* Card 4: Vacation Management */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center mb-4 text-sky-600 dark:text-sky-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Vacation Management</h3>
+            <p className="text-muted-foreground text-sm">
+              Request and approve time off with a single tap.
+            </p>
+          </div>
+
+          {/* Card 5: Real-Time Tracking */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center mb-4 text-emerald-600 dark:text-emerald-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Real-Time Tracking</h3>
+            <p className="text-muted-foreground text-sm">
+              Live clock-in/out with a running timer employees love.
+            </p>
+          </div>
+
+          {/* Card 6: Break Management */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4 text-amber-600 dark:text-amber-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Break Management</h3>
+            <p className="text-muted-foreground text-sm">
+              Track and manage employee breaks automatically.
+            </p>
+          </div>
+
+          {/* Card 7: Multi-Role Views */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center mb-4 text-indigo-600 dark:text-indigo-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Multi-Role Views</h3>
+            <p className="text-muted-foreground text-sm">
+              Tailored dashboards for Admin, Bookkeeper, and Employee.
+            </p>
+          </div>
+
+          {/* Card 8: Team Overview */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-teal-100 dark:bg-teal-500/20 flex items-center justify-center mb-4 text-teal-600 dark:text-teal-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Team Overview</h3>
+            <p className="text-muted-foreground text-sm">
+              See who's working, on break, or done for the day.
+            </p>
+          </div>
+
+          {/* Card 9: Sick Day Tracking */}
+          <div 
+            onClick={() => onNavigate('features')}
+            className="bg-card border border-border p-6 rounded-3xl hover:border-[#2CA01C]/50 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+          >
+            <div className="h-12 w-12 rounded-full bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center mb-4 text-rose-600 dark:text-rose-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-heading font-medium mb-2 text-[#263926] dark:text-[#a8d5a2]">Sick Day Tracking</h3>
+            <p className="text-muted-foreground text-sm">
+              Full and half sick day logging with one toggle.
             </p>
           </div>
         </div>
