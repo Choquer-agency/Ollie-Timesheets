@@ -200,13 +200,15 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="h-full md:h-full w-full md:max-w-2xl bg-[#FAF9F5] shadow-2xl md:rounded-none flex flex-col animate-slide-in-right overflow-hidden"
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        className="h-full md:h-full w-full md:max-w-2xl bg-[#FAF9F5] shadow-2xl md:rounded-none relative animate-slide-in-right overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Header - sticky on mobile */}
-        <div className="flex-shrink-0 flex justify-between items-start p-4 md:p-8 md:pb-0 bg-[#FAF9F5] border-b border-[#F6F5F1] md:border-b-0">
+        {/* Header - absolutely positioned overlay */}
+        <div 
+          className="absolute top-0 left-0 right-0 z-10 flex justify-between items-start p-4 md:p-8 md:pb-4 bg-[#FAF9F5] border-b border-[#F6F5F1] md:border-b-0"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)' }}
+        >
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-[#263926]">{employee.name}</h2>
             <p className="text-[#6B6B6B] font-medium text-sm">{new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
@@ -216,8 +218,8 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
           </button>
         </div>
 
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 md:pt-6 pb-4">
+        {/* Scrollable content area - absolute positioned with padding for header/footer */}
+        <div className="absolute inset-0 overflow-y-auto pt-[88px] md:pt-[100px] pb-[140px] md:pb-[120px] px-4 md:px-8">
 
         {/* Vacation Request Banner (Admin Only) */}
         {!isEmployeeView && entry?.pendingApproval && !entry?.isVacationDay && (
@@ -463,8 +465,11 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
         </div>
         </div>
 
-        {/* Footer Actions - sticky at bottom */}
-        <div className="flex-shrink-0 px-4 md:px-8 pt-4 md:pt-6 flex flex-col gap-4 bg-[#FAF9F5] border-t border-[#F6F5F1]" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
+        {/* Footer Actions - absolutely positioned overlay */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 z-10 px-4 md:px-8 pt-4 md:pt-6 flex flex-col gap-4 bg-[#FAF9F5] border-t border-[#F6F5F1]" 
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+        >
           {error && !readOnly && (
             <div className="bg-rose-50 text-rose-700 p-3 rounded-2xl text-sm flex items-center gap-2">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
