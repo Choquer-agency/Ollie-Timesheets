@@ -194,13 +194,22 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
       });
   };
 
+  // Lock body scroll when modal is open
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-end bg-[#484848]/40 backdrop-blur-sm transition-all"
+      className="fixed inset-0 z-50 bg-[#484848]/40 backdrop-blur-sm transition-all overflow-hidden"
       onClick={onClose}
+      style={{ touchAction: 'none' }}
     >
       <div 
-        className="h-full md:h-full w-full md:max-w-2xl bg-[#FAF9F5] shadow-2xl md:rounded-none relative animate-slide-in-right overflow-hidden"
+        className="absolute right-0 top-0 bottom-0 w-full md:max-w-2xl bg-[#FAF9F5] shadow-2xl md:rounded-none animate-slide-in-right overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -219,7 +228,10 @@ export const TimeCardModal: React.FC<TimeCardModalProps> = ({
         </div>
 
         {/* Scrollable content area - absolute positioned with padding for header/footer */}
-        <div className="absolute inset-0 overflow-y-auto pt-[88px] md:pt-[100px] pb-[140px] md:pb-[120px] px-4 md:px-8">
+        <div 
+          className="absolute inset-0 overflow-y-auto pt-[88px] md:pt-[100px] pb-[140px] md:pb-[120px] px-4 md:px-8"
+          style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+        >
 
         {/* Vacation Request Banner (Admin Only) */}
         {!isEmployeeView && entry?.pendingApproval && !entry?.isVacationDay && (
