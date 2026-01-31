@@ -2681,6 +2681,10 @@ const AdminDashboard = () => {
 const AppRouter = () => {
   const { currentUser, loading } = useSupabaseStore();
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const hostname = window.location.hostname;
+  
+  // Check if we're on the app subdomain
+  const isAppSubdomain = hostname === 'app.olliehours.com' || hostname.startsWith('app.');
 
   // Listen for route changes
   useEffect(() => {
@@ -2700,25 +2704,40 @@ const AppRouter = () => {
     const isBookkeeper = currentUser !== 'ADMIN' && currentUser.isBookkeeper;
     const path = window.location.pathname;
 
-    console.log('Route check:', { path, isAdmin, isBookkeeper, currentUser });
+    console.log('Route check:', { path, isAdmin, isBookkeeper, currentUser, isAppSubdomain });
 
-    // Redirect based on role and current path (app routes are under /app)
-    if (isAdmin || isBookkeeper) {
-      // Admin and Bookkeeper users should be on /app/admin
-      if (path === '/app' || path === '/app/' || path === '/app/employee') {
-        console.log('Redirecting', isBookkeeper ? 'bookkeeper' : 'admin', 'to /app/admin');
-        window.history.pushState({}, '', '/app/admin');
-        setCurrentPath('/app/admin');
+    if (isAppSubdomain) {
+      // Subdomain routing: use /admin and /employee (or just /)
+      if (isAdmin || isBookkeeper) {
+        if (path === '/' || path === '' || path === '/employee') {
+          console.log('Redirecting', isBookkeeper ? 'bookkeeper' : 'admin', 'to /admin');
+          window.history.pushState({}, '', '/admin');
+          setCurrentPath('/admin');
+        }
+      } else {
+        if (path === '/' || path === '' || path === '/admin') {
+          console.log('Redirecting employee to /employee');
+          window.history.pushState({}, '', '/employee');
+          setCurrentPath('/employee');
+        }
       }
     } else {
-      // Regular employee users should be on /app/employee
-      if (path === '/app' || path === '/app/' || path === '/app/admin') {
-        console.log('Redirecting employee to /app/employee');
-        window.history.pushState({}, '', '/app/employee');
-        setCurrentPath('/app/employee');
+      // Path-based routing: use /app/admin and /app/employee
+      if (isAdmin || isBookkeeper) {
+        if (path === '/app' || path === '/app/' || path === '/app/employee') {
+          console.log('Redirecting', isBookkeeper ? 'bookkeeper' : 'admin', 'to /app/admin');
+          window.history.pushState({}, '', '/app/admin');
+          setCurrentPath('/app/admin');
+        }
+      } else {
+        if (path === '/app' || path === '/app/' || path === '/app/admin') {
+          console.log('Redirecting employee to /app/employee');
+          window.history.pushState({}, '', '/app/employee');
+          setCurrentPath('/app/employee');
+        }
       }
     }
-  }, [currentUser, loading]);
+  }, [currentUser, loading, isAppSubdomain]);
 
   if (loading) {
     return (
@@ -2843,7 +2862,47 @@ import { Website } from './website/Website';
 const App = () => {
   const { user, loading } = useAuth();
   const path = window.location.pathname;
+  const hostname = window.location.hostname;
 
+  // Check if we're on the app subdomain (app.olliehours.com or app.localhost for dev)
+  const isAppSubdomain = hostname === 'app.olliehours.com' || hostname.startsWith('app.');
+
+  // If on app subdomain, treat ALL routes as app routes
+  if (isAppSubdomain) {
+    const isInvitationRoute = path === '/accept-invitation';
+
+    // Handle invitation route on app subdomain
+    if (isInvitationRoute && !user) {
+      return <AcceptInvitation />;
+    }
+
+    // Show loading state while checking auth
+    if (loading) {
+      return (
+        <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
+            <p className="text-[#6B6B6B]">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // If not authenticated, show auth pages
+    if (!user) {
+      return <Auth />;
+    }
+
+    // User is authenticated, show the main app with Supabase store
+    return (
+      <SupabaseStoreProvider>
+        <AppRouter />
+      </SupabaseStoreProvider>
+    );
+  }
+
+  // --- Path-based routing for main domain (olliehours.com) ---
+  
   // Check if this is the marketing website (root path, not /app)
   const isMarketingRoute = path === '/' || path === '';
   const isAppRoute = path.startsWith('/app');
