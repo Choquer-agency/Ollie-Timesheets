@@ -128,26 +128,59 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <p className="text-[#484848] mb-8">Click to see how Ollie adapts to your team.</p>
             
             <div className="space-y-3">
-              {[
-                { id: 'admin', label: 'Owner / Admin', icon: '👑', desc: 'Full control. Payroll & Team Management.' },
-                { id: 'bookkeeper', label: 'Bookkeeper', icon: '📊', desc: 'View-only access to reports.' },
-                { id: 'employee', label: 'Employee', icon: '👋', desc: 'Simple clock-in & history.' }
-              ].map((role) => (
-                <button
-                  key={role.id}
-                  onClick={() => setActiveRole(role.id as 'admin' | 'bookkeeper' | 'employee')}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
-                    activeRole === role.id 
-                      ? 'bg-white border-[#2CA01C] text-[#263926] shadow-lg' 
-                      : 'bg-white/50 border-[#263926]/10 text-[#484848] hover:bg-white hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 font-bold mb-1">
-                    <span>{role.icon}</span> {role.label}
-                  </div>
-                  <div className="text-xs opacity-70 pl-8">{role.desc}</div>
-                </button>
-              ))}
+              {/* Owner / Admin */}
+              <button
+                onClick={() => setActiveRole('admin')}
+                className={`w-full text-left p-4 rounded-xl border transition-all ${
+                  activeRole === 'admin' 
+                    ? 'bg-white border-[#2CA01C] text-[#263926] shadow-lg' 
+                    : 'bg-white/50 border-[#263926]/10 text-[#484848] hover:bg-white hover:shadow-md'
+                }`}
+              >
+                <div className="flex items-center gap-3 font-bold mb-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className={activeRole === 'admin' ? 'text-[#2CA01C]' : 'text-[#6B6B6B]'}>
+                    <path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12c5.16-1.26 9-6.45 9-12V5Zm0 3.9a3 3 0 1 1-3 3a3 3 0 0 1 3-3Zm0 7.9c2 0 6 1.09 6 3.08a7.2 7.2 0 0 1-12 0c0-1.99 4-3.08 6-3.08Z"></path>
+                  </svg>
+                  Owner / Admin
+                </div>
+                <div className="text-xs opacity-70 pl-8">Full control. Payroll & Team Management.</div>
+              </button>
+
+              {/* Bookkeeper */}
+              <button
+                onClick={() => setActiveRole('bookkeeper')}
+                className={`w-full text-left p-4 rounded-xl border transition-all ${
+                  activeRole === 'bookkeeper' 
+                    ? 'bg-white border-[#2CA01C] text-[#263926] shadow-lg' 
+                    : 'bg-white/50 border-[#263926]/10 text-[#484848] hover:bg-white hover:shadow-md'
+                }`}
+              >
+                <div className="flex items-center gap-3 font-bold mb-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 344 432" className={activeRole === 'bookkeeper' ? 'text-[#2CA01C]' : 'text-[#6B6B6B]'}>
+                    <path fill="currentColor" d="M299 3q17 0 29.5 12.5T341 45v342q0 17-12.5 29.5T299 429H43q-18 0-30.5-12.5T0 387V45q0-17 12.5-29.5T43 3h256zM43 45v171l53-32l53 32V45H43z"></path>
+                  </svg>
+                  Bookkeeper
+                </div>
+                <div className="text-xs opacity-70 pl-8">View-only access to reports.</div>
+              </button>
+
+              {/* Employee */}
+              <button
+                onClick={() => setActiveRole('employee')}
+                className={`w-full text-left p-4 rounded-xl border transition-all ${
+                  activeRole === 'employee' 
+                    ? 'bg-white border-[#2CA01C] text-[#263926] shadow-lg' 
+                    : 'bg-white/50 border-[#263926]/10 text-[#484848] hover:bg-white hover:shadow-md'
+                }`}
+              >
+                <div className="flex items-center gap-3 font-bold mb-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512" className={activeRole === 'employee' ? 'text-[#2CA01C]' : 'text-[#6B6B6B]'}>
+                    <path fill="currentColor" d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32v208c0 8.8-7.2 16-16 16s-16-7.2-16-16V64c0-17.7-14.3-32-32-32s-32 14.3-32 32v272c0 1.5 0 3.1.1 4.6L67.6 283c-16-15.2-41.3-14.6-56.6 1.4s-14.6 41.3 1.4 56.6l112.4 107c43.1 41.1 100.4 64 160 64H304c97.2 0 176-78.8 176-176V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v112c0 8.8-7.2 16-16 16s-16-7.2-16-16V64c0-17.7-14.3-32-32-32s-32 14.3-32 32v176c0 8.8-7.2 16-16 16s-16-7.2-16-16z"></path>
+                  </svg>
+                  Employee
+                </div>
+                <div className="text-xs opacity-70 pl-8">Simple clock-in & history.</div>
+              </button>
             </div>
           </div>
 
