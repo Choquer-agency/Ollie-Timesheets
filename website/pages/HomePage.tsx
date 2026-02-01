@@ -94,8 +94,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      const fadeEnd = 600; // Fade out completely after 600px scroll
-      const baseOpacity = 0.5;
+      const fadeEnd = 800; // Fade out completely after 800px scroll
+      const baseOpacity = 1;
       const newOpacity = Math.max(0, baseOpacity * (1 - scrollY / fadeEnd));
       if (meshBgRef.current) {
         meshBgRef.current.style.opacity = String(newOpacity);
@@ -117,32 +117,32 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div
           ref={meshBgRef}
           className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
-          style={{ opacity: 0.5 }}
+          style={{ opacity: 1 }}
         >
-          {/* Blob 1 - Large green, top-left */}
+          {/* Blob 1 - Large vivid green, top-left */}
           <div 
-            className="absolute w-[700px] h-[700px] rounded-full blur-[120px] bg-gradient-to-br from-[#2CA01C]/50 to-[#A1EB97]/30 animate-mesh-float-1"
-            style={{ top: '-10%', left: '-5%' }}
+            className="absolute w-[800px] h-[800px] rounded-full blur-[100px] bg-[#2CA01C]/25 animate-mesh-float-1"
+            style={{ top: '-20%', left: '-10%' }}
           />
           {/* Blob 2 - Bright green, center-right */}
           <div 
-            className="absolute w-[500px] h-[500px] rounded-full blur-[100px] bg-gradient-to-tl from-[#00D639]/40 to-[#2CA01C]/20 animate-mesh-float-2"
-            style={{ top: '20%', right: '-10%' }}
+            className="absolute w-[600px] h-[600px] rounded-full blur-[80px] bg-[#00D639]/20 animate-mesh-float-2"
+            style={{ top: '10%', right: '-15%' }}
           />
-          {/* Blob 3 - Light green, bottom-center */}
+          {/* Blob 3 - Light mint, bottom-center */}
           <div 
-            className="absolute w-[600px] h-[600px] rounded-full blur-[110px] bg-gradient-to-tr from-[#A1EB97]/50 to-[#00D639]/25 animate-mesh-float-3"
-            style={{ bottom: '-20%', left: '30%' }}
+            className="absolute w-[700px] h-[700px] rounded-full blur-[90px] bg-[#A1EB97]/35 animate-mesh-float-3"
+            style={{ bottom: '-25%', left: '20%' }}
           />
-          {/* Blob 4 - Subtle accent, top-right */}
+          {/* Blob 4 - Accent green, top-right */}
           <div 
-            className="absolute w-[400px] h-[400px] rounded-full blur-[80px] bg-gradient-to-bl from-[#2CA01C]/30 to-transparent animate-mesh-float-4"
-            style={{ top: '5%', right: '20%' }}
+            className="absolute w-[500px] h-[500px] rounded-full blur-[70px] bg-[#2CA01C]/15 animate-mesh-float-4"
+            style={{ top: '0%', right: '10%' }}
           />
-          {/* Blob 5 - Deep green, bottom-left */}
+          {/* Blob 5 - Deep forest green, bottom-left */}
           <div 
-            className="absolute w-[450px] h-[450px] rounded-full blur-[90px] bg-gradient-to-r from-[#1a7a12]/40 to-[#2CA01C]/20 animate-mesh-float-5"
-            style={{ bottom: '10%', left: '-10%' }}
+            className="absolute w-[550px] h-[550px] rounded-full blur-[85px] bg-[#1a7a12]/20 animate-mesh-float-5"
+            style={{ bottom: '5%', left: '-15%' }}
           />
         </div>
 
