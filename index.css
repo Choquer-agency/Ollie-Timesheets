@@ -388,49 +388,49 @@
     animation: marquee 20s linear infinite;
   }
 
-  /* Mesh gradient floating animations */
+  /* Mesh gradient floating animations - more dramatic movement */
   @keyframes mesh-float-1 {
     0%, 100% {
-      transform: translate(0, 0) scale(1);
+      transform: translate(0, 0) scale(1) rotate(0deg);
     }
     25% {
-      transform: translate(5%, 10%) scale(1.05);
+      transform: translate(12%, 18%) scale(1.12) rotate(3deg);
     }
     50% {
-      transform: translate(-3%, 5%) scale(0.95);
+      transform: translate(-8%, 10%) scale(0.9) rotate(-2deg);
     }
     75% {
-      transform: translate(8%, -5%) scale(1.02);
+      transform: translate(15%, -10%) scale(1.08) rotate(4deg);
     }
   }
 
   @keyframes mesh-float-2 {
     0%, 100% {
-      transform: translate(0, 0) scale(1);
+      transform: translate(0, 0) scale(1) rotate(0deg);
     }
     33% {
-      transform: translate(-8%, 6%) scale(1.08);
+      transform: translate(-15%, 12%) scale(1.15) rotate(-5deg);
     }
     66% {
-      transform: translate(4%, -8%) scale(0.92);
+      transform: translate(10%, -15%) scale(0.88) rotate(3deg);
     }
   }
 
   @keyframes mesh-float-3 {
     0%, 100% {
-      transform: translate(0, 0) scale(1);
+      transform: translate(0, 0) scale(1) rotate(0deg);
     }
     20% {
-      transform: translate(6%, -4%) scale(1.03);
+      transform: translate(10%, -8%) scale(1.1) rotate(2deg);
     }
     40% {
-      transform: translate(-4%, 8%) scale(0.97);
+      transform: translate(-10%, 15%) scale(0.92) rotate(-3deg);
     }
     60% {
-      transform: translate(3%, 3%) scale(1.06);
+      transform: translate(8%, 8%) scale(1.15) rotate(4deg);
     }
     80% {
-      transform: translate(-6%, -6%) scale(0.94);
+      transform: translate(-12%, -10%) scale(0.88) rotate(-2deg);
     }
   }
 
@@ -439,40 +439,40 @@
       transform: translate(0, 0) scale(1) rotate(0deg);
     }
     50% {
-      transform: translate(-10%, 8%) scale(1.1) rotate(5deg);
+      transform: translate(-18%, 15%) scale(1.2) rotate(8deg);
     }
   }
 
   @keyframes mesh-float-5 {
     0%, 100% {
-      transform: translate(0, 0) scale(1);
+      transform: translate(0, 0) scale(1) rotate(0deg);
     }
     40% {
-      transform: translate(10%, 5%) scale(0.9);
+      transform: translate(18%, 10%) scale(0.85) rotate(-6deg);
     }
     70% {
-      transform: translate(-5%, -10%) scale(1.1);
+      transform: translate(-10%, -18%) scale(1.18) rotate(5deg);
     }
   }
 
   .animate-mesh-float-1 {
-    animation: mesh-float-1 25s ease-in-out infinite;
+    animation: mesh-float-1 18s ease-in-out infinite;
   }
 
   .animate-mesh-float-2 {
-    animation: mesh-float-2 20s ease-in-out infinite;
+    animation: mesh-float-2 15s ease-in-out infinite;
   }
 
   .animate-mesh-float-3 {
-    animation: mesh-float-3 30s ease-in-out infinite;
+    animation: mesh-float-3 22s ease-in-out infinite;
   }
 
   .animate-mesh-float-4 {
-    animation: mesh-float-4 22s ease-in-out infinite;
+    animation: mesh-float-4 16s ease-in-out infinite;
   }
 
   .animate-mesh-float-5 {
-    animation: mesh-float-5 28s ease-in-out infinite;
+    animation: mesh-float-5 20s ease-in-out infinite;
   }
 
   /* Hide scrollbar while maintaining scroll functionality */

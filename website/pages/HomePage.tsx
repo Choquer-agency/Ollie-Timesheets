@@ -94,7 +94,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      const fadeEnd = 800; // Fade out completely after 800px scroll
+      const fadeEnd = 400; // Fade out completely when 50% past hero (~400px)
       const baseOpacity = 1;
       const newOpacity = Math.max(0, baseOpacity * (1 - scrollY / fadeEnd));
       if (meshBgRef.current) {
@@ -117,31 +117,35 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div
           ref={meshBgRef}
           className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
-          style={{ opacity: 1 }}
+          style={{ 
+            opacity: 1,
+            maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)'
+          }}
         >
           {/* Blob 1 - Large vivid green, top-left */}
           <div 
-            className="absolute w-[900px] h-[900px] rounded-full blur-[80px] bg-[#2CA01C]/40 animate-mesh-float-1"
+            className="absolute w-[900px] h-[900px] rounded-full blur-[80px] bg-[#2CA01C]/20 animate-mesh-float-1"
             style={{ top: '-30%', left: '-20%' }}
           />
           {/* Blob 2 - Bright green, center-right */}
           <div 
-            className="absolute w-[700px] h-[700px] rounded-full blur-[70px] bg-[#00D639]/35 animate-mesh-float-2"
+            className="absolute w-[700px] h-[700px] rounded-full blur-[70px] bg-[#00D639]/18 animate-mesh-float-2"
             style={{ top: '5%', right: '-20%' }}
           />
           {/* Blob 3 - Light mint, bottom-center */}
           <div 
-            className="absolute w-[800px] h-[800px] rounded-full blur-[75px] bg-[#A1EB97]/50 animate-mesh-float-3"
+            className="absolute w-[800px] h-[800px] rounded-full blur-[75px] bg-[#A1EB97]/25 animate-mesh-float-3"
             style={{ bottom: '-30%', left: '15%' }}
           />
           {/* Blob 4 - Accent green, top-right */}
           <div 
-            className="absolute w-[600px] h-[600px] rounded-full blur-[60px] bg-[#2CA01C]/30 animate-mesh-float-4"
+            className="absolute w-[600px] h-[600px] rounded-full blur-[60px] bg-[#2CA01C]/15 animate-mesh-float-4"
             style={{ top: '-5%', right: '5%' }}
           />
           {/* Blob 5 - Deep forest green, bottom-left */}
           <div 
-            className="absolute w-[650px] h-[650px] rounded-full blur-[70px] bg-[#1a7a12]/35 animate-mesh-float-5"
+            className="absolute w-[650px] h-[650px] rounded-full blur-[70px] bg-[#1a7a12]/18 animate-mesh-float-5"
             style={{ bottom: '0%', left: '-20%' }}
           />
         </div>

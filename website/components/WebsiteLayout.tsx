@@ -51,11 +51,9 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
-      {/* Navigation */}
-      <nav className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-background/70 dark:bg-background/60 backdrop-blur-xl shadow-sm' 
-          : 'bg-background border-b border-border'
+      {/* Navigation - Always glass effect */}
+      <nav className={`sticky top-0 z-50 transition-all duration-300 bg-background/60 dark:bg-background/50 backdrop-blur-xl ${
+        isScrolled ? 'shadow-sm' : ''
       }`}>
         <div className={`max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-300 ${
           isScrolled ? 'h-16' : 'h-20'
