@@ -1,10 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+// Declare UnicornStudio on window for TypeScript
+declare global {
+  interface Window {
+    UnicornStudio?: {
+      isInitialized?: boolean;
+      init: () => void;
+    };
+  }
+}
 
 interface HomePageProps {
   onNavigate: (page: string, feature?: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
+  // Ref for Unicorn Studio background container
+  const unicornRef = useRef<HTMLDivElement>(null);
+
   // Interactive State: ROI Calculator
   const [employeeCount, setEmployeeCount] = useState(15);
   const annualSavings = (employeeCount * 0.25 * 5 * 52 * 30).toLocaleString();
@@ -18,8 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // Interactive State: Leave Heatmap
   const [conflictResolved, setConflictResolved] = useState(false);
 
-  // Interactive State: Payroll Pulse
-  const [sliderValue, setSliderValue] = useState(0);
+  // Interactive State: Payroll
   const [payrollSent, setPayrollSent] = useState(false);
 
   // Interactive State: Employee Timer (starts at ~45 minutes)
@@ -88,21 +100,70 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   const nextMonthData = getNextMonth();
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value);
-    setSliderValue(val);
-    if (val === 100) {
-      setPayrollSent(true);
-    }
-  };
+  // Load Unicorn Studio script dynamically
+  useEffect(() => {
+    const loadUnicornStudio = () => {
+      const u = window.UnicornStudio;
+      if (u && u.init) {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => u.init());
+        } else {
+          u.init();
+        }
+      } else {
+        window.UnicornStudio = { isInitialized: false, init: () => {} };
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.4/dist/unicornStudio.umd.js';
+        script.onload = () => {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+              if (window.UnicornStudio) window.UnicornStudio.init();
+            });
+          } else {
+            if (window.UnicornStudio) window.UnicornStudio.init();
+          }
+        };
+        (document.head || document.body).appendChild(script);
+      }
+    };
+
+    loadUnicornStudio();
+  }, []);
+
+  // Scroll-based fade effect for Unicorn Studio background
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const fadeEnd = 600; // Fade out completely after 600px scroll
+      const baseOpacity = 0.5;
+      const newOpacity = Math.max(0, baseOpacity * (1 - scrollY / fadeEnd));
+      if (unicornRef.current) {
+        unicornRef.current.style.opacity = String(newOpacity);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Run once on mount to set initial state
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div>
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center py-20 md:py-24 overflow-hidden">
-        {/* Animated Background Orbs */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#2CA01C]/10 rounded-full blur-[120px] -z-10 opacity-60"></div>
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#A1EB97]/20 rounded-full blur-[100px] -z-10 opacity-40"></div>
+        {/* Unicorn Studio Background */}
+        <div
+          ref={unicornRef}
+          className="absolute inset-0 -z-10 pointer-events-none"
+          style={{ opacity: 0.5 }}
+        >
+          <div
+            data-us-project="WRA8w42XxUcyYmMFwz2R"
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
 
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border text-xs font-semibold text-[#2CA01C] mb-8 backdrop-blur-md shadow-sm">
@@ -569,16 +630,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    Fix with AI
+                    Resolve Issue
                   </button>
                 ) : (
                   <div className="w-full py-3 bg-[#A1EB97]/20 border border-[#2CA01C]/30 text-[#2CA01C] rounded-xl font-bold flex items-center justify-center gap-2 animate-fade-in">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Fixed based on activity logs
+                    Issue resolved — You can now clock in
                   </div>
                 )}
               </div>
@@ -595,10 +656,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               Self-Healing Timesheets.
             </h2>
             <p className="text-lg text-muted-foreground mb-6">
-              Ollie doesn't just flag errors; it proposes solutions. Our anomaly detection engine spots missing entries, long shifts, or unusual patterns and offers one-click fixes based on employee history.
+              Ollie catches timesheet errors before they cause payroll problems. When an issue is detected, employees must resolve it before clocking in the next day—keeping your data clean without any admin intervention.
             </p>
             <ul className="space-y-4">
-              {['Detects missing clock-outs instantly', 'Prevents future login until resolved', 'Keeps payroll data 100% clean'].map((item, i) => (
+              {['Detects missing clock-outs instantly', 'Blocks clock-in until issue is resolved', 'Zero admin effort to maintain clean data'].map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-foreground">
                   <span className="w-6 h-6 rounded-full bg-[#2CA01C]/10 flex items-center justify-center text-[#2CA01C] text-xs font-bold">✓</span>
                   {item}
@@ -961,61 +1022,102 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* Payroll Pulse */}
-      <section className="py-20">
-        <div className="max-w-5xl mx-auto px-6">
-          {/* Green Card Container */}
-          <div className="w-full md:w-[80%] mx-auto bg-[#2CA01C] rounded-3xl py-14 px-8 md:px-12 shadow-2xl shadow-[#2CA01C]/20 text-center">
-            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-4 text-white">
-              One-Touch Payroll.
-            </h2>
-            <p className="text-lg text-white/80 mb-10 max-w-md mx-auto">
-              Slide to send your finalized reports directly to your bookkeeper. It's that satisfying.
-            </p>
+      {/* Two-Click Payroll Section */}
+      <section className="py-24 max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          {/* Left side: Interactive Payroll UI */}
+          <div className="order-2 md:order-1">
+            <div className="relative group">
+              <div className={`bg-card border-2 rounded-3xl p-8 shadow-lg transition-all duration-500 ${
+                payrollSent ? 'border-[#2CA01C]/50 shadow-[#2CA01C]/10' : 'border-border'
+              }`}>
+                {/* Header */}
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <div className="text-xl font-bold text-[#263926] dark:text-[#a8d5a2]">Payroll Summary</div>
+                    <div className="text-xs text-muted-foreground">Jan 16 - Jan 30, 2026</div>
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    payrollSent 
+                      ? 'bg-[#A1EB97]/30 text-[#2CA01C]' 
+                      : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                  }`}>
+                    {payrollSent ? 'SENT' : 'READY TO SEND'}
+                  </div>
+                </div>
 
-            <div className="relative w-full max-w-md mx-auto h-16 bg-[#238a16] rounded-full p-2 overflow-hidden shadow-inner">
-              {/* Progress Fill */}
-              <div 
-                className="absolute top-0 left-0 bottom-0 bg-white/20 transition-all duration-75 rounded-full"
-                style={{ width: `${sliderValue}%` }}
-              ></div>
-              
-              {/* Text Label */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 font-bold text-white uppercase tracking-widest text-xs md:text-sm">
-                {payrollSent ? 'SENT SUCCESSFULLY' : 'SLIDE TO SEND PAYROLL'}
-              </div>
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-secondary rounded-xl p-4">
+                    <div className="text-xs font-bold text-muted-foreground uppercase mb-1">Total Hours</div>
+                    <div className="text-2xl font-bold text-[#263926] dark:text-[#a8d5a2]">120h 45m</div>
+                  </div>
+                  <div className="bg-secondary rounded-xl p-4">
+                    <div className="text-xs font-bold text-muted-foreground uppercase mb-1">Total Payroll</div>
+                    <div className="text-2xl font-bold text-[#2CA01C]">$14,280</div>
+                  </div>
+                </div>
 
-              {/* The Knob */}
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value={sliderValue}
-                onChange={handleSliderChange}
-                disabled={payrollSent}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-              />
-              
-              {/* Visual Knob - White when sliding */}
-              <div 
-                className={`absolute top-2 bottom-2 w-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-75 pointer-events-none z-10 ${
-                  sliderValue > 0 ? 'bg-white' : 'bg-white/90'
-                }`}
-                style={{ left: `calc(${sliderValue}% - ${sliderValue * 0.48}px)` }}
-              >
-                {payrollSent ? (
-                  <span className="text-[#2CA01C] font-bold text-lg">✓</span>
+                {/* Employee Preview */}
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm py-2 border-b border-border">
+                    <span className="text-muted-foreground">Sarah Chen</span>
+                    <span className="font-mono text-foreground">42h 30m</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-2 border-b border-border">
+                    <span className="text-muted-foreground">Mike Johnson</span>
+                    <span className="font-mono text-foreground">38h 15m</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-2 border-b border-border">
+                    <span className="text-muted-foreground">Alex Rivera</span>
+                    <span className="font-mono text-foreground">40h 00m</span>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                {!payrollSent ? (
+                  <button 
+                    onClick={() => setPayrollSent(true)}
+                    className="w-full py-3 bg-[#2CA01C] hover:bg-[#238a16] text-white rounded-xl font-bold shadow-lg shadow-[#2CA01C]/30 transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Send to Bookkeeper
+                  </button>
                 ) : (
-                  <span className="text-[#2CA01C] text-lg">➔</span>
+                  <div className="w-full py-3 bg-[#A1EB97]/20 border border-[#2CA01C]/30 text-[#2CA01C] rounded-xl font-bold flex items-center justify-center gap-2 animate-fade-in">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Sent to accountant@agency.com
+                  </div>
                 )}
               </div>
             </div>
-            
-            {payrollSent && (
-              <div className="mt-6 text-white font-bold animate-bounce">
-                Report delivered to accountant@agency.com
-              </div>
-            )}
+          </div>
+          
+          {/* Right side: Text content */}
+          <div className="order-1 md:order-2">
+            <div className="w-16 h-16 bg-[#A1EB97]/30 rounded-2xl flex items-center justify-center text-[#2CA01C] mb-6">
+              <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-heading font-medium mb-6 text-[#263926] dark:text-[#a8d5a2]">
+              Payroll in Two Clicks.
+            </h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              Ollie automatically calculates hours, formats reports, and sends everything directly to your bookkeeper. No spreadsheets. No manual exports. Just review and send.
+            </p>
+            <ul className="space-y-4">
+              {['Review calculated hours at a glance', 'Send directly to your bookkeeper\'s inbox', 'No spreadsheets, no manual exports'].map((item, i) => (
+                <li key={i} className="flex items-center gap-3 text-foreground">
+                  <span className="w-6 h-6 rounded-full bg-[#2CA01C]/10 flex items-center justify-center text-[#2CA01C] text-xs font-bold">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -1023,10 +1125,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       {/* CTA Section */}
       <section className="py-32 text-center px-6 bg-background">
         <h2 className="text-4xl md:text-6xl font-heading font-medium mb-8 text-[#263926] dark:text-[#a8d5a2]">
-          Payroll in 3 clicks. Seriously.
+          Payroll in 2 clicks. Seriously.
         </h2>
         <p className="text-muted-foreground text-lg mb-10 max-w-lg mx-auto">
-          Clock in. Review hours. Send to bookkeeper. That's it. No learning curve, no setup headaches—just start.
+          Review hours. Send to bookkeeper. That's it. No learning curve, no setup headaches—just start.
         </p>
         <a 
           href="/app" 
