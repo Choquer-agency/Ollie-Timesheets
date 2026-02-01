@@ -1,22 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// Declare UnicornStudio on window for TypeScript
-declare global {
-  interface Window {
-    UnicornStudio?: {
-      isInitialized?: boolean;
-      init: () => void;
-    };
-  }
-}
-
 interface HomePageProps {
   onNavigate: (page: string, feature?: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
-  // Ref for Unicorn Studio background container
-  const unicornRef = useRef<HTMLDivElement>(null);
+  // Ref for mesh gradient background container
+  const meshBgRef = useRef<HTMLDivElement>(null);
 
   // Interactive State: ROI Calculator
   const [employeeCount, setEmployeeCount] = useState(15);
@@ -100,45 +90,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   const nextMonthData = getNextMonth();
 
-  // Load Unicorn Studio script dynamically
-  useEffect(() => {
-    const loadUnicornStudio = () => {
-      const u = window.UnicornStudio;
-      if (u && u.init) {
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', () => u.init());
-        } else {
-          u.init();
-        }
-      } else {
-        window.UnicornStudio = { isInitialized: false, init: () => {} };
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.4/dist/unicornStudio.umd.js';
-        script.onload = () => {
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-              if (window.UnicornStudio) window.UnicornStudio.init();
-            });
-          } else {
-            if (window.UnicornStudio) window.UnicornStudio.init();
-          }
-        };
-        (document.head || document.body).appendChild(script);
-      }
-    };
-
-    loadUnicornStudio();
-  }, []);
-
-  // Scroll-based fade effect for Unicorn Studio background
+  // Scroll-based fade effect for mesh gradient background
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const fadeEnd = 600; // Fade out completely after 600px scroll
       const baseOpacity = 0.5;
       const newOpacity = Math.max(0, baseOpacity * (1 - scrollY / fadeEnd));
-      if (unicornRef.current) {
-        unicornRef.current.style.opacity = String(newOpacity);
+      if (meshBgRef.current) {
+        meshBgRef.current.style.opacity = String(newOpacity);
       }
     };
 
@@ -153,24 +113,36 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     <div>
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center py-20 md:py-24 overflow-hidden">
-        {/* Unicorn Studio Background */}
+        {/* Animated Mesh Gradient Background */}
         <div
-          ref={unicornRef}
-          className="absolute inset-0 -z-10 pointer-events-none overflow-hidden flex items-center justify-center"
+          ref={meshBgRef}
+          className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
           style={{ opacity: 0.5 }}
         >
-          <div
-            data-us-project="WRA8w42XxUcyYmMFwz2R"
-            style={{ 
-              width: '1440px', 
-              height: '900px',
-              minWidth: '100%',
-              minHeight: '100%',
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)'
-            }}
+          {/* Blob 1 - Large green, top-left */}
+          <div 
+            className="absolute w-[700px] h-[700px] rounded-full blur-[120px] bg-gradient-to-br from-[#2CA01C]/50 to-[#A1EB97]/30 animate-mesh-float-1"
+            style={{ top: '-10%', left: '-5%' }}
+          />
+          {/* Blob 2 - Bright green, center-right */}
+          <div 
+            className="absolute w-[500px] h-[500px] rounded-full blur-[100px] bg-gradient-to-tl from-[#00D639]/40 to-[#2CA01C]/20 animate-mesh-float-2"
+            style={{ top: '20%', right: '-10%' }}
+          />
+          {/* Blob 3 - Light green, bottom-center */}
+          <div 
+            className="absolute w-[600px] h-[600px] rounded-full blur-[110px] bg-gradient-to-tr from-[#A1EB97]/50 to-[#00D639]/25 animate-mesh-float-3"
+            style={{ bottom: '-20%', left: '30%' }}
+          />
+          {/* Blob 4 - Subtle accent, top-right */}
+          <div 
+            className="absolute w-[400px] h-[400px] rounded-full blur-[80px] bg-gradient-to-bl from-[#2CA01C]/30 to-transparent animate-mesh-float-4"
+            style={{ top: '5%', right: '20%' }}
+          />
+          {/* Blob 5 - Deep green, bottom-left */}
+          <div 
+            className="absolute w-[450px] h-[450px] rounded-full blur-[90px] bg-gradient-to-r from-[#1a7a12]/40 to-[#2CA01C]/20 animate-mesh-float-5"
+            style={{ bottom: '10%', left: '-10%' }}
           />
         </div>
 

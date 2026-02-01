@@ -388,6 +388,93 @@
     animation: marquee 20s linear infinite;
   }
 
+  /* Mesh gradient floating animations */
+  @keyframes mesh-float-1 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      transform: translate(5%, 10%) scale(1.05);
+    }
+    50% {
+      transform: translate(-3%, 5%) scale(0.95);
+    }
+    75% {
+      transform: translate(8%, -5%) scale(1.02);
+    }
+  }
+
+  @keyframes mesh-float-2 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(-8%, 6%) scale(1.08);
+    }
+    66% {
+      transform: translate(4%, -8%) scale(0.92);
+    }
+  }
+
+  @keyframes mesh-float-3 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    20% {
+      transform: translate(6%, -4%) scale(1.03);
+    }
+    40% {
+      transform: translate(-4%, 8%) scale(0.97);
+    }
+    60% {
+      transform: translate(3%, 3%) scale(1.06);
+    }
+    80% {
+      transform: translate(-6%, -6%) scale(0.94);
+    }
+  }
+
+  @keyframes mesh-float-4 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+    50% {
+      transform: translate(-10%, 8%) scale(1.1) rotate(5deg);
+    }
+  }
+
+  @keyframes mesh-float-5 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    40% {
+      transform: translate(10%, 5%) scale(0.9);
+    }
+    70% {
+      transform: translate(-5%, -10%) scale(1.1);
+    }
+  }
+
+  .animate-mesh-float-1 {
+    animation: mesh-float-1 25s ease-in-out infinite;
+  }
+
+  .animate-mesh-float-2 {
+    animation: mesh-float-2 20s ease-in-out infinite;
+  }
+
+  .animate-mesh-float-3 {
+    animation: mesh-float-3 30s ease-in-out infinite;
+  }
+
+  .animate-mesh-float-4 {
+    animation: mesh-float-4 22s ease-in-out infinite;
+  }
+
+  .animate-mesh-float-5 {
+    animation: mesh-float-5 28s ease-in-out infinite;
+  }
+
   /* Hide scrollbar while maintaining scroll functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
