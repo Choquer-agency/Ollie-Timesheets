@@ -116,33 +116,33 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         {/* Animated Mesh Gradient Background */}
         <div
           ref={meshBgRef}
-          className="absolute inset-0 -z-10 pointer-events-none overflow-hidden"
+          className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
           style={{ opacity: 1 }}
         >
           {/* Blob 1 - Large vivid green, top-left */}
           <div 
-            className="absolute w-[800px] h-[800px] rounded-full blur-[100px] bg-[#2CA01C]/25 animate-mesh-float-1"
-            style={{ top: '-20%', left: '-10%' }}
+            className="absolute w-[900px] h-[900px] rounded-full blur-[80px] bg-[#2CA01C]/40 animate-mesh-float-1"
+            style={{ top: '-30%', left: '-20%' }}
           />
           {/* Blob 2 - Bright green, center-right */}
           <div 
-            className="absolute w-[600px] h-[600px] rounded-full blur-[80px] bg-[#00D639]/20 animate-mesh-float-2"
-            style={{ top: '10%', right: '-15%' }}
+            className="absolute w-[700px] h-[700px] rounded-full blur-[70px] bg-[#00D639]/35 animate-mesh-float-2"
+            style={{ top: '5%', right: '-20%' }}
           />
           {/* Blob 3 - Light mint, bottom-center */}
           <div 
-            className="absolute w-[700px] h-[700px] rounded-full blur-[90px] bg-[#A1EB97]/35 animate-mesh-float-3"
-            style={{ bottom: '-25%', left: '20%' }}
+            className="absolute w-[800px] h-[800px] rounded-full blur-[75px] bg-[#A1EB97]/50 animate-mesh-float-3"
+            style={{ bottom: '-30%', left: '15%' }}
           />
           {/* Blob 4 - Accent green, top-right */}
           <div 
-            className="absolute w-[500px] h-[500px] rounded-full blur-[70px] bg-[#2CA01C]/15 animate-mesh-float-4"
-            style={{ top: '0%', right: '10%' }}
+            className="absolute w-[600px] h-[600px] rounded-full blur-[60px] bg-[#2CA01C]/30 animate-mesh-float-4"
+            style={{ top: '-5%', right: '5%' }}
           />
           {/* Blob 5 - Deep forest green, bottom-left */}
           <div 
-            className="absolute w-[550px] h-[550px] rounded-full blur-[85px] bg-[#1a7a12]/20 animate-mesh-float-5"
-            style={{ bottom: '5%', left: '-15%' }}
+            className="absolute w-[650px] h-[650px] rounded-full blur-[70px] bg-[#1a7a12]/35 animate-mesh-float-5"
+            style={{ bottom: '0%', left: '-20%' }}
           />
         </div>
 
