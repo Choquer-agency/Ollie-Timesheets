@@ -156,12 +156,21 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         {/* Unicorn Studio Background */}
         <div
           ref={unicornRef}
-          className="absolute inset-0 -z-10 pointer-events-none"
+          className="absolute inset-0 -z-10 pointer-events-none overflow-hidden flex items-center justify-center"
           style={{ opacity: 0.5 }}
         >
           <div
             data-us-project="WRA8w42XxUcyYmMFwz2R"
-            style={{ width: '100%', height: '100%' }}
+            style={{ 
+              width: '1440px', 
+              height: '900px',
+              minWidth: '100%',
+              minHeight: '100%',
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)'
+            }}
           />
         </div>
 
