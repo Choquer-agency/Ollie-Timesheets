@@ -11,6 +11,7 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 // Now import everything else
 import express from 'express';
 import cors from 'cors';
+import Stripe from 'stripe';
 import {
   sendBookkeeperReport,
   sendTeamInvitation,
@@ -25,6 +26,15 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Stripe price IDs
+const STRIPE_PRICES = {
+  ESSENTIALS_PLAN: 'price_1SwEJdLMn1YDhR61ZqCbtyw2',
+  EXTRA_EMPLOYEE: 'price_1SwEKHLMn1YDhR61KE7b49H9'
+};
 
 // Middleware
 app.use(cors({
@@ -73,6 +83,52 @@ app.get('/api/health', (req, res) => {
     service: 'ollie-timesheets-email',
     timestamp: new Date().toISOString()
   });
+});
+
+// Stripe Checkout endpoint
+app.post('/api/stripe/create-checkout-session', rateLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: 'Stripe is not configured'
+      });
+    }
+
+    const sessionConfig = {
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: STRIPE_PRICES.ESSENTIALS_PLAN,
+          quantity: 1,
+        },
+      ],
+      success_url: `${FRONTEND_URL}/app?checkout=success`,
+      cancel_url: `${FRONTEND_URL}/pricing?checkout=cancelled`,
+      allow_promotion_codes: true,
+    };
+
+    // Pre-fill customer email if provided
+    if (email) {
+      sessionConfig.customer_email = email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    res.json({
+      success: true,
+      url: session.url
+    });
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Email API routes
@@ -316,4 +372,5 @@ app.listen(PORT, () => {
   console.log(`✅ Email server running on port ${PORT}`);
   console.log(`📧 RESEND_API_KEY: ${process.env.RESEND_API_KEY ? 'Set' : 'NOT SET'}`);
   console.log(`📬 FROM_EMAIL: ${process.env.FROM_EMAIL || 'onboarding@resend.dev'}`);
+  console.log(`💳 STRIPE_SECRET_KEY: ${process.env.STRIPE_SECRET_KEY ? 'Set' : 'NOT SET'}`);
 });

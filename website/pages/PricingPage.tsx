@@ -1,7 +1,28 @@
-import React from 'react';
-import { Check, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, X, Loader2 } from 'lucide-react';
+import { createCheckoutSession } from '../../apiClient';
 
 export const PricingPage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    setIsLoading(true);
+    try {
+      const response = await createCheckoutSession();
+      if (response.success && response.url) {
+        window.location.href = response.url;
+      } else {
+        console.error('Checkout error:', response.error);
+        alert('Unable to start checkout. Please try again.');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Unable to start checkout. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="pt-20 pb-20 px-6">
       <div className="text-center max-w-3xl mx-auto mb-20">
@@ -46,7 +67,7 @@ export const PricingPage: React.FC = () => {
         {/* Paid Plan */}
         <div className="bg-[#263926] border border-[#2CA01C]/50 rounded-3xl p-10 flex flex-col relative overflow-hidden shadow-2xl shadow-[#2CA01C]/10 transition-all hover:scale-105">
           <div className="absolute top-0 right-0 bg-[#2CA01C] text-white text-xs font-bold px-4 py-1 rounded-bl-xl">POPULAR</div>
-          <h3 className="text-2xl font-heading font-medium text-white mb-2">Agency Pro</h3>
+          <h3 className="text-2xl font-heading font-medium text-white mb-2">Essentials Plan</h3>
           <div className="text-white/60 mb-6">For growing teams that need automation.</div>
           <div className="text-5xl font-bold text-white mb-1">
             $9.99<span className="text-lg font-normal text-white/50">/mo</span>
@@ -72,12 +93,20 @@ export const PricingPage: React.FC = () => {
             </li>
           </ul>
 
-          <a 
-            href="/app" 
-            className="w-full block text-center bg-white text-[#263926] font-bold py-4 rounded-xl hover:bg-[#A1EB97] transition-colors shadow-lg shadow-[#2CA01C]/20"
+          <button 
+            onClick={handleSubscribe}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 bg-white text-[#263926] font-bold py-4 rounded-xl hover:bg-[#A1EB97] transition-colors shadow-lg shadow-[#2CA01C]/20 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Start Pro Trial
-          </a>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              'Subscribe Now'
+            )}
+          </button>
         </div>
       </div>
 
@@ -92,7 +121,7 @@ export const PricingPage: React.FC = () => {
               <tr className="border-b border-border bg-secondary">
                 <th className="py-4 px-6 text-muted-foreground font-medium">Feature</th>
                 <th className="py-4 px-6 text-[#263926] dark:text-[#a8d5a2] font-bold text-center">Starter</th>
-                <th className="py-4 px-6 text-[#2CA01C] font-bold text-center">Agency Pro</th>
+                <th className="py-4 px-6 text-[#2CA01C] font-bold text-center">Essentials</th>
               </tr>
             </thead>
             <tbody className="text-sm">
