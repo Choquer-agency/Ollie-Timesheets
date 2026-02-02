@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface HomePageProps {
   onNavigate: (page: string, feature?: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
-  // Ref for mesh gradient background container
-  const meshBgRef = useRef<HTMLDivElement>(null);
 
   // Interactive State: ROI Calculator
   const [employeeCount, setEmployeeCount] = useState(15);
@@ -90,37 +88,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
   const nextMonthData = getNextMonth();
 
-  // Scroll-based fade effect for mesh gradient background
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const fadeEnd = 400; // Fade out completely when 50% past hero (~400px)
-      const baseOpacity = 1;
-      const newOpacity = Math.max(0, baseOpacity * (1 - scrollY / fadeEnd));
-      if (meshBgRef.current) {
-        meshBgRef.current.style.opacity = String(newOpacity);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    // Run once on mount to set initial state
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <div>
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center py-20 md:py-24 overflow-hidden">
         {/* Animated Mesh Gradient Background */}
         <div
-          ref={meshBgRef}
           className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
           style={{ 
-            opacity: 1,
-            maskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)'
+            maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)'
           }}
         >
           {/* Blob 1 - Large vivid green, top-left */}
@@ -178,8 +155,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* Core Features Section - Pain Points & Solutions */}
       <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(44,160,28,0.06),transparent_50%)]"></div>
-        
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           {/* Pain-focused heading */}
           <div className="text-center mb-14">
@@ -237,7 +212,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* Role Deck Section - Views for Every Role */}
       <section className="py-24 overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(44,160,28,0.08),transparent_50%)]"></div>
+        {/* Decorative blob - top right */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[80px] bg-[#2CA01C]/15 -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
         
         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12 items-center relative z-10">
           <div className="md:col-span-1 space-y-6">
@@ -764,8 +740,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Bento Grid Highlights */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <h2 className="text-3xl md:text-5xl font-heading font-medium text-center mb-16 text-[#263926] dark:text-[#a8d5a2]">
+      <section className="max-w-7xl mx-auto px-6 py-20 relative overflow-hidden">
+        {/* Decorative blob - top left */}
+        <div className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[70px] bg-[#A1EB97]/20 -translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
+        
+        <h2 className="text-3xl md:text-5xl font-heading font-medium text-center mb-16 text-[#263926] dark:text-[#a8d5a2] relative z-10">
           Everything you need.<br/>Nothing you don't.
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1108,16 +1087,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 text-center px-6 bg-background">
-        <h2 className="text-4xl md:text-6xl font-heading font-medium mb-8 text-[#263926] dark:text-[#a8d5a2]">
+      <section className="py-32 text-center px-6 bg-background relative overflow-hidden">
+        {/* Decorative blob - bottom center */}
+        <div className="absolute bottom-0 left-1/2 w-[600px] h-[400px] rounded-full blur-[90px] bg-[#00D639]/15 translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+        
+        <h2 className="text-4xl md:text-6xl font-heading font-medium mb-8 text-[#263926] dark:text-[#a8d5a2] relative z-10">
           Payroll in 2 clicks. Seriously.
         </h2>
-        <p className="text-muted-foreground text-lg mb-10 max-w-lg mx-auto">
+        <p className="text-muted-foreground text-lg mb-10 max-w-lg mx-auto relative z-10">
           Review hours. Send to bookkeeper. That's it. No learning curve, no setup headaches—just start.
         </p>
         <a 
           href="/app" 
-          className="inline-block px-10 py-5 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all transform hover:scale-105 shadow-2xl shadow-[#2CA01C]/20"
+          className="inline-block px-10 py-5 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all transform hover:scale-105 shadow-2xl shadow-[#2CA01C]/20 relative z-10"
         >
           Start Free Today
         </a>

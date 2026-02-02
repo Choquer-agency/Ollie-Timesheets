@@ -51,12 +51,14 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
-      {/* Navigation - Always glass effect */}
-      <nav className={`sticky top-0 z-50 transition-all duration-300 bg-background/60 dark:bg-background/50 backdrop-blur-xl ${
-        isScrolled ? 'shadow-sm' : ''
+      {/* Navigation - Transparent at top, floating glass on scroll */}
+      <nav className={`fixed z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'top-3 left-4 right-4 md:left-8 md:right-8 bg-background/70 dark:bg-background/60 backdrop-blur-md rounded-2xl border border-border/50 shadow-lg' 
+          : 'top-0 left-0 right-0 bg-transparent'
       }`}>
         <div className={`max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-300 ${
-          isScrolled ? 'h-16' : 'h-20'
+          isScrolled ? 'h-14' : 'h-20'
         }`}>
           {/* Logo */}
           <button 
@@ -110,7 +112,9 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
         </div>
 
         {/* Mobile Menu */}
-        <div className="md:hidden border-t border-border px-6 py-3 flex items-center justify-center gap-6 text-sm font-medium text-muted-foreground">
+        <div className={`md:hidden px-6 py-3 flex items-center justify-center gap-6 text-sm font-medium text-muted-foreground ${
+          isScrolled ? '' : 'border-t border-border/30'
+        }`}>
           {navLinks.map((link) => (
             <button 
               key={link.id}
@@ -125,10 +129,11 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
         </div>
       </nav>
 
+      {/* Spacer for fixed nav */}
+      <div className="h-20"></div>
+
       {/* Main Content */}
       <main className="relative overflow-hidden">
-        {/* Global Abstract Decorations */}
-        <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#2CA01C]/5 to-transparent pointer-events-none -z-10"></div>
         {children}
       </main>
 
