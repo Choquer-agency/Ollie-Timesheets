@@ -137,3 +137,14 @@ export const sendVacationDenialNotification = async (data: VacationDenialData): 
   return makeRequest('/email/vacation-denial', data);
 };
 
+
+// Stripe Checkout
+interface CheckoutSessionResponse {
+  success: boolean;
+  url?: string;
+  error?: string;
+}
+
+export const createCheckoutSession = async (email?: string): Promise<CheckoutSessionResponse> => {
+  return makeRequest('/stripe/create-checkout-session', { email }) as Promise<CheckoutSessionResponse>;
+};
