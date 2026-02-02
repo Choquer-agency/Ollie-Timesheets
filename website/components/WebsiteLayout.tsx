@@ -55,7 +55,7 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
       <nav 
         className={`fixed z-50 left-1/2 -translate-x-1/2 transition-all duration-500 ease-out ${
           isScrolled 
-            ? 'bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/10 shadow-lg' 
+            ? 'bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md rounded-[100px] border border-black/5 dark:border-white/10 shadow-lg' 
             : 'bg-transparent'
         }`}
         style={{
