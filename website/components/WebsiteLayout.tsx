@@ -50,16 +50,21 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-300 overflow-x-hidden">
       {/* Navigation - Transparent at top, floating glass on scroll */}
-      <nav className={`fixed z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'top-3 left-1/2 -translate-x-1/2 bg-background/70 dark:bg-background/60 backdrop-blur-md rounded-2xl border border-border/50 shadow-lg' 
-          : 'top-0 left-0 right-0 bg-transparent'
-      }`}
-      style={isScrolled ? { width: 'calc(100% - 48px)', maxWidth: 'calc(1280px + 40px)' } : undefined}
+      <nav 
+        className={`fixed z-50 left-1/2 -translate-x-1/2 transition-all duration-500 ease-out ${
+          isScrolled 
+            ? 'bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/10 shadow-lg' 
+            : 'bg-transparent'
+        }`}
+        style={{
+          top: isScrolled ? '12px' : '0px',
+          width: isScrolled ? 'calc(100% - 20px)' : '100%',
+          maxWidth: isScrolled ? 'calc(1280px + 16px)' : 'none',
+        }}
       >
-        <div className={`mx-auto px-6 flex items-center justify-between transition-all duration-300 ${
+        <div className={`mx-auto px-6 flex items-center justify-between transition-all duration-500 ease-out ${
           isScrolled ? 'h-14 max-w-7xl' : 'h-20 max-w-7xl'
         }`}>
           {/* Logo */}
@@ -140,7 +145,7 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-secondary pt-20 pb-10 transition-colors duration-300">
+      <footer className="relative z-10 border-t border-border bg-secondary pt-20 pb-10 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-6">
