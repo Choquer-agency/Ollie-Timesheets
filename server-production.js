@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import cors from 'cors';
 import 'dotenv/config';
+import Stripe from 'stripe';
 import {
   sendBookkeeperReport,
   sendTeamInvitation,
@@ -16,6 +17,17 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+const APP_URL = process.env.APP_URL || 'https://app.olliehours.com';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://olliehours.com';
+
+// Initialize Stripe
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+// Stripe price IDs
+const STRIPE_PRICES = {
+  ESSENTIALS_PLAN: 'price_1SwEJdLMn1YDhR61ZqCbtyw2',
+  EXTRA_EMPLOYEE: 'price_1SwEKHLMn1YDhR61KE7b49H9'
+};
 
 // Middleware
 app.use(cors());
@@ -213,6 +225,52 @@ app.post('/api/email/change-approval', rateLimiter, async (req, res) => {
   }
 });
 
+// Stripe Checkout endpoint
+app.post('/api/stripe/create-checkout-session', rateLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!stripe) {
+      return res.status(500).json({
+        success: false,
+        error: 'Stripe is not configured'
+      });
+    }
+
+    const sessionConfig = {
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: STRIPE_PRICES.ESSENTIALS_PLAN,
+          quantity: 1,
+        },
+      ],
+      success_url: `${APP_URL}?checkout=success`,
+      cancel_url: `${FRONTEND_URL}/pricing?checkout=cancelled`,
+      allow_promotion_codes: true,
+    };
+
+    // Pre-fill customer email if provided
+    if (email) {
+      sessionConfig.customer_email = email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    res.json({
+      success: true,
+      url: session.url
+    });
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Serve static files from dist folder
 app.use(express.static(join(__dirname, 'dist')));
 
@@ -235,6 +293,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Ollie Timesheets Server running on port ${PORT}`);
   console.log(`📧 Resend API configured: ${process.env.RESEND_API_KEY ? 'Yes' : 'No'}`);
   console.log(`📧 From email: ${process.env.FROM_EMAIL || 'Not set'}`);
+  console.log(`💳 Stripe configured: ${process.env.STRIPE_SECRET_KEY ? 'Yes' : 'No'}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
 });
 
