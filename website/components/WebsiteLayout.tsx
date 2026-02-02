@@ -54,11 +54,13 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
       {/* Navigation - Transparent at top, floating glass on scroll */}
       <nav className={`fixed z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'top-3 left-4 right-4 md:left-8 md:right-8 bg-background/70 dark:bg-background/60 backdrop-blur-md rounded-2xl border border-border/50 shadow-lg' 
+          ? 'top-3 left-1/2 -translate-x-1/2 bg-background/70 dark:bg-background/60 backdrop-blur-md rounded-2xl border border-border/50 shadow-lg' 
           : 'top-0 left-0 right-0 bg-transparent'
-      }`}>
-        <div className={`max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-300 ${
-          isScrolled ? 'h-14' : 'h-20'
+      }`}
+      style={isScrolled ? { width: 'calc(100% - 48px)', maxWidth: 'calc(1280px + 40px)' } : undefined}
+      >
+        <div className={`mx-auto px-6 flex items-center justify-between transition-all duration-300 ${
+          isScrolled ? 'h-14 max-w-7xl' : 'h-20 max-w-7xl'
         }`}>
           {/* Logo */}
           <button 
@@ -133,12 +135,12 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
       <div className="h-20"></div>
 
       {/* Main Content */}
-      <main className="relative overflow-hidden">
+      <main className="relative">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-secondary pt-20 pb-10 mt-20 transition-colors duration-300">
+      <footer className="border-t border-border bg-secondary pt-20 pb-10 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 mb-16">
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-6">

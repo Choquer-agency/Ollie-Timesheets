@@ -89,43 +89,45 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const nextMonthData = getNextMonth();
 
   return (
-    <div>
+    <div className="relative">
+      {/* Animated Mesh Gradient Background - extends behind nav */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[100vh] z-0 pointer-events-none"
+        style={{ 
+          marginTop: '-80px',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)'
+        }}
+      >
+        {/* Blob 1 - Large vivid green, top-left */}
+        <div 
+          className="absolute w-[900px] h-[900px] rounded-full blur-[80px] bg-[#2CA01C]/20 animate-mesh-float-1"
+          style={{ top: '-10%', left: '-20%' }}
+        />
+        {/* Blob 2 - Bright green, center-right */}
+        <div 
+          className="absolute w-[700px] h-[700px] rounded-full blur-[70px] bg-[#00D639]/18 animate-mesh-float-2"
+          style={{ top: '15%', right: '-20%' }}
+        />
+        {/* Blob 3 - Light mint, bottom-center */}
+        <div 
+          className="absolute w-[800px] h-[800px] rounded-full blur-[75px] bg-[#A1EB97]/25 animate-mesh-float-3"
+          style={{ bottom: '0%', left: '15%' }}
+        />
+        {/* Blob 4 - Accent green, top-right */}
+        <div 
+          className="absolute w-[600px] h-[600px] rounded-full blur-[60px] bg-[#2CA01C]/15 animate-mesh-float-4"
+          style={{ top: '5%', right: '5%' }}
+        />
+        {/* Blob 5 - Deep forest green, bottom-left */}
+        <div 
+          className="absolute w-[650px] h-[650px] rounded-full blur-[70px] bg-[#1a7a12]/18 animate-mesh-float-5"
+          style={{ bottom: '20%', left: '-20%' }}
+        />
+      </div>
+
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center py-20 md:py-24 overflow-hidden">
-        {/* Animated Mesh Gradient Background */}
-        <div
-          className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
-          style={{ 
-            maskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 60%, transparent 100%)'
-          }}
-        >
-          {/* Blob 1 - Large vivid green, top-left */}
-          <div 
-            className="absolute w-[900px] h-[900px] rounded-full blur-[80px] bg-[#2CA01C]/20 animate-mesh-float-1"
-            style={{ top: '-30%', left: '-20%' }}
-          />
-          {/* Blob 2 - Bright green, center-right */}
-          <div 
-            className="absolute w-[700px] h-[700px] rounded-full blur-[70px] bg-[#00D639]/18 animate-mesh-float-2"
-            style={{ top: '5%', right: '-20%' }}
-          />
-          {/* Blob 3 - Light mint, bottom-center */}
-          <div 
-            className="absolute w-[800px] h-[800px] rounded-full blur-[75px] bg-[#A1EB97]/25 animate-mesh-float-3"
-            style={{ bottom: '-30%', left: '15%' }}
-          />
-          {/* Blob 4 - Accent green, top-right */}
-          <div 
-            className="absolute w-[600px] h-[600px] rounded-full blur-[60px] bg-[#2CA01C]/15 animate-mesh-float-4"
-            style={{ top: '-5%', right: '5%' }}
-          />
-          {/* Blob 5 - Deep forest green, bottom-left */}
-          <div 
-            className="absolute w-[650px] h-[650px] rounded-full blur-[70px] bg-[#1a7a12]/18 animate-mesh-float-5"
-            style={{ bottom: '0%', left: '-20%' }}
-          />
-        </div>
+      <section className="relative min-h-[80vh] flex items-center justify-center py-20 md:py-24">
 
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border text-xs font-semibold text-[#2CA01C] mb-8 backdrop-blur-md shadow-sm">
@@ -211,7 +213,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Role Deck Section - Views for Every Role */}
-      <section className="py-24 overflow-hidden relative">
+      <section className="py-24 relative">
         {/* Decorative blob - top right */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[80px] bg-[#2CA01C]/15 -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
         
@@ -740,7 +742,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Bento Grid Highlights */}
-      <section className="max-w-7xl mx-auto px-6 py-20 relative overflow-hidden">
+      <section className="max-w-7xl mx-auto px-6 py-20 relative">
         {/* Decorative blob - top left */}
         <div className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[70px] bg-[#A1EB97]/20 -translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
         
@@ -1087,7 +1089,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 text-center px-6 bg-background relative overflow-hidden">
+      <section className="py-32 text-center px-6 bg-background relative">
         {/* Decorative blob - bottom center */}
         <div className="absolute bottom-0 left-1/2 w-[600px] h-[400px] rounded-full blur-[90px] bg-[#00D639]/15 translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
         
