@@ -26,6 +26,7 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const APP_URL = process.env.APP_URL || 'http://localhost:5173';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -106,7 +107,7 @@ app.post('/api/stripe/create-checkout-session', rateLimiter, async (req, res) =>
           quantity: 1,
         },
       ],
-      success_url: `${FRONTEND_URL}/app?checkout=success`,
+      success_url: `${APP_URL}?checkout=success`,
       cancel_url: `${FRONTEND_URL}/pricing?checkout=cancelled`,
       allow_promotion_codes: true,
     };

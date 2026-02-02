@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { OllieHoursLogo } from './OllieHoursLogo';
 
+// App subdomain URL - use full URL in production, relative path in dev
+const APP_URL = typeof window !== 'undefined' && window.location.hostname === 'olliehours.com' 
+  ? 'https://app.olliehours.com' 
+  : '/app';
+
 interface WebsiteLayoutProps {
   children: React.ReactNode;
   currentPage: string;
@@ -104,13 +109,13 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
             <div className="h-6 w-px bg-border hidden sm:block"></div>
 
             <a 
-              href="/app" 
+              href={APP_URL} 
               className="text-sm font-medium text-muted-foreground hover:text-[#2CA01C] hidden sm:block transition-colors"
             >
               Log in
             </a>
             <a 
-              href="/app"
+              href={`${APP_URL}?signup=true`}
               className="bg-[#2CA01C] text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#238a16] transition-all shadow-lg shadow-[#2CA01C]/20"
             >
               Start Free
@@ -194,7 +199,7 @@ export const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({
                 </button>
               </li>
               <li>
-                <a href="/app" className="hover:text-[#2CA01C] transition-colors">
+                <a href={APP_URL} className="hover:text-[#2CA01C] transition-colors">
                   Login
                 </a>
               </li>

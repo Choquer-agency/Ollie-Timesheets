@@ -1,6 +1,11 @@
 import React from 'react';
 import { Quote } from 'lucide-react';
 
+// App subdomain URL - use full URL in production, relative path in dev
+const APP_URL = typeof window !== 'undefined' && window.location.hostname === 'olliehours.com' 
+  ? 'https://app.olliehours.com' 
+  : '/app';
+
 export const TestimonialsPage: React.FC = () => {
   const stories = [
     {
@@ -122,7 +127,7 @@ export const TestimonialsPage: React.FC = () => {
           Ready to join them?
         </h3>
         <a 
-          href="/app" 
+          href={`${APP_URL}?signup=true`}
           className="inline-block px-8 py-4 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all shadow-lg shadow-[#2CA01C]/20"
         >
           Start Your Free Trial

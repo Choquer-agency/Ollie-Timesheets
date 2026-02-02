@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { Check, X, Loader2 } from 'lucide-react';
 import { createCheckoutSession } from '../../apiClient';
 
+// App subdomain URL - use full URL in production, relative path in dev
+const APP_URL = typeof window !== 'undefined' && window.location.hostname === 'olliehours.com' 
+  ? 'https://app.olliehours.com' 
+  : '/app';
+
 export const PricingPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,7 +62,7 @@ export const PricingPage: React.FC = () => {
           </ul>
 
           <a 
-            href="/app" 
+            href={`${APP_URL}?signup=true`}
             className="w-full block text-center bg-secondary hover:bg-accent text-foreground font-bold py-4 rounded-xl transition-colors"
           >
             Get Started

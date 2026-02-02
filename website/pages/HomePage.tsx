@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
+// App subdomain URL - use full URL in production, relative path in dev
+const APP_URL = typeof window !== 'undefined' && window.location.hostname === 'olliehours.com' 
+  ? 'https://app.olliehours.com' 
+  : '/app';
+
 interface HomePageProps {
   onNavigate: (page: string, feature?: string) => void;
 }
@@ -147,7 +152,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             Hands-off payroll, smart compliance checks, and a seamless experience for modern agencies. Stop chasing hours. Start automating them.
           </p>
           <a 
-            href="/app" 
+            href={`${APP_URL}?signup=true`}
             className="inline-block px-8 py-4 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all shadow-xl shadow-[#2CA01C]/20 hover:scale-105 transform"
           >
             Get Started for Free
@@ -1100,7 +1105,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           Review hours. Send to bookkeeper. That's it. No learning curve, no setup headaches—just start.
         </p>
         <a 
-          href="/app" 
+          href={`${APP_URL}?signup=true`}
           className="inline-block px-10 py-5 bg-[#2CA01C] text-white font-bold rounded-full hover:bg-[#238a16] transition-all transform hover:scale-105 shadow-2xl shadow-[#2CA01C]/20 relative z-10"
         >
           Start Free Today
