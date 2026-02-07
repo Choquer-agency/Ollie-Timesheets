@@ -899,6 +899,8 @@ const EmployeeDashboard = () => {
   // History View State - Moved to top level to avoid hook violation
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<TimeEntry | null>(null);
   const [historyEntryDate, setHistoryEntryDate] = useState<string>('');
+  const [filterStartDate, setFilterStartDate] = useState<string>('');
+  const [filterEndDate, setFilterEndDate] = useState<string>('');
   
   // Check for unresolved past issues on mount
   useEffect(() => {
@@ -1181,8 +1183,14 @@ const EmployeeDashboard = () => {
   // --- Schedule / History View ---
   if (view === 'history') {
       const myEntries = entries.filter(e => e.employeeId === currentUser.id).sort((a,b) => b.date.localeCompare(a.date));
-      const totalWorkedMins = myEntries.reduce((acc, e) => acc + calculateStats(e).totalWorkedMinutes, 0);
-      const totalBreakMins = myEntries.reduce((acc, e) => acc + calculateStats(e).totalBreakMinutes, 0);
+      const isFilterActive = filterStartDate !== '' || filterEndDate !== '';
+      const filteredEntries = myEntries.filter(e => {
+        if (filterStartDate && e.date < filterStartDate) return false;
+        if (filterEndDate && e.date > filterEndDate) return false;
+        return true;
+      });
+      const totalWorkedMins = filteredEntries.reduce((acc, e) => acc + calculateStats(e).totalWorkedMinutes, 0);
+      const totalBreakMins = filteredEntries.reduce((acc, e) => acc + calculateStats(e).totalBreakMinutes, 0);
       
       return (
         <div className="max-w-4xl mx-auto mt-4 md:mt-8 px-4 md:px-6 pb-20">
@@ -1193,17 +1201,36 @@ const EmployeeDashboard = () => {
                 <h1 className="text-xl md:text-2xl font-bold text-[#263926]">My Schedule & History</h1>
             </div>
 
+            {/* Date Range Filter */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-6 md:mb-8">
+                <div className="flex-1 min-w-0">
+                    <DatePicker label="From" value={filterStartDate} onChange={setFilterStartDate} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <DatePicker label="To" value={filterEndDate} onChange={setFilterEndDate} />
+                </div>
+                {isFilterActive && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
+                        className="text-sm text-[#6B6B6B] hover:text-[#263926] whitespace-nowrap"
+                    >
+                        Clear Filter
+                    </Button>
+                )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
                 <div className="bg-sky-50 p-4 md:p-6 rounded-2xl border border-sky-100 text-sky-900">
                     <h3 className="text-xs font-bold uppercase opacity-70 mb-1">Vacation Remaining</h3>
                     <div className="text-2xl md:text-3xl font-bold">{vacationRemaining} <span className="text-sm font-normal opacity-70">Days</span></div>
                 </div>
                 <div className="bg-white p-4 md:p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Hours Worked</h3>
+                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">{isFilterActive ? 'Hours (Filtered)' : 'Total Hours Worked'}</h3>
                     <div className="text-2xl md:text-3xl font-bold">{formatDuration(totalWorkedMins)}</div>
                 </div>
                 <div className="bg-white p-4 md:p-6 rounded-2xl border border-[#F6F5F1] text-[#263926] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">Total Break Time</h3>
+                    <h3 className="text-xs font-bold uppercase text-[#6B6B6B] mb-1">{isFilterActive ? 'Break (Filtered)' : 'Total Break Time'}</h3>
                     <div className="text-2xl md:text-3xl font-bold">{formatDuration(totalBreakMins)}</div>
                 </div>
             </div>
