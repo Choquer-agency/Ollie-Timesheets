@@ -9,6 +9,7 @@ export const bookkeeperReportTemplate = (data) => {
       <td style="padding: 12px 16px; text-align: right; color: #484848;">${emp.sickDays}</td>
       <td style="padding: 12px 16px; text-align: right; color: #484848;">${emp.vacationDays}</td>
       <td style="padding: 12px 16px; text-align: right; font-family: 'Courier New', monospace; color: #263926;">${emp.hours}</td>
+      <td style="padding: 12px 16px; text-align: right; font-family: 'Courier New', monospace; color: #263926;">${emp.decimalHours}</td>
     </tr>
   `).join('');
 
@@ -51,6 +52,7 @@ export const bookkeeperReportTemplate = (data) => {
             <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Sick</th>
             <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Vacation</th>
             <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">Hours</th>
+            <th style="padding: 16px; text-align: right; font-size: 11px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.5px;">QBO Hours</th>
           </tr>
         </thead>
         <tbody>

@@ -1752,6 +1752,7 @@ const BookkeeperDashboard = () => {
         name: s.employee.name,
         role: s.employee.role,
         hours: formatDuration(s.totalMinutes),
+        decimalHours: (s.totalMinutes / 60).toFixed(2),
         daysWorked: s.daysWorked,
         sickDays: s.sickDays,
         vacationDays: s.vacationDays
@@ -2312,6 +2313,7 @@ const AdminDashboard = () => {
         name: s.employee.name,
         role: s.employee.role,
         hours: formatDuration(s.totalMinutes),
+        decimalHours: (s.totalMinutes / 60).toFixed(2),
         daysWorked: s.daysWorked,
         sickDays: s.sickDays,
         vacationDays: s.vacationDays

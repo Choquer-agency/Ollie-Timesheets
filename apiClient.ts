@@ -12,6 +12,7 @@ interface BookkeeperReportData {
     name: string;
     role: string;
     hours: string;
+    decimalHours: string;
     daysWorked: number;
     sickDays: number;
     vacationDays: number;
