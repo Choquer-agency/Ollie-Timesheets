@@ -70,6 +70,17 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
+    // Safety timeout: if data loading doesn't complete in 15 seconds, stop loading
+    // This prevents infinite spinner when Supabase DB queries hang
+    const timeout = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) {
+          console.error('Data loading timed out after 15s');
+        }
+        return false;
+      });
+    }, 15000);
+
     const loadData = async () => {
       try {
         // First, check if user is owner or employee to determine which owner_id to use for settings
@@ -367,6 +378,7 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           // This happens with OAuth users who haven't completed setup
           console.log('User needs to complete account setup');
           setNeedsSetup(true);
+          clearTimeout(timeout);
           setLoading(false);
           return;
         }
@@ -420,14 +432,18 @@ export const SupabaseStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           setEntries(mappedEntries);
         }
 
+        clearTimeout(timeout);
         setLoading(false);
       } catch (error) {
+        clearTimeout(timeout);
         console.error('Error loading data:', error);
         setLoading(false);
       }
     };
 
     loadData();
+
+    return () => clearTimeout(timeout);
   }, [user]);
 
   const clockIn = async (employeeId: string) => {

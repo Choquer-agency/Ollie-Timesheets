@@ -22,6 +22,55 @@ import {
   sendTeamInvitation 
 } from './apiClient';
 
+// --- Loading Screen with timeout escape hatch ---
+
+const LoadingScreen = ({ message = "Loading..." }: { message?: string }) => {
+  const [showRetry, setShowRetry] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowRetry(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // If sign out fails (Supabase unreachable), clear local storage and reload
+      localStorage.clear();
+    }
+    window.location.reload();
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
+        <p className="text-[#6B6B6B]">{message}</p>
+        {showRetry && (
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-[#6B6B6B]">This is taking longer than expected.</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 text-sm bg-[#2CA01C] text-white rounded-lg hover:bg-[#248a17] transition-colors"
+              >
+                Retry
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 text-sm border border-[#E0DED7] text-[#6B6B6B] rounded-lg hover:bg-[#F6F5F1] transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // --- Components ---
 
 const LiveBreakTimer = ({ breakStartTime }: { breakStartTime: string }) => {
@@ -2834,14 +2883,7 @@ const AppRouter = () => {
   }, [currentUser, loading, isAppSubdomain]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
-          <p className="text-[#6B6B6B]">Loading your data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your data..." />;
   }
 
   return <MainLayout />;
@@ -2856,14 +2898,7 @@ const MainLayout = () => {
 
   // Show loading state while fetching data
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
-          <p className="text-[#6B6B6B]">Loading your data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading your data..." />;
   }
 
   // Determine user role type
@@ -2968,14 +3003,7 @@ const App = () => {
 
     // Show loading state while checking auth
     if (loading) {
-      return (
-        <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
-            <p className="text-[#6B6B6B]">Loading...</p>
-          </div>
-        </div>
-      );
+      return <LoadingScreen message="Loading..." />;
     }
 
     // If not authenticated, show auth pages
@@ -3005,14 +3033,7 @@ const App = () => {
 
   // Show loading state while checking auth for app routes
   if (loading && (isAppRoute || isInvitationRoute)) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2CA01C] mx-auto mb-4"></div>
-          <p className="text-[#6B6B6B]">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading..." />;
   }
 
   // If on invitation route and not authenticated, show invitation page

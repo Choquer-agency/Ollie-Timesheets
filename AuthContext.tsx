@@ -20,12 +20,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety timeout: if auth check doesn't resolve in 10 seconds, stop loading
+    // This prevents infinite spinner when Supabase auth service is unreachable (e.g. 522 errors)
+    const timeout = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) {
+          console.error('Auth session check timed out after 10s');
+          setSession(null);
+          setUser(null);
+        }
+        return false;
+      });
+    }, 10000);
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     }).catch((error) => {
+      clearTimeout(timeout);
       console.error('Failed to get session:', error);
       setSession(null);
       setUser(null);
@@ -34,12 +49,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      clearTimeout(timeout);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
